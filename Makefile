@@ -100,12 +100,6 @@ $(BUILD_DIR)/web_tpkg/$(WEB_TPKG_VERSION):
 	cd $(BUILD_DIR)/web_tpkg/$(WEB_TPKG_VERSION) && tar -xzf $(WEB_TPKG_VERSION).tgz
 	rm -rf $(BUILD_DIR)/web_tpkg/$(WEB_TPKG_VERSION)/$(WEB_TPKG_VERSION).tgz
 
-.PHONY: run/registry
-run/registry: $(BUILD_DIR)/registry
-	rm -rf /tmp/toitdocs
-	rm -rf /tmp/registry
-	TOITC_PATH=`pwd`/../../build/release64/bin/toitc TOITLSP_PATH=`pwd`/../../build/toitlsp SDK_PATH=`pwd`/../../ ./$(BUILD_DIR)/registry
-
 .PHONY: image
 image: $(BUILD_DIR)/registry_container $(BUILD_DIR)/web_toitdocs/$(WEB_TOITDOCS_VERSION) $(BUILD_DIR)/sdk/$(SDK_VERSION) $(BUILD_DIR)/web_tpkg/$(WEB_TPKG_VERSION)
 	docker build --build-arg WEB_TOITDOCS_VERSION=$(WEB_TOITDOCS_VERSION) --build-arg SDK_VERSION=${SDK_VERSION} --build-arg WEB_TPKG_VERSION=${WEB_TPKG_VERSION} -t toit_registry .
