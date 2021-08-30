@@ -23,8 +23,12 @@ deep: <TEST>/nested_registry:
 pkg install
 Exit Code: 0
 ===================
-exec test.toit
-Exit Code: 0
-foo-1.0.0
-foo-2.3.0
-gee-1.0.1
+::exec:: exec test.toit
+::exec:: Exit Code: 0
+::exec:: foo-1.0.0
+::exec:: foo-2.3.0
+::exec:: gee-1.0.1
+::exec:: 
+::check:: check test.toit
+::check:: Exit Code: 0
+::check:: 

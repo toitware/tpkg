@@ -7,9 +7,13 @@ pkg install pkg1
 Exit Code: 0
 Info: Package '<TEST>/git_pkgs/pkg1@1.0.0' installed with prefix 'pkg1'
 ===================
-exec main.toit
-Exit Code: 0
-pkg1-1.0.0pkg2-2.4.2pkg3-3.1.2
+::exec:: exec main.toit
+::exec:: Exit Code: 0
+::exec:: pkg1-1.0.0pkg2-2.4.2pkg3-3.1.2
+::exec:: 
+::check:: check main.toit
+::check:: Exit Code: 0
+::check:: 
 ===================
 // Adding it again has no effect
 ===================

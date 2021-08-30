@@ -15,6 +15,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strings"
 	"time"
 
@@ -40,11 +41,12 @@ func fix_Context(t *tedi.T) context.Context {
 
 type toitCmd struct {
 	path string
+	args []string
 	envs map[string]string
 }
 
 func (c *toitCmd) RunInDir(ctx context.Context, dir string, args ...string) (*exec.Cmd, error) {
-	cmd := exec.CommandContext(ctx, c.path, args...)
+	cmd := exec.CommandContext(ctx, c.path, append(c.args, args...)...)
 	cmd.Dir = dir
 	cmd.Env = c.Env()
 	return cmd, nil
@@ -58,8 +60,11 @@ func (c *toitCmd) Env() []string {
 	return res
 }
 
-// The environment variable that gives the toitvm. This is a required variable.
+// The environment variable that gives the toitvm.
 const toitvmEnv string = "TOITVM_PATH"
+
+// The environment variable that gives the toit CLI.
+const toitCLIEnv string = "TOITCLI_PATH"
 
 // The environment variable that gives the tpkg executable. This is a required variable.
 const tpkgEnv string = "TPKG_PATH"
@@ -93,7 +98,8 @@ type PkgTest struct {
 	t                  *tedi.T
 	ctx                context.Context
 	tpkg               *toitCmd
-	toitvm             *toitCmd
+	toitCheck          *toitCmd
+	toitExec           *toitCmd
 	goldRepls          map[string]string
 	pkgDir             string
 	cacheDir           string
@@ -287,11 +293,41 @@ func fixtureCreatePkgTest(ctx context.Context, t *tedi.T, dir TestDirectory) Pkg
 
 	tpkg, _ := os.LookupEnv(tpkgEnv)
 	toitvm, _ := os.LookupEnv(toitvmEnv)
+	toitCLI, _ := os.LookupEnv(toitCLIEnv)
 	if tpkg == "" {
 		log.Fatalf("Missing 'tpkg' path in '%s' environment variable", tpkgEnv)
 	}
-	if toitvm == "" {
-		log.Fatalf("Missing 'toitvm' path in '%s' environment variable", toitvmEnv)
+	if toitvm == "" && toitCLI == "" {
+		log.Fatalf("Need either path to VM or CLI in '%s' or '%s' environment variable", toitvmEnv, toitCLIEnv)
+	}
+	replacements := map[string]string{
+		string(dir): "<TEST>",
+		tpkg:        "<tpkg>",
+	}
+	var toitCheck *toitCmd
+	var toitExec *toitCmd
+	if toitvm != "" {
+		replacements[toitvm] = "<toitvm>"
+		toitExec = &toitCmd{
+			path: toitvm,
+			args: nil,
+		}
+	}
+	if toitCLI != "" {
+		args := []string{"program", "bundle"}
+		replacements[toitCLI+" "+strings.Join(args, " ")] = "<bundle>"
+		toitCheck = &toitCmd{
+			path: toitCLI,
+			args: args,
+		}
+	}
+	if os.Getenv(updateGoldEnv) != "" {
+		if runtime.GOOS != "linux" {
+			log.Fatalf("Can only update gold files on Linux")
+		}
+		if toitExec == nil || toitCheck == nil {
+			log.Fatalf("Updating gold files requires both '%s' and '%s' environment variables", toitvmEnv, toitCLIEnv)
+		}
 	}
 	return PkgTest{
 		dir: string(dir),
@@ -300,14 +336,9 @@ func fixtureCreatePkgTest(ctx context.Context, t *tedi.T, dir TestDirectory) Pkg
 		tpkg: &toitCmd{
 			path: tpkg,
 		},
-		toitvm: &toitCmd{
-			path: toitvm,
-		},
-		goldRepls: map[string]string{
-			string(dir): "<TEST>",
-			tpkg:        "<tpkg>",
-			toitvm:      "<toitvm>",
-		},
+		toitCheck:        toitCheck,
+		toitExec:         toitExec,
+		goldRepls:        replacements,
 		pkgDir:           absPkgDir,
 		cacheDir:         absCacheDir,
 		pkgCacheDir:      absPkgCacheDir,
@@ -325,8 +356,10 @@ func (pt PkgTest) runToit(args ...string) (string, error) {
 	if pt.overwriteRunDir != "" {
 		dir = pt.overwriteRunDir
 	}
-	if args[0] == "exec" {
-		cmd, err = pt.toitvm.RunInDir(pt.ctx, dir, args[1:]...)
+	if args[0] == "check" {
+		cmd, err = pt.toitCheck.RunInDir(pt.ctx, dir, args[1:]...)
+	} else if args[0] == "exec" {
+		cmd, err = pt.toitExec.RunInDir(pt.ctx, dir, args[1:]...)
 	} else {
 		runFlags := []string{
 			"--cache", filepath.Join(pt.dir, cacheDir),
@@ -417,7 +450,21 @@ func (pt PkgTest) checkGold(name string, actual string) {
 	goldPath := filepath.Join(pt.dir, "gold", name+".gold")
 	contentBytes, err := ioutil.ReadFile(goldPath)
 	require.NoError(pt.t, err)
-	require.Equal(pt.t, string(contentBytes), actual)
+	gold := string(contentBytes)
+	toBeRemoved := "::check::"
+	if pt.toitExec == nil {
+		toBeRemoved = "::exec::"
+	}
+	lines := strings.Split(gold, "\n")
+	filtered := []string{}
+	// Filter out all lines that aren't relevant.
+	for _, line := range lines {
+		if !strings.HasPrefix(line, toBeRemoved) {
+			filtered = append(filtered, line)
+		}
+	}
+	filteredGold := strings.Join(filtered, "\n")
+	require.Equal(pt.t, filteredGold, actual)
 }
 
 func (pt PkgTest) buildActual(args ...string) string {
@@ -441,6 +488,36 @@ func (pt PkgTest) GoldToit(name string, commands [][]string) {
 	for _, command := range commands {
 		if strings.HasPrefix(command[0], "//") {
 			actuals = append(actuals, strings.Join(command, "\n")+"\n")
+		} else if command[0] == "exec" {
+			execActual := ""
+			// On some platforms we can only run the check command, which has a
+			// more limited output than the exec command.
+
+			// If we are creating the Gold file, we need to build both outputs.
+			// That's why we have a loop here.
+			for i := 0; i < 2; i++ {
+				if pt.toitExec == nil {
+					command[0] = "check"
+				}
+				if i == 1 {
+					if os.Getenv(updateGoldEnv) == "" {
+						// No need to do it another time.
+						break
+					}
+					if runtime.GOOS != "linux" {
+						log.Fatalf("Can only update gold files on Linux")
+					}
+					command[0] = "check"
+				}
+
+				actual := pt.buildActual(command...)
+				lines := strings.Split(actual, "\n")
+				for i, line := range lines {
+					lines[i] = "::" + command[0] + ":: " + line + "\n"
+				}
+				execActual += strings.Join(lines, "")
+			}
+			actuals = append(actuals, execActual)
 		} else {
 			actual := pt.buildActual(command...)
 			actuals = append(actuals, actual)
