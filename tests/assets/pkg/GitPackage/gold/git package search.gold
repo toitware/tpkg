@@ -1,0 +1,70 @@
+// Execution should fail, as the package is not installed yet
+===================
+exec main.toit
+Exit Code: 1
+main.toit:3:8: error: Package for prefix 'foo' not found
+import foo
+       ^~
+main.toit:4:8: error: Package for prefix 'bar' not found
+import bar
+       ^~
+main.toit:7:7: error: Unresolved identifier: 'say_hello'
+  foo.say_hello
+      ^~
+main.toit:8:7: error: Unresolved identifier: 'say_hello'
+  bar.say_hello
+      ^~
+Compilation failed.
+===================
+// Install packages from the registry
+===================
+pkg registry add --local test-reg registry
+Exit Code: 0
+===================
+pkg install foo
+Exit Code: 0
+Info: Package '<TEST>/foo_git@1.2.3' installed with prefix 'foo'
+===================
+pkg install bar
+Exit Code: 0
+Info: Package '<TEST>/bar_git@2.0.1' installed with prefix 'bar'
+===================
+// Execution should succeed now
+===================
+exec main.toit
+Exit Code: 0
+hello from foo 1.2.3
+hello from bar 2.0.1
+===================
+// Execution should fail, as the prefixes are not yet known
+===================
+exec main2.toit
+Exit Code: 1
+main2.toit:3:8: error: Package for prefix 'pre1' not found
+import pre1.foo
+       ^~
+main2.toit:4:8: error: Package for prefix 'pre2' not found
+import pre2.bar
+       ^~
+main2.toit:7:7: error: Unresolved identifier: 'say_hello'
+  foo.say_hello
+      ^~
+main2.toit:8:7: error: Unresolved identifier: 'say_hello'
+  bar.say_hello
+      ^~
+Compilation failed.
+===================
+pkg install --prefix=pre1 foo
+Exit Code: 0
+Info: Package '<TEST>/foo_git@1.2.3' installed with prefix 'pre1'
+===================
+pkg install --prefix=pre2 bar
+Exit Code: 0
+Info: Package '<TEST>/bar_git@2.0.1' installed with prefix 'pre2'
+===================
+// Execution should succeed now
+===================
+exec main2.toit
+Exit Code: 0
+hello from foo 1.2.3
+hello from bar 2.0.1

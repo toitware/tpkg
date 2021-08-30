@@ -1,0 +1,84 @@
+pkg --track registry add test-reg <TEST>/registry_git_pkgs
+Exit Code: 0
+Category: pkg
+Action: registry add
+Label: 
+Fields:
+  kind: git
+  url: <TEST>/registry_git_pkgs
+===================
+pkg --track init
+Exit Code: 0
+===================
+pkg --track install pkg2
+Exit Code: 0
+Category: pkg
+Action: download-git
+Label: 
+Fields:
+  hash: 
+  url: <TEST>/git_pkgs/pkg2
+  version: 2.4.2
+Category: pkg
+Action: download-git
+Label: 
+Fields:
+  hash: 
+  url: <TEST>/git_pkgs/pkg3
+  version: 3.1.2
+Info: Package '<TEST>/git_pkgs/pkg2@2.4.2' installed with prefix 'pkg2'
+Category: pkg
+Action: install
+Label: 
+Fields:
+  pkg-string: <TEST>/git_pkgs/pkg2@2.4.2
+===================
+pkg --track install
+Exit Code: 0
+Category: pkg
+Action: install-fetch
+Label: 
+
+===================
+pkg --track install --recompute
+Exit Code: 0
+Category: pkg
+Action: install-recompute
+Label: 
+
+===================
+pkg --track search pkg
+Exit Code: 0
+Category: pkg
+Action: search
+Label: 
+Fields:
+  needle: pkg
+pkg1 - 1.0.0
+pkg2 - 2.4.2
+pkg3 - 3.1.2
+pkg4 - 4.9.9
+===================
+pkg --track registry remove test-reg
+Exit Code: 0
+Category: pkg
+Action: registry remove
+Label: 
+Fields:
+  path: <TEST>/registry_git_pkgs
+===================
+pkg --track describe github.com/toitware/toit-morse v1.0.0
+Exit Code: 0
+Category: pkg
+Action: describe
+Label: 
+Fields:
+  url: github.com/toitware/toit-morse
+  version: v1.0.0
+morse:
+  description: Functions for International (ITU) Morse code.
+  url: github.com/toitware/toit-morse
+  version: 1.0.0
+  license: MIT
+  hash: 15f15a432f7adc899eef4478a121d02995990b26
+  

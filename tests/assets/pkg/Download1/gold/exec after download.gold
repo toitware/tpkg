@@ -1,0 +1,5 @@
+exec main.toit
+Exit Code: 0
+hello from foo 1.2.3
+hello from bar 2.0.1
+hello from target

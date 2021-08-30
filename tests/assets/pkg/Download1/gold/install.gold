@@ -1,0 +1,20 @@
+pkg registry add --local test-reg registry
+Exit Code: 0
+===================
+pkg install foo
+Exit Code: 0
+Info: Package '<TEST>/foo_git@1.2.3' installed with prefix 'foo'
+===================
+pkg install bar
+Exit Code: 0
+Info: Package '<TEST>/bar_git@2.0.1' installed with prefix 'bar'
+===================
+pkg install --local target
+Exit Code: 0
+Info: Package 'target' installed with prefix 'target'
+===================
+exec main.toit
+Exit Code: 0
+hello from foo 1.2.3
+hello from bar 2.0.1
+hello from target

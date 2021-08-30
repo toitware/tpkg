@@ -1,0 +1,11 @@
+exec main.toit
+Exit Code: 0
+all ok
+===================
+pkg install --local pkg
+Exit Code: 0
+Info: Package 'pkg' installed with prefix 'pkg'
+===================
+exec main2.toit
+Exit Code: 0
+local package

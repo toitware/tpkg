@@ -1,0 +1,20 @@
+// Without sync there shouldn't be any packages
+===================
+pkg list
+Exit Code: 0
+test-reg: <TEST>/registry_git_pkgs:
+===================
+// Install should, however, still work
+===================
+pkg install
+Exit Code: 0
+===================
+exec test.toit
+Exit Code: 0
+pkg3-3.1.2
+===================
+// Error is expected now.
+===================
+pkg install pkg1
+Exit Code: 1
+Error: Package 'pkg1' not found

@@ -1,0 +1,44 @@
+pkg init
+Exit Code: 0
+===================
+pkg registry add --local test-reg registry
+Exit Code: 0
+===================
+pkg install foo
+Exit Code: 0
+Info: Package '<TEST>/foo_git@1.2.3' installed with prefix 'foo'
+===================
+pkg install bar
+Exit Code: 0
+Info: Package '<TEST>/bar_git@2.0.1' installed with prefix 'bar'
+===================
+pkg lockfile
+Exit Code: 0
+prefixes:
+  bar: bar_git
+  foo: foo_git
+packages:
+  bar_git:
+    url: <TEST>/bar_git
+    version: 2.0.1
+    prefixes:
+      foo: foo_git
+      sub: sub_git
+  foo_git:
+    url: <TEST>/foo_git
+    version: 1.2.3
+  sub_git:
+    url: <TEST>/sub_git
+    version: 3.1.4
+
+===================
+pkg packagefile
+Exit Code: 0
+dependencies:
+  bar:
+    url: <TEST>/bar_git
+    version: ^2.0.1
+  foo:
+    url: <TEST>/foo_git
+    version: ^1.2.3
+

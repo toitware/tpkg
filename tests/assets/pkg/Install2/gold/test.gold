@@ -1,0 +1,45 @@
+// No package installed yet.
+===================
+exec main.toit
+Exit Code: 1
+<TEST>/package.lock:6:10: error: Package '<TEST>/git_pkgs/pkg1-1.0.0' not found
+    url: "<TEST>/git_pkgs/pkg1"
+         ^~
+main.toit:3:8: error: Package 'pkg1' for prefix 'pkg1' not found
+import pkg1
+       ^~
+main.toit:6:14: error: Unresolved identifier: 'identify'
+  print pkg1.identify
+             ^~
+Compilation failed.
+===================
+// Add registry so we can find packages.
+===================
+pkg registry add --local test-reg <TEST>/registry_git_pkgs
+Exit Code: 0
+===================
+// Just 'install' doesn't add the missing dependencies.
+===================
+pkg install
+Exit Code: 0
+===================
+pkg lockfile
+Exit Code: 0
+prefixes:
+  pkg1: pkg1
+packages:
+  pkg1:
+    url: <TEST>/git_pkgs/pkg1
+    version: 1.0.0
+
+===================
+// With '--recompute' we get the missing dependencies.
+===================
+pkg install --recompute
+Exit Code: 0
+===================
+// Should work now.
+===================
+exec main.toit
+Exit Code: 0
+pkg1-1.0.0pkg2-2.4.2pkg3-3.1.2
