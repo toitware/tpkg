@@ -1,0 +1,8 @@
+#!/bin/bash
+set -e
+
+[ "$SKIP_POST_MERGE" = 1 ] && exit 0
+
+echo "Synchronizing submodules"
+git submodule sync --recursive > /dev/null
+git submodule update --init --recursive -j 8 > /dev/null
