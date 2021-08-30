@@ -3,7 +3,7 @@
 BUILD_DIR := build
 PROTO_DIR := proto
 
-GOOGLE_API_PROTO_DIR := ../../third_party/googleapis
+GOOGLE_API_PROTO_DIR := third_party/googleapis
 
 PROTO_FLAGS := -I$(dir $(shell which protoc))$(dir $(shell readlink "$(shell which protoc)"))../include/ -I/snap/protobuf/current/include/
 PROTO_SOURCES := $(foreach dir,$(PROTO_DIR),$(shell find $(dir) -name '*.proto'))
@@ -54,8 +54,7 @@ $(BUILD_DIR)/tpkg: $(GO_DEPS) $(GO_SOURCES)
 .PHONY: tpkg
 tpkg: $(BUILD_DIR)/tpkg
 
-$(BUILD_DIR)/registry: $(GO_DEPS) $(GO_SOURCES)
-	$(GO_BUILD_FLAGS) go build -ldflags "$(GO_LINK_FLAGS)" -tags 'netgo osusergo' -o $(BUILD_DIR)/registry .
+$(BUILD_DIR)/registry: $(GO_DEPS) $(R$(GO_BUILD_FLAGS) go build -ldflags "$(GO_LINK_FLAGS)" -tags 'netgo osusergo' -o $(BUILD_DIR)/registry .
 
 .PHONY: registry
 registry: $(BUILD_DIR)/registry
@@ -77,7 +76,7 @@ mocks:
 
 .PHONY: test
 test: tpkg $(GO_MOCKS)
-	tedi test -v -cover ./...
+	tedi test -v -cover ./tests/...
 
 WEB_TOITDOCS_VERSION ?= v0.0.9-pre.8+0e304a9f
 $(BUILD_DIR)/web_toitdocs/$(WEB_TOITDOCS_VERSION):
