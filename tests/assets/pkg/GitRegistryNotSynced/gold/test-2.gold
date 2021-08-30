@@ -13,9 +13,9 @@ Exit Code: 0
 ::exec:: Exit Code: 0
 ::exec:: pkg3-3.1.2
 ::exec:: 
-::check:: check test.toit
-::check:: Exit Code: 0
-::check:: 
+::analyze:: analyze test.toit
+::analyze:: Exit Code: 0
+::analyze:: 
 ===================
 // Error is expected now.
 ===================

@@ -2,6 +2,6 @@
 ::exec:: Exit Code: 0
 ::exec:: Hello World
 ::exec:: 
-::check:: check hello.toit
-::check:: Exit Code: 0
-::check:: 
+::analyze:: analyze hello.toit
+::analyze:: Exit Code: 0
+::analyze:: 

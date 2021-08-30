@@ -6,6 +6,12 @@ Exit Code: 0
 ::exec:: foo-1.0.0 old alt
 ::exec:: foo-1.5.0
 ::exec:: 
-::check:: check main.toit
-::check:: Exit Code: 0
-::check:: 
+::analyze:: analyze main.toit
+::analyze:: Exit Code: 0
+::analyze:: <TEST>/package.lock:8:5: warning: Unexpected entry in package.lock file: 'hash'
+::analyze::     hash: dc701befd4debbf7793d9f0dfe41a8b9e82d3b88
+::analyze::     ^~
+::analyze:: <TEST>/package.lock:12:5: warning: Unexpected entry in package.lock file: 'hash'
+::analyze::     hash: 619f9aca8a4a82e7bc37ab9060ca6b342f13bf6b
+::analyze::     ^~
+::analyze:: 

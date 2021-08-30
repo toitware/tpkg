@@ -19,6 +19,6 @@ Info: Package 'target' installed with prefix 'target'
 ::exec:: hello from bar 2.0.1
 ::exec:: hello from target
 ::exec:: 
-::check:: check main.toit
-::check:: Exit Code: 0
-::check:: 
+::analyze:: analyze main.toit
+::analyze:: Exit Code: 0
+::analyze:: 

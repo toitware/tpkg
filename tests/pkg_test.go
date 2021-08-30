@@ -98,7 +98,7 @@ type PkgTest struct {
 	t                  *tedi.T
 	ctx                context.Context
 	tpkg               *toitCmd
-	toitCheck          *toitCmd
+	toitAnalyze        *toitCmd
 	toitExec           *toitCmd
 	goldRepls          map[string]string
 	pkgDir             string
@@ -304,7 +304,7 @@ func fixtureCreatePkgTest(ctx context.Context, t *tedi.T, dir TestDirectory) Pkg
 		string(dir): "<TEST>",
 		tpkg:        "<tpkg>",
 	}
-	var toitCheck *toitCmd
+	var toitAnalyze *toitCmd
 	var toitExec *toitCmd
 	if toitvm != "" {
 		replacements[toitvm] = "<toitvm>"
@@ -314,9 +314,9 @@ func fixtureCreatePkgTest(ctx context.Context, t *tedi.T, dir TestDirectory) Pkg
 		}
 	}
 	if toitCLI != "" {
-		args := []string{"program", "bundle"}
+		args := []string{"tool", "analyze"}
 		replacements[toitCLI+" "+strings.Join(args, " ")] = "<bundle>"
-		toitCheck = &toitCmd{
+		toitAnalyze = &toitCmd{
 			path: toitCLI,
 			args: args,
 		}
@@ -325,7 +325,7 @@ func fixtureCreatePkgTest(ctx context.Context, t *tedi.T, dir TestDirectory) Pkg
 		if runtime.GOOS != "linux" {
 			log.Fatalf("Can only update gold files on Linux")
 		}
-		if toitExec == nil || toitCheck == nil {
+		if toitExec == nil || toitAnalyze == nil {
 			log.Fatalf("Updating gold files requires both '%s' and '%s' environment variables", toitvmEnv, toitCLIEnv)
 		}
 	}
@@ -336,7 +336,7 @@ func fixtureCreatePkgTest(ctx context.Context, t *tedi.T, dir TestDirectory) Pkg
 		tpkg: &toitCmd{
 			path: tpkg,
 		},
-		toitCheck:        toitCheck,
+		toitAnalyze:      toitAnalyze,
 		toitExec:         toitExec,
 		goldRepls:        replacements,
 		pkgDir:           absPkgDir,
@@ -356,8 +356,8 @@ func (pt PkgTest) runToit(args ...string) (string, error) {
 	if pt.overwriteRunDir != "" {
 		dir = pt.overwriteRunDir
 	}
-	if args[0] == "check" {
-		cmd, err = pt.toitCheck.RunInDir(pt.ctx, dir, args[1:]...)
+	if args[0] == "analyze" {
+		cmd, err = pt.toitAnalyze.RunInDir(pt.ctx, dir, args[1:]...)
 	} else if args[0] == "exec" {
 		cmd, err = pt.toitExec.RunInDir(pt.ctx, dir, args[1:]...)
 	} else {
@@ -451,7 +451,7 @@ func (pt PkgTest) checkGold(name string, actual string) {
 	contentBytes, err := ioutil.ReadFile(goldPath)
 	require.NoError(pt.t, err)
 	gold := string(contentBytes)
-	toBeRemoved := "::check::"
+	toBeRemoved := "::analyze::"
 	if pt.toitExec == nil {
 		toBeRemoved = "::exec::"
 	}
@@ -490,14 +490,14 @@ func (pt PkgTest) GoldToit(name string, commands [][]string) {
 			actuals = append(actuals, strings.Join(command, "\n")+"\n")
 		} else if command[0] == "exec" {
 			execActual := ""
-			// On some platforms we can only run the check command, which has a
+			// On some platforms we can only run the analyze command, which has a
 			// more limited output than the exec command.
 
 			// If we are creating the Gold file, we need to build both outputs.
 			// That's why we have a loop here.
 			for i := 0; i < 2; i++ {
 				if pt.toitExec == nil {
-					command[0] = "check"
+					command[0] = "analyze"
 				}
 				if i == 1 {
 					if os.Getenv(updateGoldEnv) == "" {
@@ -507,7 +507,7 @@ func (pt PkgTest) GoldToit(name string, commands [][]string) {
 					if runtime.GOOS != "linux" {
 						log.Fatalf("Can only update gold files on Linux")
 					}
-					command[0] = "check"
+					command[0] = "analyze"
 				}
 
 				actual := pt.buildActual(command...)

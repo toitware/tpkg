@@ -29,6 +29,6 @@ Exit Code: 0
 ::exec:: foo-2.3.0
 ::exec:: gee-1.0.1
 ::exec:: 
-::check:: check test.toit
-::check:: Exit Code: 0
-::check:: 
+::analyze:: analyze test.toit
+::analyze:: Exit Code: 0
+::analyze:: 

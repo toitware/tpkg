@@ -16,9 +16,21 @@
 ::exec::       ^~
 ::exec:: Compilation failed.
 ::exec:: 
-::check:: check main.toit
-::check:: Exit Code: 0
-::check:: 
+::analyze:: analyze main.toit
+::analyze:: Exit Code: 1
+::analyze:: <TEST>/main.toit:3:8: error: Package for prefix 'foo' not found
+::analyze:: import foo
+::analyze::        ^~
+::analyze:: <TEST>/main.toit:4:8: error: Package for prefix 'bar' not found
+::analyze:: import bar
+::analyze::        ^~
+::analyze:: <TEST>/main.toit:7:7: error: Unresolved identifier: 'say_hello'
+::analyze::   foo.say_hello
+::analyze::       ^~
+::analyze:: <TEST>/main.toit:8:7: error: Unresolved identifier: 'say_hello'
+::analyze::   bar.say_hello
+::analyze::       ^~
+::analyze:: 
 ===================
 // Install packages from the registry
 ===================
@@ -40,9 +52,9 @@ Info: Package '<TEST>/bar_git@2.0.1' installed with prefix 'bar'
 ::exec:: hello from foo 1.2.3
 ::exec:: hello from bar 2.0.1
 ::exec:: 
-::check:: check main.toit
-::check:: Exit Code: 0
-::check:: 
+::analyze:: analyze main.toit
+::analyze:: Exit Code: 0
+::analyze:: 
 ===================
 // Execution should fail, as the prefixes are not yet known
 ===================
@@ -62,9 +74,21 @@ Info: Package '<TEST>/bar_git@2.0.1' installed with prefix 'bar'
 ::exec::       ^~
 ::exec:: Compilation failed.
 ::exec:: 
-::check:: check main2.toit
-::check:: Exit Code: 0
-::check:: 
+::analyze:: analyze main2.toit
+::analyze:: Exit Code: 1
+::analyze:: <TEST>/main2.toit:3:8: error: Package for prefix 'pre1' not found
+::analyze:: import pre1.foo
+::analyze::        ^~
+::analyze:: <TEST>/main2.toit:4:8: error: Package for prefix 'pre2' not found
+::analyze:: import pre2.bar
+::analyze::        ^~
+::analyze:: <TEST>/main2.toit:7:7: error: Unresolved identifier: 'say_hello'
+::analyze::   foo.say_hello
+::analyze::       ^~
+::analyze:: <TEST>/main2.toit:8:7: error: Unresolved identifier: 'say_hello'
+::analyze::   bar.say_hello
+::analyze::       ^~
+::analyze:: 
 ===================
 pkg install --prefix=pre1 foo
 Exit Code: 0
@@ -81,6 +105,6 @@ Info: Package '<TEST>/bar_git@2.0.1' installed with prefix 'pre2'
 ::exec:: hello from foo 1.2.3
 ::exec:: hello from bar 2.0.1
 ::exec:: 
-::check:: check main2.toit
-::check:: Exit Code: 0
-::check:: 
+::analyze:: analyze main2.toit
+::analyze:: Exit Code: 0
+::analyze:: 

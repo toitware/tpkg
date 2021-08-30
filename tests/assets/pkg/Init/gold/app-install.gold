@@ -2,9 +2,9 @@
 ::exec:: Exit Code: 0
 ::exec:: all ok
 ::exec:: 
-::check:: check main.toit
-::check:: Exit Code: 0
-::check:: 
+::analyze:: analyze main.toit
+::analyze:: Exit Code: 0
+::analyze:: 
 ===================
 pkg install --local pkg
 Exit Code: 0
@@ -14,6 +14,6 @@ Info: Package 'pkg' installed with prefix 'pkg'
 ::exec:: Exit Code: 0
 ::exec:: local package
 ::exec:: 
-::check:: check main2.toit
-::check:: Exit Code: 0
-::check:: 
+::analyze:: analyze main2.toit
+::analyze:: Exit Code: 0
+::analyze:: 

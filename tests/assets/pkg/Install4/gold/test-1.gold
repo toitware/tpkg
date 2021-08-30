@@ -10,9 +10,15 @@
 ::exec::              ^~
 ::exec:: Compilation failed.
 ::exec:: 
-::check:: check main.toit
-::check:: Exit Code: 0
-::check:: 
+::analyze:: analyze main.toit
+::analyze:: Exit Code: 1
+::analyze:: <TEST>/main.toit:3:8: error: Package for prefix 'pkg4_pre' not found
+::analyze:: import pkg4_pre.pkg4
+::analyze::        ^~
+::analyze:: <TEST>/main.toit:6:14: error: Unresolved identifier: 'identify'
+::analyze::   print pkg4.identify
+::analyze::              ^~
+::analyze:: 
 ===================
 ::exec:: exec main2.toit
 ::exec:: Exit Code: 1
@@ -24,9 +30,15 @@
 ::exec::              ^~
 ::exec:: Compilation failed.
 ::exec:: 
-::check:: check main2.toit
-::check:: Exit Code: 0
-::check:: 
+::analyze:: analyze main2.toit
+::analyze:: Exit Code: 1
+::analyze:: <TEST>/main2.toit:3:8: error: Package for prefix 'pkg1' not found
+::analyze:: import pkg1
+::analyze::        ^~
+::analyze:: <TEST>/main2.toit:6:14: error: Unresolved identifier: 'identify'
+::analyze::   print pkg1.identify
+::analyze::              ^~
+::analyze:: 
 ===================
 // Add registry so we can find packages.
 ===================
@@ -45,9 +57,9 @@ Info: Package '<TEST>/git_pkgs/pkg4@4.9.9' installed with prefix 'pkg4_pre'
 ::exec:: Exit Code: 0
 ::exec:: pkg4-4.9.9
 ::exec:: 
-::check:: check main.toit
-::check:: Exit Code: 0
-::check:: 
+::analyze:: analyze main.toit
+::analyze:: Exit Code: 0
+::analyze:: 
 ===================
 pkg install pkg1
 Exit Code: 0
@@ -59,6 +71,6 @@ Info: Package '<TEST>/git_pkgs/pkg1@1.0.0' installed with prefix 'pkg1'
 ::exec:: Exit Code: 0
 ::exec:: pkg1-1.0.0pkg2-2.4.2pkg3-3.1.2
 ::exec:: 
-::check:: check main2.toit
-::check:: Exit Code: 0
-::check:: 
+::analyze:: analyze main2.toit
+::analyze:: Exit Code: 0
+::analyze:: 

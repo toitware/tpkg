@@ -8,9 +8,15 @@
 ::exec::       ^~
 ::exec:: Compilation failed.
 ::exec:: 
-::check:: check main.toit
-::check:: Exit Code: 0
-::check:: 
+::analyze:: analyze main.toit
+::analyze:: Exit Code: 1
+::analyze:: <TEST>/main.toit:3:8: error: Package for prefix 'pkg' not found
+::analyze:: import pkg
+::analyze::        ^~
+::analyze:: <TEST>/main.toit:6:7: error: Unresolved identifier: 'say_hello'
+::analyze::   pkg.say_hello
+::analyze::       ^~
+::analyze:: 
 ===================
 pkg install --local pkg
 Exit Code: 0
@@ -20,9 +26,9 @@ Info: Package 'pkg' installed with prefix 'pkg'
 ::exec:: Exit Code: 0
 ::exec:: hello from pkg
 ::exec:: 
-::check:: check main.toit
-::check:: Exit Code: 0
-::check:: 
+::analyze:: analyze main.toit
+::analyze:: Exit Code: 0
+::analyze:: 
 ===================
 // Install with a prefix.
 ===================
@@ -34,9 +40,9 @@ Info: Package 'pkg2' installed with prefix 'prepkg'
 ::exec:: Exit Code: 0
 ::exec:: hello from pkg2
 ::exec:: 
-::check:: check main2.toit
-::check:: Exit Code: 0
-::check:: 
+::analyze:: analyze main2.toit
+::analyze:: Exit Code: 0
+::analyze:: 
 ===================
 // Installing again yields an error.
 ===================

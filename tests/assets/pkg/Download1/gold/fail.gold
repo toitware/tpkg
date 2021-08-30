@@ -20,6 +20,24 @@
 ::exec::       ^~
 ::exec:: Compilation failed.
 ::exec:: 
-::check:: check main.toit
-::check:: Exit Code: 0
-::check:: 
+::analyze:: analyze main.toit
+::analyze:: Exit Code: 1
+::analyze:: <TEST>/package.lock:7:10: error: Package '<TEST>/bar_git-2.0.1' not found
+::analyze::     url: <TEST>/bar_git
+::analyze::          ^~
+::analyze:: <TEST>/package.lock:13:10: error: Package '<TEST>/foo_git-1.2.3' not found
+::analyze::     url: <TEST>/foo_git
+::analyze::          ^~
+::analyze:: <TEST>/main.toit:1:8: error: Package 'foo_git' for prefix 'foo' not found
+::analyze:: import foo
+::analyze::        ^~
+::analyze:: <TEST>/main.toit:2:8: error: Package 'bar_git' for prefix 'bar' not found
+::analyze:: import bar
+::analyze::        ^~
+::analyze:: <TEST>/main.toit:6:7: error: Unresolved identifier: 'say_hello'
+::analyze::   foo.say_hello
+::analyze::       ^~
+::analyze:: <TEST>/main.toit:7:7: error: Unresolved identifier: 'say_hello'
+::analyze::   bar.say_hello
+::analyze::       ^~
+::analyze:: 
