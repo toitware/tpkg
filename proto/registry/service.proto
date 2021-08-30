@@ -1,0 +1,89 @@
+syntax = "proto3";
+
+package registry;
+
+import "google/api/annotations.proto";
+
+option go_package = "github.com/toitware/toit.git/tools/tpkg/build/proto/registry";
+
+service RegistryService {
+  rpc ListPackages(ListPackagesRequest) returns (stream ListPackagesResponse) {
+    option (google.api.http) = {
+      get: "/v1/packages"
+    };
+  }
+
+  rpc Sync(SyncRequest) returns (SyncResponse) {
+    option (google.api.http) = {
+      post: "/v1/sync"
+    };
+  }
+
+  rpc GetPackageVersions(GetPackageVersionsRequest) returns (stream GetPackageVersionsResponse) {
+    option (google.api.http) = {
+      get: "/v1/packages/{url=**}/versions"
+    };
+  }
+
+  rpc Register(RegisterRequest) returns (RegisterResponse) {
+    option (google.api.http) = {
+      post: "/v1/register/{url=**}"
+      additional_bindings {
+        post: "/v1/register/{url=**}/version/{version}"
+      }
+    };
+
+  }
+}
+
+message ListPackagesRequest {
+}
+
+message ListPackagesResponse {
+  Package package = 1;
+}
+
+message Package {
+  string name = 1;
+  string description = 2;
+  string license = 3;
+  string url = 4;
+  string latestVersion = 5;
+}
+
+message SyncRequest {
+}
+
+message SyncResponse {
+}
+
+message GetPackageVersionsRequest {
+  string url = 1;
+}
+
+message GetPackageVersionsResponse {
+  PackageVersion version = 1;
+}
+
+message PackageVersion {
+  string name = 1;
+  string description = 2;
+  string license = 3;
+  string url = 4;
+  string version = 5;
+  repeated Dependency dependencies = 6;
+}
+
+message Dependency {
+  string url = 1;
+  string version = 2;
+}
+
+message RegisterRequest {
+  string url = 1;
+  string version = 2;
+}
+
+message RegisterResponse {
+
+}

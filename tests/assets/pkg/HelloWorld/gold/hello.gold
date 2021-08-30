@@ -1,0 +1,3 @@
+exec hello.toit
+Exit Code: 0
+Hello World

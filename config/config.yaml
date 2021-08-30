@@ -1,0 +1,23 @@
+service_name: tpkg_registry
+
+port: ${PORT:8733}
+debug_port: ${DEBUG_PORT:0}
+web_path: ${TPKG_PATH:/web_tpkg}
+https: ${FORCE_HTTPS:false}
+
+metrics:
+  enabled: true
+
+registry:
+  url: ${REGISTRY_URL:github.com/toitware/registry}
+  branch: ${REGISTRY_BRANCH:main}
+  cache_path: ${REGISTRY_CACHE_PATH:/tmp/registry}
+  ssh_key_file_file: ${REGISTRY_SSH_KEY_FILE:}
+
+toitdocs:
+  cache_path: ${TOITDOCS_CACHE_PATH:/tmp/toitdocs}
+  viewer_path: ${TOITDOCS_VIEWER_PATH:/web_toitdocs}
+  sdk:
+    toitc_path: ${TOITC_PATH}
+    toitlsp_path: ${TOITLSP_PATH}
+    path: ${SDK_PATH}

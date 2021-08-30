@@ -1,0 +1,21 @@
+pkg install many@2.3
+Exit Code: 0
+Info: Package '<TEST>/pkgs_many_versions/many@2.3.8' installed with prefix 'many'
+===================
+pkg lockfile
+Exit Code: 0
+prefixes:
+  many: many
+packages:
+  many:
+    url: <TEST>/pkgs_many_versions/many
+    version: 2.3.8
+
+===================
+pkg packagefile
+Exit Code: 0
+dependencies:
+  many:
+    url: <TEST>/pkgs_many_versions/many
+    version: ^2.3.8
+

@@ -1,0 +1,8 @@
+This directory is a git-directory.
+
+Since we can't store git repositories inside other git repositories,
+we have stored the `.git` directory in a zip file. The test framework
+automatically extracts zip files.
+
+When manipulating the test, it's thus generally necessary to unzip the
+archive first, before changing the files.
