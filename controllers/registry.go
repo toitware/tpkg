@@ -30,6 +30,10 @@ func provideRegistry(config *config.Config, cache tpkg.Cache, logger *zap.Logger
 		return nil, nil, err
 	}
 
+	if _, err := os.Stat(config.Registry.SSHKeyFile); os.IsNotExist(err) {
+		return nil, nil, fmt.Errorf("Failed to load SSH key from path: '%s'", config.Registry.SSHKeyFile)
+	}
+
 	authMethod, err := ssh.NewPublicKeysFromFile("git", config.Registry.SSHKeyFile, "")
 	if err != nil {
 		return nil, nil, err
