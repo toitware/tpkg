@@ -77,7 +77,7 @@ mocks:
 
 .PHONY: test
 test: tpkg $(GO_MOCKS)
-	tedi test -v -cover ./...
+	tedi test -v -cover ./tests/...
 
 WEB_TOITDOCS_VERSION ?= v0.0.12
 $(BUILD_DIR)/web_toitdocs/$(WEB_TOITDOCS_VERSION):
