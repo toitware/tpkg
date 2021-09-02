@@ -63,8 +63,11 @@ func (c *toitCmd) Env() []string {
 // The environment variable that gives the toitvm.
 const toitvmEnv string = "TOITVM_PATH"
 
-// The environment variable that gives the toit CLI.
-const toitCLIEnv string = "TOITCLI_PATH"
+// The environment variable that gives toitc.
+const toitcEnv string = "TOITC_PATH"
+
+// The environment variable that gives toitlsp.
+const toitlspEnv string = "TOITLSP_PATH"
 
 // The environment variable that gives the tpkg executable. This is a required variable.
 const tpkgEnv string = "TPKG_PATH"
@@ -293,12 +296,16 @@ func fixtureCreatePkgTest(ctx context.Context, t *tedi.T, dir TestDirectory) Pkg
 
 	tpkg, _ := os.LookupEnv(tpkgEnv)
 	toitvm, _ := os.LookupEnv(toitvmEnv)
-	toitCLI, _ := os.LookupEnv(toitCLIEnv)
+	toitc, _ := os.LookupEnv(toitcEnv)
+	toitlsp, _ := os.LookupEnv(toitlspEnv)
 	if tpkg == "" {
 		log.Fatalf("Missing 'tpkg' path in '%s' environment variable", tpkgEnv)
 	}
-	if toitvm == "" && toitCLI == "" {
-		log.Fatalf("Need either path to VM or CLI in '%s' or '%s' environment variable", toitvmEnv, toitCLIEnv)
+	if (toitc == "" && toitlsp != "") || (toitc != "" && toitlsp == "") {
+		log.Fatalf("Toitlsp (%s) and toitc (%s) need to given as pairs", toitlspEnv, toitcEnv)
+	}
+	if toitvm == "" && toitc == "" {
+		log.Fatalf("Need either path to VM or toitlsp/toitc in '%s' or '%s/%s' environment variable", toitvmEnv, toitlspEnv, toitcEnv)
 	}
 	replacements := map[string]string{
 		string(dir): "<TEST>",
@@ -313,11 +320,11 @@ func fixtureCreatePkgTest(ctx context.Context, t *tedi.T, dir TestDirectory) Pkg
 			args: nil,
 		}
 	}
-	if toitCLI != "" {
-		args := []string{"tool", "analyze"}
-		replacements[toitCLI+" "+strings.Join(args, " ")] = "<bundle>"
+	if toitlsp != "" {
+		args := []string{"analyze", "--toitc", toitc}
+		replacements[toitlsp+" "+strings.Join(args, " ")] = "<analyze>"
 		toitAnalyze = &toitCmd{
-			path: toitCLI,
+			path: toitlsp,
 			args: args,
 		}
 	}
@@ -326,7 +333,7 @@ func fixtureCreatePkgTest(ctx context.Context, t *tedi.T, dir TestDirectory) Pkg
 			log.Fatalf("Can only update gold files on Linux")
 		}
 		if toitExec == nil || toitAnalyze == nil {
-			log.Fatalf("Updating gold files requires both '%s' and '%s' environment variables", toitvmEnv, toitCLIEnv)
+			log.Fatalf("Updating gold files requires both the vm and lsp/toitc environment variables")
 		}
 	}
 	return PkgTest{
