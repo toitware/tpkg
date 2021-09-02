@@ -168,9 +168,13 @@ func (d *Desc) WriteToFile() error {
 	return d.WriteYAML(file)
 }
 
-func (d *Desc) WriteInDir(outDir string) (string, error) {
+func (d *Desc) PackageDir() string {
 	descRel := URLVersionToRelPath(d.URL, d.Version)
-	p := filepath.Join(outDir, PackageDescriptionDir, descRel)
+	return filepath.Join(PackageDescriptionDir, descRel)
+}
+
+func (d *Desc) WriteInDir(outDir string) (string, error) {
+	p := filepath.Join(outDir, d.PackageDir())
 	err := os.MkdirAll(p, 0775)
 	if err != nil {
 		return "", err

@@ -10,28 +10,23 @@ Fields:
 pkg --track init
 Exit Code: 0
 ===================
-pkg --track install pkg2
+pkg --track install pkg3
 Exit Code: 0
 Category: pkg
 Action: download-git
 Label: 
 Fields:
   hash: 
-  url: <TEST>/git_pkgs/pkg3
-  version: 3.1.2
-Category: pkg
-Action: download-git
-Label: 
-Fields:
-  hash: 
+
+
   url: <TEST>/git_pkgs/pkg2
   version: 2.4.2
-Info: Package '<TEST>/git_pkgs/pkg2@2.4.2' installed with prefix 'pkg2'
+Info: Package '<TEST>/git_pkgs/pkg3@3.1.2' installed with prefix 'pkg3'
 Category: pkg
 Action: install
 Label: 
 Fields:
-  pkg-string: <TEST>/git_pkgs/pkg2@2.4.2
+  pkg-string: <TEST>/git_pkgs/pkg3@3.1.2
 ===================
 pkg --track install
 Exit Code: 0

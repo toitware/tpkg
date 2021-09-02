@@ -54,7 +54,8 @@ $(BUILD_DIR)/tpkg: $(GO_DEPS) $(GO_SOURCES)
 .PHONY: tpkg
 tpkg: $(BUILD_DIR)/tpkg
 
-$(BUILD_DIR)/registry: $(GO_DEPS) $(R$(GO_BUILD_FLAGS) go build -ldflags "$(GO_LINK_FLAGS)" -tags 'netgo osusergo' -o $(BUILD_DIR)/registry .
+$(BUILD_DIR)/registry: $(GO_DEPS) $(GO_SOURCES)
+	$(GO_BUILD_FLAGS) go build -ldflags "$(GO_LINK_FLAGS)" -tags 'netgo osusergo' -o $(BUILD_DIR)/registry .
 
 .PHONY: registry
 registry: $(BUILD_DIR)/registry
@@ -76,23 +77,23 @@ mocks:
 
 .PHONY: test
 test: tpkg $(GO_MOCKS)
-	tedi test -v -cover ./tests/...
+	tedi test -v -cover ./...
 
-WEB_TOITDOCS_VERSION ?= v0.0.9-pre.8+0e304a9f
+WEB_TOITDOCS_VERSION ?= v0.0.12
 $(BUILD_DIR)/web_toitdocs/$(WEB_TOITDOCS_VERSION):
 	mkdir -p $(BUILD_DIR)/web_toitdocs/$(WEB_TOITDOCS_VERSION)
 	gsutil cp gs://toit-web/toitdocs.toit.io/$(WEB_TOITDOCS_VERSION).tar.gz $(BUILD_DIR)/web_toitdocs/$(WEB_TOITDOCS_VERSION)
 	cd $(BUILD_DIR)/web_toitdocs/$(WEB_TOITDOCS_VERSION) && tar -xzf $(WEB_TOITDOCS_VERSION).tar.gz
 	rm -rf $(BUILD_DIR)/web_toitdocs/$(WEB_TOITDOCS_VERSION)/$(WEB_TOITDOCS_VERSION).tar.gz
 
-SDK_VERSION ?= v1.2.0-pre.149+220944325
+SDK_VERSION ?= v1.2.0
 $(BUILD_DIR)/sdk/$(SDK_VERSION):
 	mkdir -p $(BUILD_DIR)/sdk/$(SDK_VERSION)
 	gsutil cp gs://toit-archive/toit-devkit/linux/$(SDK_VERSION).tgz $(BUILD_DIR)/sdk/$(SDK_VERSION)
 	cd $(BUILD_DIR)/sdk/$(SDK_VERSION) && tar -xzf $(SDK_VERSION).tgz
 	rm -rf $(BUILD_DIR)/sdk/$(SDK_VERSION)/$(SDK_VERSION).tgz
 
-WEB_TPKG_VERSION ?= v0.0.1-pre.62+faeb6e1
+WEB_TPKG_VERSION ?= v0.0.1-pre.66+6710bbd
 $(BUILD_DIR)/web_tpkg/$(WEB_TPKG_VERSION):
 	mkdir -p $(BUILD_DIR)/web_tpkg/$(WEB_TPKG_VERSION)
 	gsutil cp gs://toit-web/pkg.toit.io/$(WEB_TPKG_VERSION).tgz $(BUILD_DIR)/web_tpkg/$(WEB_TPKG_VERSION)
