@@ -100,11 +100,15 @@ $(BUILD_DIR)/web_tpkg/$(WEB_TPKG_VERSION):
 	cd $(BUILD_DIR)/web_tpkg/$(WEB_TPKG_VERSION) && tar -xzf $(WEB_TPKG_VERSION).tgz
 	rm -rf $(BUILD_DIR)/web_tpkg/$(WEB_TPKG_VERSION)/$(WEB_TPKG_VERSION).tgz
 
+TOITC_PATH ?= `pwd`/../toit/build/release64/bin/toitc
+TOITLSP_PATH ?= `pwd`/../toit/build/toitlsp
+SDK_PATH ?=`pwd`/../toit/
+
 .PHONY: run/registry
 run/registry: $(BUILD_DIR)/registry
 	rm -rf /tmp/toitdocs
 	rm -rf /tmp/registry
-	TOITC_PATH=`pwd`/../../build/release64/bin/toitc TOITLSP_PATH=`pwd`/../../build/toitlsp SDK_PATH=`pwd`/../../ ./$(BUILD_DIR)/registry
+	TOITC_PATH=$(TOITC_PATH) TOITLSP_PATH=$(TOITLSP_PATH) SDK_PATH=$(SDK_PATH) ./$(BUILD_DIR)/registry
 
 .PHONY: image
 image: $(BUILD_DIR)/registry_container $(BUILD_DIR)/web_toitdocs/$(WEB_TOITDOCS_VERSION) $(BUILD_DIR)/sdk/$(SDK_VERSION) $(BUILD_DIR)/web_tpkg/$(WEB_TPKG_VERSION)

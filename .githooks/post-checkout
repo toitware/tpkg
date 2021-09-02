@@ -1,0 +1,15 @@
+#!/bin/bash
+set -e
+
+[ "$SKIP_POST_CHECKOUT" = 1 ] && exit 0
+
+prevHEAD=$1
+newHEAD=$2
+
+if [[ $prevHEAD == $newHEAD ]]; then
+    exit
+fi;
+
+echo "Synchronizing submodules"
+git submodule sync --recursive > /dev/null
+git submodule update --init --recursive -j 8 > /dev/null
