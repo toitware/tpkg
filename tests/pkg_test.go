@@ -1234,7 +1234,9 @@ func test_toitPkg(t *tedi.T) {
 		pt.GoldToit("test", [][]string{
 			{"pkg", "--track", "registry", "add", "test-reg", regPath1},
 			{"pkg", "--track", "init"},
-			{"pkg", "--track", "install", "pkg2"},
+			// Note that the order of downloading packages is not deterministic.
+			// For simplicity we therefore install a package without dependencies.
+			{"pkg", "--track", "install", "pkg3"},
 			{"pkg", "--track", "install"},
 			{"pkg", "--track", "install", "--recompute"},
 			{"pkg", "--track", "search", "pkg"},
