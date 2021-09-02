@@ -11,3 +11,7 @@ type TrackingEvent struct {
 	Fields   map[string]string
 }
 type Track func(ctx context.Context, event *TrackingEvent) error
+
+func NopTrack(ctx context.Context, event *TrackingEvent) error {
+	return nil
+}
