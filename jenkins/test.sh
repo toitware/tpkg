@@ -23,7 +23,7 @@ if [ "$TOIT_FIRMWARE_VERSION" != "" ]; then
   pushd "$TOOLS_DIR"
   gsutil cp gs://toit-binaries/$TOIT_FIRMWARE_VERSION/sdk/$TOIT_FIRMWARE_VERSION.tar .
   #gsutil cp gs://toit-archive/toit-devkit/linux/$TOIT_FIRMWARE_VERSION.tgz $TOIT_SDK_PATH
-  tar x -f $TOIT_FIRMWARE_VERSION.tar
+  tar x -fv $TOIT_FIRMWARE_VERSION.tar
   popd
 fi
 
