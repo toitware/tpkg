@@ -183,6 +183,15 @@ func (r *registry) RegisterPackage(ctx context.Context, url string, version stri
 		return err
 	}
 
+	path, err := filepath.Abs(filepath.Join(dir, desc.PackageDir(), tpkg.DescriptionFileName))
+	if err != nil {
+		return err
+	}
+
+	if _, err := os.Stat(path); err == nil {
+		return status.Errorf(codes.AlreadyExists, "Package %s version %s already exists", url, version)
+	}
+
 	descPath, err := desc.WriteInDir(dir)
 	if err != nil {
 		return err

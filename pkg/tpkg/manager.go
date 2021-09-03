@@ -58,9 +58,6 @@ type DescRegistries []DescRegistry
 
 // NewManager returns a new Manager.
 func NewManager(registries Registries, cache Cache, ui UI, track tracking.Track) *Manager {
-	if track == nil {
-		track = func(context.Context, *tracking.TrackingEvent) error { return nil }
-	}
 	return &Manager{
 		registries: registries,
 		cache:      cache,
