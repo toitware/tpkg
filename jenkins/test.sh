@@ -21,10 +21,10 @@ export TOIT_SDK_PATH=$TPKG_DIR/sdk.tgz
 if [ "$TOIT_FIRMWARE_VERSION" != "" ]; then
   mkdir "$TOOLS_DIR"
   pushd "$TOOLS_DIR"
-  gsutil cp gs://toit-binaries/$TOIT_FIRMWARE_VERSION/sdk/$TOIT_FIRMWARE_VERSION.tar $TOIT_FIRMWARE_PATH
+  gsutil cp gs://toit-binaries/$TOIT_FIRMWARE_VERSION/sdk/$TOIT_FIRMWARE_VERSION.tar .
   #gsutil cp gs://toit-archive/toit-devkit/linux/$TOIT_FIRMWARE_VERSION.tgz $TOIT_SDK_PATH
+  tar x -f $TOIT_FIRMWARE_VERSION.tar
   popd
-  export TOIT_FIRMWARE_VERSION=$TOIT_FIRMWARE_VERSION
 fi
 
 export TPKG_PATH="$TPKG_DIR/build/tpkg"
