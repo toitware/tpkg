@@ -35,5 +35,9 @@ ls -l $TOITLSP_PATH
 ls -l $TOITC_PATH
 ls -l $TOITVM_PATH
 
+$TOITLSP_PATH --help
+$TOITC_PATH --help
+$TOITVM_PATH --help
+
 GROUP_TAG=$GROUP_TAG tedi test -v -cover -bench=. ./tests/... 2>&1 | tee tests.out
 cat tests.out | go-junit-report > tests.xml
