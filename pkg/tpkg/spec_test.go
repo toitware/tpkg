@@ -11,7 +11,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/toitware/toit.git/tools/tpkg/pkg/set"
+	"github.com/toitware/tpkg.git/pkg/set"
 )
 
 type testUI struct {

@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"regexp"
 
-	"github.com/toitware/toit.git/tools/tpkg/pkg/set"
+	"github.com/toitware/tpkg.git/pkg/set"
 	"gopkg.in/yaml.v2"
 )
 

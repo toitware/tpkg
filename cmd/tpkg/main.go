@@ -13,9 +13,9 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/toitware/toit.git/tools/tpkg/commands"
-	"github.com/toitware/toit.git/tools/tpkg/pkg/tpkg"
-	"github.com/toitware/toit.git/tools/tpkg/pkg/tracking"
+	"github.com/toitware/tpkg.git/commands"
+	"github.com/toitware/tpkg.git/pkg/tpkg"
+	"github.com/toitware/tpkg.git/pkg/tracking"
 )
 
 type withExitCode interface {

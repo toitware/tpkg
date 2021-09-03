@@ -10,7 +10,7 @@ PROTO_SOURCES := $(foreach dir,$(PROTO_DIR),$(shell find $(dir) -name '*.proto')
 GO_PROTO_FILES := $(PROTO_SOURCES:%.proto=$(BUILD_DIR)/%.pb.go)
 GO_PROTO_PLUGINS := --plugin=protoc-gen-go=$(shell which protoc-gen-go) --plugin=protoc-gen-go-grpc=$(shell which protoc-gen-go-grpc) --plugin=protoc-gen-grpc-gateway=$(shell which protoc-gen-grpc-gateway) --plugin=protoc-gen-openapiv2=$(shell which protoc-gen-openapiv2)
 GO_PROTO_FLAGS := $(PROTO_FLAGS) -I$(GOOGLE_API_PROTO_DIR)
-GO_PACKAGE := github.com/toitware/toit.git/tools/tpkg
+GO_PACKAGE := github.com/toitware/tpkg.git
 
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)

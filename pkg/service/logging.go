@@ -3,7 +3,7 @@ package service
 import (
 	"fmt"
 
-	"github.com/toitware/toit.git/tools/tpkg/config"
+	"github.com/toitware/tpkg.git/config"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )

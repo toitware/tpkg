@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/toitware/toit.git/tools/tpkg/config"
-	"github.com/toitware/toit.git/tools/tpkg/pkg/service/debug"
+	"github.com/toitware/tpkg.git/config"
+	"github.com/toitware/tpkg.git/pkg/service/debug"
 	"github.com/uber-go/tally"
 	"github.com/uber-go/tally/prometheus"
 	"go.uber.org/fx"
