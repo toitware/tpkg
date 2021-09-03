@@ -31,5 +31,9 @@ export TPKG_PATH="$TPKG_DIR/build/tpkg"
 export TOITLSP_PATH="$TOOLS_DIR/toitlsp"
 export TOITC_PATH="$TOOLS_DIR/toitc"
 export TOITVM_PATH="$TOOLS_DIR/toitvm"
+ls -l $TOITLSP_PATH
+ls -l $TOITC_PATH
+ls -l $TOITVM_PATH
+
 GROUP_TAG=$GROUP_TAG tedi test -v -cover -bench=. ./tests/... 2>&1 | tee tests.out
 cat tests.out | go-junit-report > tests.xml
