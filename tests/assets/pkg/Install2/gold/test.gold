@@ -53,5 +53,4 @@ Exit Code: 0
 ::exec:: 
 ::analyze:: analyze main.toit
 ::analyze:: Exit Code: 0
-::analyze:: <TEST>/.packages<TEST>/git_pkgs/pkg2/2.4.2/src/pkg2.toit:3:8 warning: Deprecated first-segment prefix
 ::analyze:: 
