@@ -258,6 +258,12 @@ func fixtureCreateTestDirectory(t *tedi.T) TestDirectory {
 	dir, err := ioutil.TempDir("", "pkg-test-"+name)
 	require.NoError(t, err)
 
+	// On macos the temp directory is sometimes a symlink, so
+	// calling eval-symlinks, makes the output consistent with the output of
+	// the analyzer.
+	dir, err = filepath.EvalSymlinks(dir)
+	require.NoError(t, err)
+
 	t.AfterTest(func() {
 		e := os.RemoveAll(string(dir))
 		require.NoError(t, e)
@@ -308,6 +314,7 @@ func fixtureCreatePkgTest(ctx context.Context, t *tedi.T, dir TestDirectory) Pkg
 		log.Fatalf("Need either path to VM or toitlsp/toitc in '%s' or '%s/%s' environment variable", toitvmEnv, toitlspEnv, toitcEnv)
 	}
 	replacements := map[string]string{
+		"\r\n":      "\n", // Make windows output compatible with gold files.
 		string(dir): "<TEST>",
 		tpkg:        "<tpkg>",
 	}
@@ -458,6 +465,8 @@ func (pt PkgTest) checkGold(name string, actual string) {
 	contentBytes, err := ioutil.ReadFile(goldPath)
 	require.NoError(pt.t, err)
 	gold := string(contentBytes)
+	// On windows the gold files come with '\r\n'...
+	gold = strings.ReplaceAll(gold, "\r\n", "\n")
 	toBeRemoved := "::analyze::"
 	if pt.toitExec == nil {
 		toBeRemoved = "::exec::"
@@ -556,11 +565,12 @@ func test_toitPkg(t *tedi.T) {
 		require.NoError(t, err)
 		data, err := ioutil.ReadFile(filepath.Join(git_dir, "a"))
 		require.NoError(t, err)
+		// Notice that we don't use `git_dir` as we used `filepath.Join` to create it.
 		// Notice that we implicitly check the correct `<[*TEST_DIR*>]` replacement.
-		assert.Equal(t, git_dir+"/a 1.0.0\n", string(data))
+		assert.Equal(t, pt.dir+"/git_dir/a 1.0.0\n", string(data))
 		data, err = ioutil.ReadFile(filepath.Join(git_dir, "b"))
 		require.NoError(t, err)
-		assert.Equal(t, git_dir+"/b 1.0.0\n", string(data))
+		assert.Equal(t, pt.dir+"/git_dir/b 1.0.0\n", string(data))
 		_, err = os.Stat(filepath.Join(git_dir, "c"))
 		assert.True(t, os.IsNotExist(err))
 
@@ -572,12 +582,12 @@ func test_toitPkg(t *tedi.T) {
 		require.NoError(t, err)
 		data, err = ioutil.ReadFile(filepath.Join(git_dir, "a"))
 		require.NoError(t, err)
-		assert.Equal(t, git_dir+"/a 2.0.0\n", string(data))
+		assert.Equal(t, pt.dir+"/git_dir/a 2.0.0\n", string(data))
 		_, err = os.Stat(filepath.Join(git_dir, "b"))
 		assert.True(t, os.IsNotExist(err))
 		data, err = ioutil.ReadFile(filepath.Join(git_dir, "c"))
 		require.NoError(t, err)
-		assert.Equal(t, git_dir+"/c 2.0.0\n", string(data))
+		assert.Equal(t, pt.dir+"/git_dir/c 2.0.0\n", string(data))
 	})
 
 	t.Run("Install1", func(pt PkgTest) {
