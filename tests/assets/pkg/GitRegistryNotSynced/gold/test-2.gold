@@ -9,9 +9,13 @@ test-reg: <TEST>/registry_git_pkgs:
 pkg install
 Exit Code: 0
 ===================
-exec test.toit
-Exit Code: 0
-pkg3-3.1.2
+::exec:: exec test.toit
+::exec:: Exit Code: 0
+::exec:: pkg3-3.1.2
+::exec:: 
+::analyze:: analyze test.toit
+::analyze:: Exit Code: 0
+::analyze:: 
 ===================
 // Error is expected now.
 ===================
