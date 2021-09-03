@@ -11,12 +11,6 @@ pipeline {
     }
 
     stages {
-        stage("setup") {
-            steps {
-                sh "make go_dependencies"
-            }
-        }
-
         stage("Testing Linux") {
             agent {
                 kubernetes {
@@ -24,16 +18,26 @@ pipeline {
                     defaultContainer 'tpkg'
                 }
             }
-            steps {
-                withCredentials([[$class: 'FileBinding', credentialsId: 'gcloud-service-auth', variable: 'GOOGLE_APPLICATION_CREDENTIALS']]) {
-                    sh "gcloud auth activate-service-account --key-file=${GOOGLE_APPLICATION_CREDENTIALS}"
-                    sh "gcloud config set project infrastructure-220307"
-                    sh "./jenkins/test.sh"
+            stages {
+                stage("setup") {
+                    steps {
+                        sh "make go_dependencies"
+                    }
                 }
-            }
-            post {
-                always {
-                    junit "tests.xml"
+
+                stage("test") {
+                    steps {
+                        withCredentials([[$class: 'FileBinding', credentialsId: 'gcloud-service-auth', variable: 'GOOGLE_APPLICATION_CREDENTIALS']]) {
+                            sh "gcloud auth activate-service-account --key-file=${GOOGLE_APPLICATION_CREDENTIALS}"
+                            sh "gcloud config set project infrastructure-220307"
+                            sh "./jenkins/test.sh"
+                        }
+                    }
+                    post {
+                        always {
+                            junit "tests.xml"
+                        }
+                    }
                 }
             }
         }
