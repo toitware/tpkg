@@ -314,14 +314,14 @@ func fixtureCreatePkgTest(ctx context.Context, t *tedi.T, dir TestDirectory) Pkg
 		log.Fatalf("Need either path to VM or toitlsp/toitc in '%s' or '%s/%s' environment variable", toitvmEnv, toitlspEnv, toitcEnv)
 	}
 	replacements := map[string]string{
-		"\r\n":      "\n", // Make windows output compatible with gold files.
-		string(dir): "<TEST>",
-		tpkg:        "<tpkg>",
+		"test-dir": string(dir),
+		"tpkg":     tpkg,
 	}
+
 	var toitAnalyze *toitCmd
 	var toitExec *toitCmd
 	if toitvm != "" {
-		replacements[toitvm] = "<toitvm>"
+		replacements["toitvm"] = toitvm
 		toitExec = &toitCmd{
 			path: toitvm,
 			args: nil,
@@ -329,7 +329,7 @@ func fixtureCreatePkgTest(ctx context.Context, t *tedi.T, dir TestDirectory) Pkg
 	}
 	if toitlsp != "" {
 		args := []string{"analyze", "--toitc", toitc}
-		replacements[toitlsp+" "+strings.Join(args, " ")] = "<analyze>"
+		replacements["analyze"] = toitlsp + " " + strings.Join(args, " ")
 		toitAnalyze = &toitCmd{
 			path: toitlsp,
 			args: args,
@@ -409,6 +409,19 @@ func (pt PkgTest) ToitNegative(args ...string) string {
 }
 
 func (pt PkgTest) normalizeGold(gold string) string {
+	for _, entry := range []string{"tpkg", "toitvm", "analyze"} {
+		pattern, ok := pt.goldRepls[entry]
+		if !ok {
+			continue
+		}
+		replacement := "<" + entry + ">"
+		// Replace these patterns first in the output.
+		gold = strings.ReplaceAll(gold, pattern, replacement)
+	}
+	if runtime.GOOS != "windows" {
+		gold = strings.ReplaceAll(gold, "\r\n", "\n")
+	}
+	gold = strings.ReplaceAll(gold, pt.dir, "<TEST>")
 	for pattern, replacement := range pt.goldRepls {
 		gold = strings.ReplaceAll(gold, pattern, replacement)
 	}
@@ -565,12 +578,14 @@ func test_toitPkg(t *tedi.T) {
 		require.NoError(t, err)
 		data, err := ioutil.ReadFile(filepath.Join(git_dir, "a"))
 		require.NoError(t, err)
+		dataStr := strings.ReplaceAll(string(data), "\r\n", "\n")
 		// Notice that we don't use `git_dir` as we used `filepath.Join` to create it.
 		// Notice that we implicitly check the correct `<[*TEST_DIR*>]` replacement.
-		assert.Equal(t, pt.dir+"/git_dir/a 1.0.0\n", string(data))
+		assert.Equal(t, pt.dir+"/git_dir/a 1.0.0\n", dataStr)
 		data, err = ioutil.ReadFile(filepath.Join(git_dir, "b"))
 		require.NoError(t, err)
-		assert.Equal(t, pt.dir+"/git_dir/b 1.0.0\n", string(data))
+		dataStr = strings.ReplaceAll(string(data), "\r\n", "\n")
+		assert.Equal(t, pt.dir+"/git_dir/b 1.0.0\n", dataStr)
 		_, err = os.Stat(filepath.Join(git_dir, "c"))
 		assert.True(t, os.IsNotExist(err))
 
@@ -582,12 +597,14 @@ func test_toitPkg(t *tedi.T) {
 		require.NoError(t, err)
 		data, err = ioutil.ReadFile(filepath.Join(git_dir, "a"))
 		require.NoError(t, err)
-		assert.Equal(t, pt.dir+"/git_dir/a 2.0.0\n", string(data))
+		dataStr = strings.ReplaceAll(string(data), "\r\n", "\n")
+		assert.Equal(t, pt.dir+"/git_dir/a 2.0.0\n", dataStr)
 		_, err = os.Stat(filepath.Join(git_dir, "b"))
 		assert.True(t, os.IsNotExist(err))
 		data, err = ioutil.ReadFile(filepath.Join(git_dir, "c"))
 		require.NoError(t, err)
-		assert.Equal(t, pt.dir+"/git_dir/c 2.0.0\n", string(data))
+		dataStr = strings.ReplaceAll(string(data), "\r\n", "\n")
+		assert.Equal(t, pt.dir+"/git_dir/c 2.0.0\n", dataStr)
 	})
 
 	t.Run("Install1", func(pt PkgTest) {
