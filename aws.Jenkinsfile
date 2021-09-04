@@ -139,9 +139,9 @@ pipeline {
                                 TOITC_PATH="${env.WORKSPACE}\\test-tools\\toitc.exe"
                             }
                             steps {
-                                bat "dir"
+                                // bat "dir"
                                 // TODO(florian): enable Windows tests.
-                                // bat "tedi test -v ./tests/..."
+                                bat "tedi test -v ./tests/..."
                                 // bat "tedi test -v -cover -bench=. ./tests/... 2>&1 | go-junit-report > tests.xml"
                             }
                             // post {
