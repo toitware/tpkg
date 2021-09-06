@@ -15,8 +15,8 @@ import (
 
 	"github.com/alessio/shellescape"
 	"github.com/spf13/cobra"
-	"github.com/toitware/tpkg.git/pkg/tpkg"
-	"github.com/toitware/tpkg.git/pkg/tracking"
+	"github.com/toitware/tpkg/pkg/tpkg"
+	"github.com/toitware/tpkg/pkg/tracking"
 )
 
 type Config interface {
