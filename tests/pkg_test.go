@@ -423,6 +423,8 @@ func (pt PkgTest) normalizeGold(gold string) string {
 	gold = strings.ReplaceAll(gold, pt.goldRepls["test-dir"], "<TEST>")
 	if runtime.GOOS != "windows" {
 		gold = strings.ReplaceAll(gold, "\r\n", "\n")
+		testDirCompilerPath := string(path.ToCompilerPath(pt.goldRepls["test-dir"]))
+		gold = strings.ReplaceAll(gold, testDirCompilerPath, "<TEST>")
 	}
 	errorUnderline := regexp.MustCompile(`[\^][~]+`)
 	gold = errorUnderline.ReplaceAllString(gold, "^~")
