@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"regexp"
 
+	"github.com/toitware/tpkg.git/pkg/path"
 	"github.com/toitware/tpkg.git/pkg/set"
 	"gopkg.in/yaml.v2"
 )
@@ -41,7 +42,7 @@ type SpecPackage struct {
 	// Path is set if the package should be found locally.
 	// This field overrides all other fields. This makes it possible to
 	// temporarily (during development) switch to a local version.
-	Path string `yaml:"path,omitempty"`
+	Path path.CompilerPath `yaml:"path,omitempty"`
 }
 
 // TODO (jesper): Parse and WriteYAML should preserve comments.
@@ -206,7 +207,7 @@ func (s *Spec) BuildLockFile(solution Solution, cache Cache, registries Registri
 			if specPkg.Path == "" {
 				continue
 			}
-			p := specPkg.Path
+			p := specPkg.Path.ToLocal()
 			fullPath := p
 			if !filepath.IsAbs(fullPath) {
 				fullPath = filepath.Clean(filepath.Join(dir, p))
@@ -245,7 +246,7 @@ func (s *Spec) BuildLockFile(solution Solution, cache Cache, registries Registri
 			addLocalDependencies(depSpec, prefixes)
 		}
 		result.Packages[pkgID] = PackageEntry{
-			Path:     pkgPath,
+			Path:     path.ToCompilerPath(pkgPath),
 			Prefixes: prefixes,
 		}
 		return nil
@@ -279,7 +280,7 @@ func (s *Spec) visitLocalDeps(ui UI, cb func(pkgPath string, fullPath string, de
 				continue
 			}
 
-			pkgPath := dep.Path
+			pkgPath := dep.Path.ToLocal()
 			if !filepath.IsAbs(pkgPath) && spec != s {
 				pkgPath = filepath.Join(filepath.Dir(spec.path), pkgPath)
 			}
@@ -334,7 +335,7 @@ func (s *Spec) visitLocalDeps(ui UI, cb func(pkgPath string, fullPath string, de
 	return visit(s)
 }
 
-func (s *Spec) addDep(prefix string, url string, version string, path string, ui UI) error {
+func (s *Spec) addDep(prefix string, url string, version string, p string, ui UI) error {
 	if s.Deps == nil {
 		// TODO(florian): we should probably just ensure that there always is a map when
 		// creating or loading a spec.
@@ -351,7 +352,7 @@ func (s *Spec) addDep(prefix string, url string, version string, path string, ui
 	s.Deps[prefix] = SpecPackage{
 		URL:     url,
 		Version: version,
-		Path:    path,
+		Path:    path.ToCompilerPath(p),
 	}
 	return nil
 }
