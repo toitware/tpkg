@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/toitware/tpkg.git/pkg/git"
+	"github.com/toitware/tpkg/pkg/git"
 )
 
 func makeContainedReadOnly(dir string, ui UI) {
