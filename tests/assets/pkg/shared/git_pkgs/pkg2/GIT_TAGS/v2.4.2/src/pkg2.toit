@@ -3,4 +3,4 @@
 import pre.pkg3
 
 identify:
-  return "pkg2-2.4.2" + pre.identify
+  return "pkg2-2.4.2" + pkg3.identify
