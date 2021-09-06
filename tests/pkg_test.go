@@ -570,7 +570,7 @@ func test_toitPkg(t *tedi.T) {
 	t.Run("GitTagDir", func(pt PkgTest) {
 		// Just a simple check that our test-setup function works.
 		gitDir := filepath.Join(pt.dir, "git_dir")
-		dirInFiles := path.ToCompilerPath(pt.dir + "/git_dir")
+		dirInFiles := string(path.ToCompilerPath(pt.dir + "/git_dir"))
 		repository, err := git.PlainOpen(gitDir)
 		require.NoError(t, err)
 		wt, err := repository.Worktree()
