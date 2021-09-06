@@ -28,6 +28,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/toitware/tpkg.git/pkg/path"
+	"github.com/toitware/tpkg/pkg/path"
 )
 
 const (
@@ -570,7 +571,7 @@ func test_toitPkg(t *tedi.T) {
 	t.Run("GitTagDir", func(pt PkgTest) {
 		// Just a simple check that our test-setup function works.
 		gitDir := filepath.Join(pt.dir, "git_dir")
-		dirInFiles := pt.dir + "/git_dir"
+		dirInFiles := path.ToCompilerPath(pt.dir + "/git_dir")
 		repository, err := git.PlainOpen(gitDir)
 		require.NoError(t, err)
 		wt, err := repository.Worktree()
