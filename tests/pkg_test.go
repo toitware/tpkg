@@ -27,7 +27,6 @@ import (
 	"github.com/pmezard/go-difflib/difflib"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/toitware/tpkg.git/pkg/path"
 	"github.com/toitware/tpkg/pkg/path"
 )
 
