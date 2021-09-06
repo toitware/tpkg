@@ -1,7 +1,7 @@
 package service
 
 import (
-	"github.com/toitware/tpkg.git/pkg/service/debug"
+	"github.com/toitware/tpkg/pkg/service/debug"
 	"go.uber.org/fx"
 )
 

@@ -1,4 +1,4 @@
-module github.com/toitware/tpkg.git
+module github.com/toitware/tpkg
 
 go 1.15
 

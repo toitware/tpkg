@@ -568,8 +568,9 @@ func test_toitPkg(t *tedi.T) {
 
 	t.Run("GitTagDir", func(pt PkgTest) {
 		// Just a simple check that our test-setup function works.
-		git_dir := filepath.Join(pt.dir, "git_dir")
-		repository, err := git.PlainOpen(git_dir)
+		gitDir := filepath.Join(pt.dir, "git_dir")
+		dirInFiles := pt.dir + "/git_dir"
+		repository, err := git.PlainOpen(gitDir)
 		require.NoError(t, err)
 		wt, err := repository.Worktree()
 		require.NoError(t, err)
@@ -577,17 +578,16 @@ func test_toitPkg(t *tedi.T) {
 			Branch: plumbing.NewTagReferenceName("1.0.0"),
 		})
 		require.NoError(t, err)
-		data, err := ioutil.ReadFile(filepath.Join(git_dir, "a"))
+		data, err := ioutil.ReadFile(filepath.Join(gitDir, "a"))
 		require.NoError(t, err)
 		dataStr := strings.ReplaceAll(string(data), "\r\n", "\n")
-		// Notice that we don't use `git_dir` as we used `filepath.Join` to create it.
 		// Notice that we implicitly check the correct `<[*TEST_DIR*>]` replacement.
-		assert.Equal(t, pt.dir+"/git_dir/a 1.0.0\n", dataStr)
-		data, err = ioutil.ReadFile(filepath.Join(git_dir, "b"))
+		assert.Equal(t, dirInFiles+"/a 1.0.0\n", dataStr)
+		data, err = ioutil.ReadFile(filepath.Join(gitDir, "b"))
 		require.NoError(t, err)
 		dataStr = strings.ReplaceAll(string(data), "\r\n", "\n")
-		assert.Equal(t, pt.dir+"/git_dir/b 1.0.0\n", dataStr)
-		_, err = os.Stat(filepath.Join(git_dir, "c"))
+		assert.Equal(t, dirInFiles+"/b 1.0.0\n", dataStr)
+		_, err = os.Stat(filepath.Join(gitDir, "c"))
 		assert.True(t, os.IsNotExist(err))
 
 		// Now checkout tag 2.0.0 and verify that the files changed and that
@@ -596,16 +596,16 @@ func test_toitPkg(t *tedi.T) {
 			Branch: plumbing.NewTagReferenceName("2.0.0"),
 		})
 		require.NoError(t, err)
-		data, err = ioutil.ReadFile(filepath.Join(git_dir, "a"))
+		data, err = ioutil.ReadFile(filepath.Join(gitDir, "a"))
 		require.NoError(t, err)
 		dataStr = strings.ReplaceAll(string(data), "\r\n", "\n")
-		assert.Equal(t, pt.dir+"/git_dir/a 2.0.0\n", dataStr)
-		_, err = os.Stat(filepath.Join(git_dir, "b"))
+		assert.Equal(t, dirInFiles+"/a 2.0.0\n", dataStr)
+		_, err = os.Stat(filepath.Join(gitDir, "b"))
 		assert.True(t, os.IsNotExist(err))
-		data, err = ioutil.ReadFile(filepath.Join(git_dir, "c"))
+		data, err = ioutil.ReadFile(filepath.Join(gitDir, "c"))
 		require.NoError(t, err)
 		dataStr = strings.ReplaceAll(string(data), "\r\n", "\n")
-		assert.Equal(t, pt.dir+"/git_dir/c 2.0.0\n", dataStr)
+		assert.Equal(t, dirInFiles+"/c 2.0.0\n", dataStr)
 	})
 
 	t.Run("Install1", func(pt PkgTest) {
