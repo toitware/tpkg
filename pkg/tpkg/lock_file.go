@@ -7,7 +7,7 @@ import (
 	"io/ioutil"
 	"strings"
 
-	"github.com/toitware/tpkg.git/pkg/path"
+	"github.com/toitware/tpkg/pkg/path"
 	"gopkg.in/yaml.v2"
 )
 
