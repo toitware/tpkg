@@ -52,6 +52,9 @@ func decomposePkgURL(url string) (string, string) {
 // is `download/here`, then this function might first create a `download/tmp` directory.
 // Returns the checked-out hash.
 func DownloadGit(ctx context.Context, dir string, url string, version string, hash string, ui UI) (string, error) {
+	println("DownloadGit: ")
+	println(dir)
+	println(url)
 	_, err := os.Stat(dir)
 	if err != nil && !os.IsNotExist(err) {
 		return "", err
