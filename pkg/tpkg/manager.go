@@ -84,6 +84,8 @@ func (m *Manager) prepareInstallLocal(path string) (string, error) {
 	if isDir, err := isDirectory(abs); !isDir || err != nil {
 		if err == nil {
 			return "", m.ui.ReportError("Target '%s' is not a directory", path)
+		} else if os.IsNotExist(err) {
+			return "", m.ui.ReportError("Target '%s' does not exist", path)
 		}
 		return "", m.ui.ReportError("Target '%s' is not a directory: %v", path, err)
 	}
