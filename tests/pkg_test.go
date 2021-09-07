@@ -241,6 +241,12 @@ func copyRec(t *tedi.T, testDir string, sourceDir string, targetDir string) {
 		// make sure that we work with repositories that have been created using
 		// the git command-line tool.
 		if filepath.Ext(p) == ".zip" {
+			if strings.HasSuffix(p, "_windows.zip") && runtime.GOOS != "windows" {
+				return nil
+			}
+			if strings.HasSuffix(p, "_posix.zip") && runtime.GOOS == "windows" {
+				return nil
+			}
 			return unzip(p, filepath.Dir(target))
 		}
 		data, err := ioutil.ReadFile(p)
@@ -1348,6 +1354,13 @@ func test_toitPkg(t *tedi.T) {
 			{"pkg", "--track", "search", "pkg"},
 			{"pkg", "--track", "registry", "remove", "test-reg"},
 			{"pkg", "--track", "describe", "github.com/toitware/toit-morse", "v1.0.0"},
+		})
+	})
+
+	t.Run("GitNative", func(pt PkgTest) {
+		pt.GoldToit("test", [][]string{
+			{"pkg", "install"},
+			{"exec", "main.toit"},
 		})
 	})
 }
