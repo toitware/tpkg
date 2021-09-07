@@ -75,9 +75,10 @@ $(GO_MOCKS): $(GO_DEPS)
 mocks:
 	$(MAKE) -j$(getconf _NPROCESSORS_ONLN) $(GO_MOCKS)
 
+TEST_FLAGS ?=
 .PHONY: test
 test: tpkg $(GO_MOCKS)
-	tedi test -v -cover ./tests/...
+	tedi test -v -cover $(TEST_FLAGS) $(foreach dir,$(filter-out third_party/, $(sort $(dir $(wildcard */)))),./$(dir)...)
 
 WEB_TOITDOCS_VERSION ?= v0.0.12
 $(BUILD_DIR)/web_toitdocs/$(WEB_TOITDOCS_VERSION):

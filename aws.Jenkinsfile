@@ -64,8 +64,8 @@ pipeline {
                             }
                             steps {
                                 container('tpkg') {
-                                sh "tedi test -v -cover -race -bench=. ./... 2>&1 | tee tests.out"
-                                sh "cat tests.out | go-junit-report > tests.xml"
+                                    sh "TEST_FLAGS='-race -bench=.' make test 2>&1 | tee tests.out"
+                                    sh "cat tests.out | go-junit-report > tests.xml"
                                 }
                             }
                             post {
