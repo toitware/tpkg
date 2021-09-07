@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 func isDirectory(p string) (bool, error) {
@@ -29,6 +30,7 @@ func isFile(p string) (bool, error) {
 }
 
 func URLVersionToRelPath(url string, version string) string {
+	url = strings.ReplaceAll(url, ":", "")
 	return filepath.Join(urlToRelPath(url), version)
 }
 
