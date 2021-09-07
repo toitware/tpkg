@@ -309,6 +309,23 @@ func (gr *gitRegistry) Load(ctx context.Context, sync bool, cache Cache, ui UI) 
 			}
 			println("")
 			var err error
+			println("Trying other out dir")
+			out := filepath.Join(cache.pkgCachePaths[0], "t")
+			for _, branch := range []string{"master", "main", "trunk"} {
+				_, err = git.Clone(ctx, out, &git.CloneOptions{
+					URL:          url,
+					SingleBranch: true,
+					Branch:       branch,
+				})
+				if err == nil {
+					break
+				}
+			}
+			if err != nil {
+				println("Error while cloning into", out)
+				return err
+			}
+
 			for _, branch := range []string{"master", "main", "trunk"} {
 				_, err = git.Clone(ctx, p, &git.CloneOptions{
 					URL:          url,
