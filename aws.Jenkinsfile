@@ -1,4 +1,4 @@
-DEF TOIT_VERSION
+def TOIT_VERSION
 pipeline {
     agent {
         kubernetes {
