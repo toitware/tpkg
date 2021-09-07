@@ -2,9 +2,9 @@ name: bar
 description: Description of bar. bar-desc.
 version: 2.0.1
 license: MIT
-url: <[*TEST_DIR*]>/bar_git
+url: '<[*TEST_DIR*]>/bar_git'
 dependencies:
-  - url: "<[*TEST_DIR*]>/foo_git"
+  - url: '<[*TEST_DIR*]>/foo_git'
     version: 1.2.3
-  - url: "<[*TEST_DIR*]>/sub_git"
+  - url: '<[*TEST_DIR*]>/sub_git'
     version: ^3.0.0
