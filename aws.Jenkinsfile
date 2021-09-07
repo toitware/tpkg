@@ -1,3 +1,4 @@
+DEF TOIT_VERSION
 pipeline {
     agent {
         kubernetes {
@@ -14,16 +15,19 @@ pipeline {
         stage("Download") {
             steps {
                 container('tpkg') {
-                withCredentials([[$class: 'FileBinding', credentialsId: 'gcloud-service-auth', variable: 'GOOGLE_APPLICATION_CREDENTIALS']]) {
-                    sh 'gcloud auth activate-service-account --key-file=$GOOGLE_APPLICATION_CREDENTIALS'
-                    sh "gcloud config set project infrastructure-220307"
-                    sh 'gsutil cp gs://toit-binaries/$TOIT_FIRMWARE_VERSION/sdk/$TOIT_FIRMWARE_VERSION.tar linux_firmware.tar'
-                    sh 'gsutil cp gs://toit-archive/toit-devkit/darwin/$TOIT_FIRMWARE_VERSION.tgz darwin_sdk.tgz'
-                    sh 'gsutil cp gs://toit-archive/toit-devkit/windows/$TOIT_FIRMWARE_VERSION.tgz windows_sdk.tgz'
-                    stash name: 'linux_firmware', includes: 'linux_firmware.tar'
-                    stash name: 'windows_sdk', includes: 'windows_sdk.tgz'
-                    stash name: 'darwin_sdk', includes: 'darwin_sdk.tgz'
-                }
+                    script {
+                        TOIT_VERSION=sh(returnStdout: true, script: 'gitversion').trim()
+                    }
+                    withCredentials([[$class: 'FileBinding', credentialsId: 'gcloud-service-auth', variable: 'GOOGLE_APPLICATION_CREDENTIALS']]) {
+                        sh 'gcloud auth activate-service-account --key-file=$GOOGLE_APPLICATION_CREDENTIALS'
+                        sh "gcloud config set project infrastructure-220307"
+                        sh 'gsutil cp gs://toit-binaries/$TOIT_FIRMWARE_VERSION/sdk/$TOIT_FIRMWARE_VERSION.tar linux_firmware.tar'
+                        sh 'gsutil cp gs://toit-archive/toit-devkit/darwin/$TOIT_FIRMWARE_VERSION.tgz darwin_sdk.tgz'
+                        sh 'gsutil cp gs://toit-archive/toit-devkit/windows/$TOIT_FIRMWARE_VERSION.tgz windows_sdk.tgz'
+                        stash name: 'linux_firmware', includes: 'linux_firmware.tar'
+                        stash name: 'windows_sdk', includes: 'windows_sdk.tgz'
+                        stash name: 'darwin_sdk', includes: 'darwin_sdk.tgz'
+                    }
                 }
             }
         }
@@ -44,12 +48,12 @@ pipeline {
                         stage("setup") {
                             steps {
                                 container('tpkg') {
-                                unstash 'linux_firmware'
-                                sh "mkdir test-tools"
-                                sh "tar x -f linux_firmware.tar -C test-tools"
-                                sh "make go_dependencies"
-                                sh "go get -u github.com/jstemmer/go-junit-report"
-                                sh "make -j 10 tpkg"
+                                    unstash 'linux_firmware'
+                                    sh "mkdir test-tools"
+                                    sh "tar x -f linux_firmware.tar -C test-tools"
+                                    sh "make go_dependencies"
+                                    sh "go get -u github.com/jstemmer/go-junit-report"
+                                    sh "make -j 10 tpkg"
                                 }
                             }
                         }
@@ -60,7 +64,7 @@ pipeline {
                             }
                             steps {
                                 container('tpkg') {
-                                sh "tedi test -v -cover -race -bench=. ./tests/... 2>&1 | tee tests.out"
+                                sh "tedi test -v -cover -race -bench=. ./... 2>&1 | tee tests.out"
                                 sh "cat tests.out | go-junit-report > tests.xml"
                                 }
                             }
@@ -139,6 +143,22 @@ pipeline {
                             // }
                         }
                     }
+                }
+            }
+        }
+
+        stage("Build registry") {
+            when {
+                anyOf {
+                    branch 'master'
+                    branch pattern: "release-v\\d+.\\d+", comparator: "REGEXP"
+                    tag "v*"
+                }
+            }
+
+            steps {
+                container('tpkg') {
+                    sh "GCLOUD_IMAGE_TAG=${TOIT_VERSION} make gcloud"
                 }
             }
         }
