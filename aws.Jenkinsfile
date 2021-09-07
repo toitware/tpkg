@@ -151,6 +151,7 @@ pipeline {
             when {
                 anyOf {
                     branch 'master'
+                    branch 'main'
                     branch pattern: "release-v\\d+.\\d+", comparator: "REGEXP"
                     tag "v*"
                 }
