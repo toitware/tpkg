@@ -4,7 +4,7 @@ package registry;
 
 import "google/api/annotations.proto";
 
-option go_package = "github.com/toitware/toit.git/tools/tpkg/build/proto/registry";
+option go_package = "github.com/toitware/tpkg/build/proto/registry";
 
 service RegistryService {
   rpc ListPackages(ListPackagesRequest) returns (stream ListPackagesResponse) {

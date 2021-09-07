@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/go-version"
-	"github.com/toitware/toit.git/tools/tpkg/pkg/tracking"
+	"github.com/toitware/tpkg/pkg/tracking"
 )
 
 type ProjectPaths struct {
