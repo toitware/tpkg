@@ -70,6 +70,7 @@ func DownloadGit(ctx context.Context, dir string, url string, version string, ha
 	checkoutDir := dir
 	// If the url resembles an absolute file-path we treat it as such.
 	// Otherwise we assume it's a https-URL.
+	println("url: ", url)
 	if !filepath.IsAbs(url) {
 
 		url, path = decomposePkgURL(url)
