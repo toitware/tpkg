@@ -298,6 +298,12 @@ func (gr *gitRegistry) Load(ctx context.Context, sync bool, cache Cache, ui UI) 
 			p := cache.PreferredRegistryPath(gr.url)
 			url := gr.url
 
+			println("preferred path: ", p)
+			for _, c := range p {
+				print(string(c))
+				print(" ")
+			}
+			println("")
 			var err error
 			for _, branch := range []string{"master", "main", "trunk"} {
 				_, err = git.Clone(ctx, p, &git.CloneOptions{
@@ -310,6 +316,7 @@ func (gr *gitRegistry) Load(ctx context.Context, sync bool, cache Cache, ui UI) 
 				}
 			}
 			if err != nil {
+				println("Error while cloning", err.Error())
 				return err
 			}
 			gr.pathRegistry.path = p
