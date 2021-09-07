@@ -415,6 +415,7 @@ func (pt PkgTest) normalizeGold(gold string) string {
 	}
 	if runtime.GOOS == "windows" {
 		gold = strings.ReplaceAll(gold, "\r\n", "\n")
+		gold = strings.ReplaceAll(gold, "\\", "/")
 	}
 	errorUnderline := regexp.MustCompile(`[\^][~]+`)
 	gold = errorUnderline.ReplaceAllString(gold, "^~")
