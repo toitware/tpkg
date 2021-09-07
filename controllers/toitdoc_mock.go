@@ -9,8 +9,8 @@ import (
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
-	toitdoc "github.com/toitware/toit.git/tools/tpkg/pkg/toitdoc"
-	tpkg "github.com/toitware/toit.git/tools/tpkg/pkg/tpkg"
+	toitdoc "github.com/toitware/tpkg/pkg/toitdoc"
+	tpkg "github.com/toitware/tpkg/pkg/tpkg"
 )
 
 // MockToitdoc is a mock of Toitdoc interface.

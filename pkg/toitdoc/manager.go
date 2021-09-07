@@ -9,8 +9,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/toitware/toit.git/tools/tpkg/config"
-	"github.com/toitware/toit.git/tools/tpkg/pkg/tpkg"
+	"github.com/toitware/tpkg/config"
+	"github.com/toitware/tpkg/pkg/tpkg"
 	"go.uber.org/zap"
 )
 

@@ -1,9 +1,9 @@
 package controllers
 
 import (
-	"github.com/toitware/toit.git/tools/tpkg/config"
-	"github.com/toitware/toit.git/tools/tpkg/pkg/tpkg"
-	"github.com/toitware/toit.git/tools/tpkg/pkg/tracking"
+	"github.com/toitware/tpkg/config"
+	"github.com/toitware/tpkg/pkg/tpkg"
+	"github.com/toitware/tpkg/pkg/tracking"
 )
 
 func provideTpkgRegistry(cfg *config.Config, cache tpkg.Cache) (tpkg.Registry, error) {
