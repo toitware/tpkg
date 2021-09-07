@@ -3,5 +3,5 @@ prefixes:
 
 packages:
   pkg1:
-    url: '<[*TEST_DIR*]>/git_pkgs/pkg1'
+    url: '<[*TEST_GIT_DIR*]>/git_pkgs/pkg1'
     version: 1.0.0
