@@ -13,6 +13,8 @@ registry:
   branch: ${REGISTRY_BRANCH:main}
   cache_path: ${REGISTRY_CACHE_PATH:/tmp/registry}
   ssh_key_file_file: ${REGISTRY_SSH_KEY_FILE:}
+  allow_rewrite: false
+  sync_interval: 5m
 
 toitdocs:
   cache_path: ${TOITDOCS_CACHE_PATH:/tmp/toitdocs}
