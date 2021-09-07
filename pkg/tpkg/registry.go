@@ -300,7 +300,11 @@ func (gr *gitRegistry) Load(ctx context.Context, sync bool, cache Cache, ui UI) 
 
 			println("preferred path: ", p)
 			for _, c := range p {
-				print(string(c))
+				if c == '\\' {
+					print("@")
+				} else {
+					print(string(c))
+				}
 				print(" ")
 			}
 			println("")
