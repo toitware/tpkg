@@ -14,7 +14,7 @@ test-reg: <TEST>/registry_many_versions:
 ===================
 pkg install many
 Exit Code: 0
-Info: Package '<TEST>/pkgs_many_versions/many@3.0.2' installed with prefix 'many'
+Info: Package '<GIT_URL>/pkgs_many_versions/many@3.0.2' installed with prefix 'many'
 ===================
 pkg install many@1
 Exit Code: 1
@@ -22,7 +22,7 @@ Error: Project has already a package with prefix 'many'
 ===================
 pkg install --prefix=foo many@1.0
 Exit Code: 0
-Info: Package '<TEST>/pkgs_many_versions/many@1.0.1' installed with prefix 'foo'
+Info: Package '<GIT_URL>/pkgs_many_versions/many@1.0.1' installed with prefix 'foo'
 ===================
 pkg lockfile
 Exit Code: 0
@@ -31,10 +31,10 @@ prefixes:
   many: many-3.0.2
 packages:
   many-1.0.1:
-    url: <TEST>/pkgs_many_versions/many
+    url: <GIT_URL>/pkgs_many_versions/many
     version: 1.0.1
   many-3.0.2:
-    url: <TEST>/pkgs_many_versions/many
+    url: <GIT_URL>/pkgs_many_versions/many
     version: 3.0.2
 
 ===================
@@ -42,16 +42,16 @@ pkg packagefile
 Exit Code: 0
 dependencies:
   foo:
-    url: <TEST>/pkgs_many_versions/many
+    url: <GIT_URL>/pkgs_many_versions/many
     version: ^1.0.1
   many:
-    url: <TEST>/pkgs_many_versions/many
+    url: <GIT_URL>/pkgs_many_versions/many
     version: ^3.0.2
 
 ===================
 pkg install --prefix=gee many@1
 Exit Code: 0
-Info: Package '<TEST>/pkgs_many_versions/many@1.1.0' installed with prefix 'gee'
+Info: Package '<GIT_URL>/pkgs_many_versions/many@1.1.0' installed with prefix 'gee'
 ===================
 pkg lockfile
 Exit Code: 0
@@ -61,10 +61,10 @@ prefixes:
   many: many-3.0.2
 packages:
   many-1.1.0:
-    url: <TEST>/pkgs_many_versions/many
+    url: <GIT_URL>/pkgs_many_versions/many
     version: 1.1.0
   many-3.0.2:
-    url: <TEST>/pkgs_many_versions/many
+    url: <GIT_URL>/pkgs_many_versions/many
     version: 3.0.2
 
 ===================
@@ -72,13 +72,13 @@ pkg packagefile
 Exit Code: 0
 dependencies:
   foo:
-    url: <TEST>/pkgs_many_versions/many
+    url: <GIT_URL>/pkgs_many_versions/many
     version: ^1.0.1
   gee:
-    url: <TEST>/pkgs_many_versions/many
+    url: <GIT_URL>/pkgs_many_versions/many
     version: ^1.1.0
   many:
-    url: <TEST>/pkgs_many_versions/many
+    url: <GIT_URL>/pkgs_many_versions/many
     version: ^3.0.2
 
 ===================

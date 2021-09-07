@@ -6,11 +6,11 @@ Exit Code: 0
 ===================
 pkg install pkg1
 Exit Code: 0
-Info: Package '<TEST>/git_pkgs/pkg1@1.0.0' installed with prefix 'pkg1'
+Info: Package '<GIT_URL>/git_pkgs/pkg1@1.0.0' installed with prefix 'pkg1'
 ===================
 pkg install pkg2
 Exit Code: 0
-Info: Package '<TEST>/git_pkgs/pkg2@2.4.2' installed with prefix 'pkg2'
+Info: Package '<GIT_URL>/git_pkgs/pkg2@2.4.2' installed with prefix 'pkg2'
 ===================
 pkg lockfile
 Exit Code: 0
@@ -19,17 +19,17 @@ prefixes:
   pkg2: pkg2
 packages:
   pkg1:
-    url: <TEST>/git_pkgs/pkg1
+    url: <GIT_URL>/git_pkgs/pkg1
     version: 1.0.0
     prefixes:
       pkg2: pkg2
   pkg2:
-    url: <TEST>/git_pkgs/pkg2
+    url: <GIT_URL>/git_pkgs/pkg2
     version: 2.4.2
     prefixes:
       pre: pkg3
   pkg3:
-    url: <TEST>/git_pkgs/pkg3
+    url: <GIT_URL>/git_pkgs/pkg3
     version: 3.1.2
 
 ===================

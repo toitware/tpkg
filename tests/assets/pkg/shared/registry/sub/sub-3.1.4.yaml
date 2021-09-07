@@ -2,4 +2,4 @@ name: sub
 description: Description of sub. sub-desc
 version: 3.1.4
 license: MIT
-url: <[*TEST_DIR*]>/sub_git
+url: <[*TEST_GIT_DIR*]>/sub_git
