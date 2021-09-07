@@ -3,7 +3,7 @@
 ::exec:: exec main.toit
 ::exec:: Exit Code: 1
 ::exec:: <TEST>/package.lock:6:10: error: Package '<TEST>/git_pkgs/pkg1-1.0.0' not found
-::exec::     url: "<TEST>/git_pkgs/pkg1"
+::exec::     url: '<TEST>/git_pkgs/pkg1'
 ::exec::          ^~
 ::exec:: main.toit:3:8: error: Package 'pkg1' for prefix 'pkg1' not found
 ::exec:: import pkg1
