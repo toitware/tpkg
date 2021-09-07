@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // Cache handles all package-Cache related functionality.
@@ -86,12 +87,14 @@ func (c Cache) SpecPathFor(projectRootPath string, url string, version string) (
 
 // PreferredPkgPath returns the preferred path for the package url-version.
 func (c Cache) PreferredPkgPath(projectRootPath string, url string, version string) string {
+	url = strings.ReplaceAll(url, ":", "")
 	packageRel := URLVersionToRelPath(url, version)
 	return filepath.Join(projectRootPath, ProjectPackagesPath, packageRel)
 }
 
 // PreferredRegistryPath returns the preferred path for the given registry url.
 func (c Cache) PreferredRegistryPath(url string) string {
+	url = strings.ReplaceAll(url, ":", "")
 	// The first cache path is the preferred location.
 	return filepath.Join(c.registryCachePaths[0], url)
 }
