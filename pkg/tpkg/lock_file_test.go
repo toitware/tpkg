@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/toitware/tpkg/pkg/path"
 )
 
 func Test_OptimizePkgIDs(t *testing.T) {
@@ -41,7 +42,7 @@ func Test_OptimizePkgIDs(t *testing.T) {
 				Version: project3Version,
 			},
 			"other": {
-				Path: otherPath,
+				Path: path.ToCompilerPath(otherPath),
 			},
 		}
 		lc.Prefixes = PrefixMap{

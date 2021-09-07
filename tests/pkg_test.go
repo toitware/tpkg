@@ -27,6 +27,7 @@ import (
 	"github.com/pmezard/go-difflib/difflib"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/toitware/tpkg/pkg/path"
 )
 
 const (
@@ -210,18 +211,18 @@ func createGit(t *tedi.T, testDir string, targetDir string, tagsDir string) {
 
 func copyRec(t *tedi.T, testDir string, sourceDir string, targetDir string) {
 	// Copy over the content of the asset dir.
-	err := filepath.Walk(sourceDir, func(path string, info os.FileInfo, err error) error {
-		if path == sourceDir {
+	err := filepath.Walk(sourceDir, func(p string, info os.FileInfo, err error) error {
+		if p == sourceDir {
 			return nil
 		}
 		require.NoError(t, err)
-		rel, err := filepath.Rel(sourceDir, path)
+		rel, err := filepath.Rel(sourceDir, p)
 		require.NoError(t, err)
 		target := filepath.Join(targetDir, rel)
 		if info.IsDir() {
 			base := filepath.Base(rel)
 			if base == gitTagsDir {
-				createGit(t, testDir, filepath.Dir(target), path)
+				createGit(t, testDir, filepath.Dir(target), p)
 				return filepath.SkipDir
 			}
 			info, err := os.Stat(target)
@@ -239,14 +240,15 @@ func copyRec(t *tedi.T, testDir string, sourceDir string, targetDir string) {
 		// We use the zip mainly for git repositories. These are tests that
 		// make sure that we work with repositories that have been created using
 		// the git command-line tool.
-		if filepath.Ext(path) == ".zip" {
-			return unzip(path, filepath.Dir(target))
+		if filepath.Ext(p) == ".zip" {
+			return unzip(p, filepath.Dir(target))
 		}
-		data, err := ioutil.ReadFile(path)
+		data, err := ioutil.ReadFile(p)
 		if err != nil {
 			return err
 		}
-		data = bytes.ReplaceAll(data, []byte(testDirPattern), []byte(testDir))
+		testDirCompilerPath := path.ToCompilerPath(testDir)
+		data = bytes.ReplaceAll(data, []byte(testDirPattern), []byte(testDirCompilerPath))
 		return ioutil.WriteFile(target, data, info.Mode().Perm())
 	})
 	require.NoError(t, err)
@@ -415,6 +417,8 @@ func (pt PkgTest) normalizeGold(gold string) string {
 	}
 	if runtime.GOOS == "windows" {
 		gold = strings.ReplaceAll(gold, "\r\n", "\n")
+		testDirCompilerPath := string(path.ToCompilerPath(pt.goldRepls["test-dir"]))
+		gold = strings.ReplaceAll(gold, testDirCompilerPath, "<TEST>")
 	}
 	errorUnderline := regexp.MustCompile(`[\^][~]+`)
 	gold = errorUnderline.ReplaceAllString(gold, "^~")
@@ -559,7 +563,7 @@ func test_toitPkg(t *tedi.T) {
 	t.Run("GitTagDir", func(pt PkgTest) {
 		// Just a simple check that our test-setup function works.
 		gitDir := filepath.Join(pt.dir, "git_dir")
-		dirInFiles := pt.dir + "/git_dir"
+		dirInFiles := string(path.ToCompilerPath(pt.dir + "/git_dir"))
 		repository, err := git.PlainOpen(gitDir)
 		require.NoError(t, err)
 		wt, err := repository.Worktree()

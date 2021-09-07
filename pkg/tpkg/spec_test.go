@@ -11,6 +11,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/toitware/tpkg/pkg/path"
 	"github.com/toitware/tpkg/pkg/set"
 )
 
@@ -274,12 +275,12 @@ func Test_VisitLocalDeps(t *testing.T) {
 		tsc := newTestSpecCreator(t, &ui)
 		spec := tsc.createLocal("entry", []SpecPackage{
 			{
-				Path: filepath.Join("..", "dotdot"),
+				Path: path.ToCompilerPath(filepath.Join("..", "dotdot")),
 			},
 		})
 		tsc.createLocal("dotdot", []SpecPackage{
 			{
-				Path: filepath.Join(tsc.dir, "abs"),
+				Path: path.ToCompilerPath(filepath.Join(tsc.dir, "abs")),
 			},
 		})
 		tsc.createLocal("abs", []SpecPackage{
