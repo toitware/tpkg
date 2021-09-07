@@ -39,72 +39,72 @@ pipeline {
         }
         stage("Test") {
             parallel {
-                stage("Linux") {
-                    stages {
-                        stage("setup") {
-                            steps {
-                                container('tpkg') {
-                                unstash 'linux_firmware'
-                                sh "mkdir test-tools"
-                                sh "tar x -f linux_firmware.tar -C test-tools"
-                                sh "make go_dependencies"
-                                sh "go get -u github.com/jstemmer/go-junit-report"
-                                sh "make -j 10 tpkg"
-                                }
-                            }
-                        }
-                        stage("test") {
-                            environment {
-                                TPKG_PATH="${env.WORKSPACE}/build/tpkg"
-                                TOITVM_PATH="${env.WORKSPACE}/test-tools/toitvm"
-                            }
-                            steps {
-                                container('tpkg') {
-                                sh "tedi test -v -cover -race -bench=. ./tests/... 2>&1 | tee tests.out"
-                                sh "cat tests.out | go-junit-report > tests.xml"
-                                }
-                            }
-                            post {
-                                always {
-                                    junit "tests.xml"
-                                }
-                            }
-                        }
-                    }
-                }
-                stage("Mac") {
-                    agent {
-                        label 'macos'
-                    }
-                    stages {
-                        stage("setup") {
-                            steps {
-                                unstash 'darwin_sdk'
-                                sh "mkdir test-tools"
-                                sh "tar x -zf darwin_sdk.tgz -C test-tools"
-                                sh "make go_dependencies"
-                                sh "go get -u github.com/jstemmer/go-junit-report"
-                                sh "make -j 10 tpkg"
-                            }
-                        }
-                        stage("test") {
-                            environment {
-                                TPKG_PATH="${env.WORKSPACE}/build/tpkg"
-                                TOITLSP_PATH="${env.WORKSPACE}/test-tools/toitlsp"
-                                TOITC_PATH="${env.WORKSPACE}/test-tools/toitc"
-                            }
-                            steps {
-                                sh "tedi test -v -cover -race -bench=. ./tests/... 2>&1 | tee tests.out"
-                                sh "cat tests.out | go-junit-report > tests.xml"
-                            }
-                            post {
-                                always {
-                                    junit "tests.xml"
-                                }
-                            }
-                        }
-                    }
-                }
+                // stage("Linux") {
+                //     stages {
+                //         stage("setup") {
+                //             steps {
+                //                 container('tpkg') {
+                //                 unstash 'linux_firmware'
+                //                 sh "mkdir test-tools"
+                //                 sh "tar x -f linux_firmware.tar -C test-tools"
+                //                 sh "make go_dependencies"
+                //                 sh "go get -u github.com/jstemmer/go-junit-report"
+                //                 sh "make -j 10 tpkg"
+                //                 }
+                //             }
+                //         }
+                //         stage("test") {
+                //             environment {
+                //                 TPKG_PATH="${env.WORKSPACE}/build/tpkg"
+                //                 TOITVM_PATH="${env.WORKSPACE}/test-tools/toitvm"
+                //             }
+                //             steps {
+                //                 container('tpkg') {
+                //                 sh "tedi test -v -cover -race -bench=. ./tests/... 2>&1 | tee tests.out"
+                //                 sh "cat tests.out | go-junit-report > tests.xml"
+                //                 }
+                //             }
+                //             post {
+                //                 always {
+                //                     junit "tests.xml"
+                //                 }
+                //             }
+                //         }
+                //     }
+                // }
+                // stage("Mac") {
+                //     agent {
+                //         label 'macos'
+                //     }
+                //     stages {
+                //         stage("setup") {
+                //             steps {
+                //                 unstash 'darwin_sdk'
+                //                 sh "mkdir test-tools"
+                //                 sh "tar x -zf darwin_sdk.tgz -C test-tools"
+                //                 sh "make go_dependencies"
+                //                 sh "go get -u github.com/jstemmer/go-junit-report"
+                //                 sh "make -j 10 tpkg"
+                //             }
+                //         }
+                //         stage("test") {
+                //             environment {
+                //                 TPKG_PATH="${env.WORKSPACE}/build/tpkg"
+                //                 TOITLSP_PATH="${env.WORKSPACE}/test-tools/toitlsp"
+                //                 TOITC_PATH="${env.WORKSPACE}/test-tools/toitc"
+                //             }
+                //             steps {
+                //                 sh "tedi test -v -cover -race -bench=. ./tests/... 2>&1 | tee tests.out"
+                //                 sh "cat tests.out | go-junit-report > tests.xml"
+                //             }
+                //             post {
+                //                 always {
+                //                     junit "tests.xml"
+                //                 }
+                //             }
+                //         }
+                //     }
+                // }
                 stage("Windows") {
                     agent {
                         label 'windows'
@@ -129,7 +129,7 @@ pipeline {
                             steps {
                                 bat "dir"
                                 // TODO(florian): enable Windows tests.
-                                // bat "tedi test -v ./tests/..."
+                                bat "tedi test -v ./tests/..."
                                 // bat "tedi test -v -cover -race -bench=. ./tests/... 2>&1 | go-junit-report > tests.xml"
                             }
                             // post {
