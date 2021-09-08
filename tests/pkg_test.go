@@ -993,7 +993,7 @@ func test_toitPkg(t *tedi.T) {
 		err := os.RemoveAll(filepath.Join(pt.registryCacheDir, escapedRegistry))
 		assert.NoError(t, err)
 		escapedPkgPath := pt.computePathInCache(pt.dir, "", "")
-		err = os.RemoveAll(filepath.Join(pt.pkgCacheDir, escapedPkgPath))
+		err = os.RemoveAll(escapedPkgPath)
 		assert.NoError(t, err)
 
 		pt.GoldToit("test-2", [][]string{
