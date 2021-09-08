@@ -437,6 +437,12 @@ func (pt PkgTest) ToitNegative(args ...string) string {
 }
 
 func (pt PkgTest) normalizeGold(gold string) string {
+	gitDir := computeGitDir(pt.dir)
+	gold = strings.ReplaceAll(gold, gitDir, "<GIT_URL>")
+	// When showing lock-file entries we might also see escaped git entries.
+	// We can't use a different replacement, as the escaping is dependent on the OS.
+	escapedGitURL := string(path.ToEscapedURLPath(gitDir))
+	gold = strings.ReplaceAll(gold, escapedGitURL, "<GIT_URL>")
 	gold = strings.ReplaceAll(gold, computeGitDir(pt.dir), "<GIT_URL>")
 	for pattern, replacement := range pt.goldRepls {
 		gold = strings.ReplaceAll(gold, pattern, replacement)

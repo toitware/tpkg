@@ -74,7 +74,7 @@ func DownloadGit(ctx context.Context, dir string, urlStr string, version string,
 	// should be used as file path.
 	// Otherwise we assume it's a https-URL.
 	if strings.HasPrefix(urlStr, "path.toit.io/") {
-		cloneURL = strings.TrimPrefix(urlStr, "path.toit.io/")
+		cloneURL = filepath.FromSlash(strings.TrimPrefix(urlStr, "path.toit.io/"))
 		path = urlStr
 	} else {
 		cloneURL, path = decomposePkgURL(urlStr)
