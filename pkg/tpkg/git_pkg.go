@@ -70,10 +70,18 @@ func DownloadGit(ctx context.Context, dir string, urlStr string, version string,
 	}
 	checkoutDir := dir
 
+	if strings.Contains(urlStr, "path.toit.io") {
+		for _, c := range urlStr {
+			print(string(c))
+			print(" ")
+		}
+		println("")
+	}
 	// If the url's host is 'path.toit.io', then we know that the URL's path
 	// should be used as file path.
 	// Otherwise we assume it's a https-URL.
 	if strings.HasPrefix(urlStr, "path.toit.io/") {
+		println("recognized prefix")
 		cloneURL = strings.TrimPrefix(urlStr, "path.toit.io/")
 		path = urlStr
 	} else {
