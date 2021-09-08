@@ -86,6 +86,12 @@ const testDirPattern string = "<[*TEST_DIR*]>"
 // as if they were URLs.
 const testDirGitPattern string = "<[*TEST_GIT_DIR*]>"
 
+// The pattern that will be replaced with the escaped test git url dir.
+// Every asset file will have this pattern replaced.
+// These URLs are recognized by the tpkg-tool and will treat local paths
+// as if they were URLs.
+const testDirGitEscapePattern string = "<[*TEST_GIT_DIR_ESCAPE*]>"
+
 // The name of the directory that is used for cached entries.
 const cacheDir string = "CACHE"
 
@@ -274,6 +280,8 @@ func copyRec(t *tedi.T, testDir string, sourceDir string, targetDir string) {
 		data = bytes.ReplaceAll(data, []byte(testDirPattern), []byte(testDirCompilerPath))
 		testDirGitURL := computeGitDir(testDir)
 		data = bytes.ReplaceAll(data, []byte(testDirGitPattern), []byte(testDirGitURL))
+		escapedTestDirGitURL := string(path.ToEscapedURLPath(testDirGitURL))
+		data = bytes.ReplaceAll(data, []byte(testDirGitEscapePattern), []byte(escapedTestDirGitURL))
 		return ioutil.WriteFile(target, data, info.Mode().Perm())
 	})
 	require.NoError(t, err)
