@@ -16,7 +16,7 @@ pkg search --verbose foo
 Exit Code: 0
 foo:
   description: Description of foo. foo-desc.
-  url: <TEST>/foo_git
+  url: <GIT_URL>/foo_git
   version: 1.2.3
   
 ===================
@@ -88,7 +88,7 @@ sub - 3.1.4
 ===================
 pkg search 
 Exit Code: 0
+gee - 1.1.1
 bar - 2.0.1
 foo - 5.0.3
 sub - 3.1.4
-gee - 1.1.1

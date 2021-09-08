@@ -51,7 +51,7 @@ func decomposePkgURL(url string) (string, string) {
 // This function might create an adjacent directory first. For example, if the target
 // is `download/here`, then this function might first create a `download/tmp` directory.
 // Returns the checked-out hash.
-func DownloadGit(ctx context.Context, dir string, url string, version string, hash string, ui UI) (string, error) {
+func DownloadGit(ctx context.Context, dir string, urlStr string, version string, hash string, ui UI) (string, error) {
 	_, err := os.Stat(dir)
 	if err != nil && !os.IsNotExist(err) {
 		return "", err
@@ -62,17 +62,22 @@ func DownloadGit(ctx context.Context, dir string, url string, version string, ha
 		}
 	}
 
+	cloneURL := urlStr
 	path := ""
 	tag := version
 	if !strings.HasPrefix(tag, "v") {
 		tag = "v" + tag
 	}
 	checkoutDir := dir
-	// If the url resembles an absolute file-path we treat it as such.
-	// Otherwise we assume it's a https-URL.
-	if !filepath.IsAbs(url) {
 
-		url, path = decomposePkgURL(url)
+	// If the url's host is 'path.toit.io', then we know that the URL's path
+	// should be used as file path.
+	// Otherwise we assume it's a https-URL.
+	if strings.HasPrefix(urlStr, "path.toit.io/") {
+		cloneURL = filepath.FromSlash(strings.TrimPrefix(urlStr, "path.toit.io/"))
+		path = urlStr
+	} else {
+		cloneURL, path = decomposePkgURL(urlStr)
 
 		if path != "" {
 			lastSegment := path[strings.LastIndex(path, "/")+1:] // Note that this also works if there isn't any '/'.
@@ -87,7 +92,7 @@ func DownloadGit(ctx context.Context, dir string, url string, version string, ha
 			// rename-command to move the nested package to its final position.
 			checkoutDir, err = ioutil.TempDir(baseDir, "partial-toit-checkout")
 			if err != nil {
-				return "", ui.ReportError("Failed to create temporary directory to download '%s - %s': %v", url, version, err)
+				return "", ui.ReportError("Failed to create temporary directory to download '%s - %s': %v", urlStr, version, err)
 			}
 			defer os.RemoveAll(checkoutDir)
 		}
@@ -106,7 +111,7 @@ func DownloadGit(ctx context.Context, dir string, url string, version string, ha
 	}()
 
 	downloadedHash, err := git.Clone(ctx, checkoutDir, &git.CloneOptions{
-		URL:          url,
+		URL:          cloneURL,
 		SingleBranch: true,
 		Depth:        1,
 		Tag:          tag,
@@ -114,7 +119,7 @@ func DownloadGit(ctx context.Context, dir string, url string, version string, ha
 	})
 
 	if err != nil {
-		return "", ui.ReportError("Error while cloning '%s' with tag '%s': %v", url, tag, err)
+		return "", ui.ReportError("Error while cloning '%s' with tag '%s': %v", urlStr, tag, err)
 	}
 
 	if checkoutDir == dir {
@@ -127,11 +132,11 @@ func DownloadGit(ctx context.Context, dir string, url string, version string, ha
 	nestedPath := filepath.Join(checkoutDir, filepath.FromSlash(path))
 	stat, err := os.Stat(nestedPath)
 	if os.IsNotExist(err) {
-		return "", ui.ReportError("Repository '%s' does not have path '%s'", url, path)
+		return "", ui.ReportError("Repository '%s' does not have path '%s'", urlStr, path)
 	} else if err != nil {
 		return "", err
 	} else if !stat.IsDir() {
-		return "", ui.ReportError("Path '%s' in repository '%s' is not a directory", path, url)
+		return "", ui.ReportError("Path '%s' in repository '%s' is not a directory", path, urlStr)
 	}
 
 	// Renaming only works when the two locations are on the same drive. This is why we didn't

@@ -3,31 +3,31 @@ Exit Code: 0
 registry:
   bar:
     description: Description of bar. bar-desc.
-    url: <TEST>/bar_git
+    url: <GIT_URL>/bar_git
     version: 2.0.1
     license: MIT
     Dependencies:
-      <TEST>/foo_git - 1.2.3
-      <TEST>/sub_git - ^3.0.0
+      <GIT_URL>/foo_git - 1.2.3
+      <GIT_URL>/sub_git - ^3.0.0
   foo:
     description: Description of foo. foo-desc.
-    url: <TEST>/foo_git
+    url: <GIT_URL>/foo_git
     version: 1.1.0
     
   foo:
     description: Description of foo. foo-desc.
-    url: <TEST>/foo_git
+    url: <GIT_URL>/foo_git
     version: 1.2.3
     
   sub:
     description: Description of sub. sub-desc
-    url: <TEST>/sub_git
+    url: <GIT_URL>/sub_git
     version: 2.0.0
     license: MIT
     
   sub:
     description: Description of sub. sub-desc
-    url: <TEST>/sub_git
+    url: <GIT_URL>/sub_git
     version: 3.1.4
     license: MIT
     

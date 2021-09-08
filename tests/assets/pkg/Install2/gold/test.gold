@@ -2,8 +2,8 @@
 ===================
 ::exec:: exec main.toit
 ::exec:: Exit Code: 1
-::exec:: <TEST>/package.lock:6:10: error: Package '<TEST>/git_pkgs/pkg1-1.0.0' not found
-::exec::     url: '<TEST>/git_pkgs/pkg1'
+::exec:: <TEST>/package.lock:6:10: error: Package '<GIT_URL>/git_pkgs/pkg1-1.0.0' not found
+::exec::     url: '<GIT_URL>/git_pkgs/pkg1'
 ::exec::          ^~
 ::exec:: main.toit:3:8: error: Package 'pkg1' for prefix 'pkg1' not found
 ::exec:: import pkg1
@@ -17,7 +17,7 @@
 ::analyze:: Exit Code: 1
 ::analyze:: <TEST>/main.toit:3:8 error: Package 'pkg1' for prefix 'pkg1' not found
 ::analyze:: <TEST>/main.toit:6:14 error: Unresolved identifier: 'identify'
-::analyze:: <TEST>/package.lock:6:10 error: Package '<TEST>/git_pkgs/pkg1-1.0.0' not found
+::analyze:: <TEST>/package.lock:6:10 error: Package '<GIT_URL>/git_pkgs/pkg1-1.0.0' not found
 ::analyze:: 
 ===================
 // Add registry so we can find packages.
@@ -36,7 +36,7 @@ prefixes:
   pkg1: pkg1
 packages:
   pkg1:
-    url: <TEST>/git_pkgs/pkg1
+    url: <GIT_URL>/git_pkgs/pkg1
     version: 1.0.0
 
 ===================

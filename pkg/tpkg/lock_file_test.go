@@ -24,7 +24,7 @@ func Test_OptimizePkgIDs(t *testing.T) {
 
 		lc.Packages = map[string]PackageEntry{
 			"pkg1": {
-				URL:     projectURL,
+				URL:     path.ToEscapedURLPath(projectURL),
 				Version: projectVersion,
 				Prefixes: PrefixMap{
 					"pre1": "pkg1",
@@ -34,11 +34,11 @@ func Test_OptimizePkgIDs(t *testing.T) {
 				},
 			},
 			"pkg2": {
-				URL:     project2URL,
+				URL:     path.ToEscapedURLPath(project2URL),
 				Version: project2Version,
 			},
 			"pkg3": {
-				URL:     project3URL,
+				URL:     path.ToEscapedURLPath(project3URL),
 				Version: project3Version,
 			},
 			"other": {
@@ -74,21 +74,21 @@ func Test_OptimizePkgIDs(t *testing.T) {
 		checkPrefixes(entry.Prefixes)
 		assert.True(t, ok)
 		assert.Equal(t, "", entry.Path.ToLocal())
-		assert.Equal(t, projectURL, entry.URL)
+		assert.Equal(t, projectURL, entry.URL.ToURL())
 		assert.Equal(t, projectVersion, entry.Version)
 
 		entry, ok = lc.Packages["project2"]
 		assert.True(t, ok)
 		assert.Nil(t, entry.Prefixes)
 		assert.Equal(t, "", entry.Path.ToLocal())
-		assert.Equal(t, project2URL, entry.URL)
+		assert.Equal(t, project2URL, entry.URL.ToURL())
 		assert.Equal(t, project2Version, entry.Version)
 
 		entry, ok = lc.Packages["project3"]
 		assert.True(t, ok)
 		assert.Nil(t, entry.Prefixes)
 		assert.Equal(t, "", entry.Path.ToLocal())
-		assert.Equal(t, project3URL, entry.URL)
+		assert.Equal(t, project3URL, entry.URL.ToURL())
 		assert.Equal(t, project3Version, entry.Version)
 
 		entry, ok = lc.Packages["other"]
@@ -137,7 +137,7 @@ func Test_OptimizePkgIDs(t *testing.T) {
 			url := parts[0]
 			version := parts[1]
 			lc.Packages[fmt.Sprintf("pkg%d", i)] = PackageEntry{
-				URL:     url,
+				URL:     path.ToEscapedURLPath(url),
 				Version: version,
 			}
 			i++
@@ -154,7 +154,7 @@ func Test_OptimizePkgIDs(t *testing.T) {
 			entry, ok := lc.Packages[expectedID]
 			assert.True(t, ok)
 			assert.Equal(t, "", entry.Path.ToLocal())
-			assert.Equal(t, url, entry.URL)
+			assert.Equal(t, url, entry.URL.ToURL())
 			assert.Equal(t, version, entry.Version)
 		}
 	})
@@ -184,7 +184,7 @@ func Test_OptimizePkgIDs(t *testing.T) {
 			url := parts[0]
 			version := parts[1]
 			lc.Packages[fmt.Sprintf("pkg%d", i)] = PackageEntry{
-				URL:     url,
+				URL:     path.ToEscapedURLPath(url),
 				Version: version,
 			}
 			i++
@@ -207,7 +207,7 @@ func Test_OptimizePkgIDs(t *testing.T) {
 		}
 		for actualID, entry := range lc.Packages {
 			assert.Contains(t, expectedIDs, actualID)
-			urlVersion := fmt.Sprintf("%s-%s", entry.URL, entry.Version)
+			urlVersion := fmt.Sprintf("%s-%s", entry.URL.ToURL(), entry.Version)
 			assert.Contains(t, paths, urlVersion)
 			assert.NotContains(t, alreadySeen, actualID)
 			alreadySeen[actualID] = true
