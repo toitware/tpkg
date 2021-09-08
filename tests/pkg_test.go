@@ -1225,6 +1225,26 @@ func test_toitPkg(t *tedi.T) {
 		assert.Contains(t, string(data), "toitware/registry")
 	})
 
+	t.Run("RemoveRegistry", func(pt PkgTest) {
+		regPath1 := filepath.Join(pt.dir, "registry_git_pkgs")
+		regPath2 := filepath.Join(pt.dir, "registry")
+
+		pt.useDefaultRegistry = true
+		pt.GoldToit("test", [][]string{
+			{"pkg", "registry", "list"},
+			{"pkg", "registry", "remove", "toit"},
+			{"pkg", "registry", "list"},
+			{"pkg", "registry", "add", "test-reg1", regPath1},
+			{"pkg", "registry", "add", "--local", "test-reg2", regPath2},
+			{"pkg", "registry", "list"},
+			{"pkg", "registry", "remove", "non-existant"},
+			{"pkg", "registry", "remove", "test-reg1"},
+			{"pkg", "registry", "list"},
+			{"pkg", "registry", "remove", "test-reg2"},
+			{"pkg", "registry", "list"},
+		})
+	})
+
 	t.Run("Scrape", func(pt PkgTest) {
 		dirs, err := ioutil.ReadDir(filepath.Join(pt.dir, "pkg_dirs"))
 		assert.NoError(t, err)
