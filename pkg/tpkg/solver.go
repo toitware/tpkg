@@ -7,7 +7,7 @@ import (
 	"sort"
 
 	"github.com/hashicorp/go-version"
-	"github.com/toitware/toit.git/tools/tpkg/pkg/set"
+	"github.com/toitware/tpkg/pkg/set"
 )
 
 // Solver is a simple constraint solver for the Toit package manager.

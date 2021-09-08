@@ -1,12 +1,12 @@
 package main
 
 import (
-	"github.com/toitware/toit.git/tools/tpkg/config"
-	"github.com/toitware/toit.git/tools/tpkg/controllers"
-	"github.com/toitware/toit.git/tools/tpkg/handlers"
-	"github.com/toitware/toit.git/tools/tpkg/pkg/network"
-	"github.com/toitware/toit.git/tools/tpkg/pkg/service"
-	"github.com/toitware/toit.git/tools/tpkg/pkg/toitdoc"
+	"github.com/toitware/tpkg/config"
+	"github.com/toitware/tpkg/controllers"
+	"github.com/toitware/tpkg/handlers"
+	"github.com/toitware/tpkg/pkg/network"
+	"github.com/toitware/tpkg/pkg/service"
+	"github.com/toitware/tpkg/pkg/toitdoc"
 	"go.uber.org/fx"
 )
 

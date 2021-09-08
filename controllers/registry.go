@@ -15,8 +15,8 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/plumbing/transport"
 	"github.com/go-git/go-git/v5/plumbing/transport/ssh"
-	"github.com/toitware/toit.git/tools/tpkg/config"
-	"github.com/toitware/toit.git/tools/tpkg/pkg/tpkg"
+	"github.com/toitware/tpkg/config"
+	"github.com/toitware/tpkg/pkg/tpkg"
 	"go.uber.org/fx"
 	"go.uber.org/ratelimit"
 	"go.uber.org/zap"
@@ -38,6 +38,7 @@ func provideRegistry(config *config.Config, cache tpkg.Cache, logger *zap.Logger
 	if err != nil {
 		return nil, nil, err
 	}
+
 	res := &registry{
 		logger:               logger,
 		lookup:               map[string]*Package{},
@@ -56,7 +57,11 @@ func provideRegistry(config *config.Config, cache tpkg.Cache, logger *zap.Logger
 func initRegistry(lc fx.Lifecycle, registry *registry) {
 	lc.Append((fx.Hook{
 		OnStart: func(ctx context.Context) error {
-			return registry.sync(ctx)
+			if err := registry.sync(ctx); err != nil {
+				return err
+			}
+			go registry.autoSync()
+			return nil
 		},
 	}))
 }
@@ -89,6 +94,25 @@ type registry struct {
 	ui                   tpkg.UI
 	syncLimit            ratelimit.Limiter
 	syncMutex            sync.Mutex
+}
+
+func (r *registry) autoSync() {
+	if r.remoteRegistryConfig.SyncInterval == 0 {
+		return
+	}
+
+	ticker := time.NewTicker(r.remoteRegistryConfig.SyncInterval)
+	defer ticker.Stop()
+	for {
+		<-ticker.C
+		ctx, cancel := context.WithCancel(context.Background())
+		if err := r.sync(ctx); err != nil {
+			r.logger.Error("failed to auto sync registry", zap.Error(err))
+		} else {
+			r.logger.Info("synced registry")
+		}
+		cancel()
+	}
 }
 
 func (r *registry) Packages(ctx context.Context) ([]*Package, error) {
@@ -188,8 +212,10 @@ func (r *registry) RegisterPackage(ctx context.Context, url string, version stri
 		return err
 	}
 
-	if _, err := os.Stat(path); err == nil {
-		return status.Errorf(codes.AlreadyExists, "Package %s version %s already exists", url, version)
+	if !r.remoteRegistryConfig.AllowRewrite {
+		if _, err := os.Stat(path); err == nil {
+			return status.Errorf(codes.AlreadyExists, "Package %s version %s already exists", url, version)
+		}
 	}
 
 	descPath, err := desc.WriteInDir(dir)
