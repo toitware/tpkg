@@ -60,7 +60,7 @@ pipeline {
                         stage("test") {
                             environment {
                                 TPKG_PATH="${env.WORKSPACE}/build/tpkg"
-                                TOITVM_PATH="${env.WORKSPACE}/test-tools/toitvm"
+                                TOITVM_PATH="${env.WORKSPACE}/test-tools/toitvm64"
                             }
                             steps {
                                 container('tpkg') {
