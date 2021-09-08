@@ -990,9 +990,10 @@ func test_toitPkg(t *tedi.T) {
 			{"pkg", "registry", "add", "test-reg", regPath},
 		})
 		// Delete the registry cache.
-		err := os.RemoveAll(filepath.Join(pt.registryCacheDir, regPath))
-		assert.NoError(t, err)
-		err = os.RemoveAll(filepath.Join(pt.pkgCacheDir, regPath))
+		escapedRegistry := filepath.FromSlash(string(path.ToEscapedURLPath(filepath.ToSlash(regPath))))
+		registryPath := filepath.Join(pt.registryCacheDir, escapedRegistry)
+		assert.DirExists(t, registryPath)
+		err := os.RemoveAll(registryPath)
 		assert.NoError(t, err)
 
 		pt.GoldToit("test-2", [][]string{
