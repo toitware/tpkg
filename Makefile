@@ -75,9 +75,10 @@ $(GO_MOCKS): $(GO_DEPS)
 mocks:
 	$(MAKE) -j$(getconf _NPROCESSORS_ONLN) $(GO_MOCKS)
 
+TEST_FLAGS ?=
 .PHONY: test
 test: tpkg $(GO_MOCKS)
-	tedi test -v -cover ./tests/...
+	tedi test -v -cover $(TEST_FLAGS) $(foreach dir,$(filter-out third_party/, $(sort $(dir $(wildcard */)))),./$(dir)...)
 
 WEB_TOITDOCS_VERSION ?= v0.0.12
 $(BUILD_DIR)/web_toitdocs/$(WEB_TOITDOCS_VERSION):
@@ -93,7 +94,7 @@ $(BUILD_DIR)/sdk/$(SDK_VERSION):
 	cd $(BUILD_DIR)/sdk/$(SDK_VERSION) && tar -xzf $(SDK_VERSION).tgz
 	rm -rf $(BUILD_DIR)/sdk/$(SDK_VERSION)/$(SDK_VERSION).tgz
 
-WEB_TPKG_VERSION ?= v0.0.1-pre.66+6710bbd
+WEB_TPKG_VERSION ?= v0.0.1-pre.68+decb82a
 $(BUILD_DIR)/web_tpkg/$(WEB_TPKG_VERSION):
 	mkdir -p $(BUILD_DIR)/web_tpkg/$(WEB_TPKG_VERSION)
 	gsutil cp gs://toit-web/pkg.toit.io/$(WEB_TPKG_VERSION).tgz $(BUILD_DIR)/web_tpkg/$(WEB_TPKG_VERSION)
