@@ -24,7 +24,7 @@ func Test_OptimizePkgIDs(t *testing.T) {
 
 		lc.Packages = map[string]PackageEntry{
 			"pkg1": {
-				URL:     projectURL,
+				URL:     path.ToEscapedURLPath(projectURL),
 				Version: projectVersion,
 				Prefixes: PrefixMap{
 					"pre1": "pkg1",
@@ -34,11 +34,11 @@ func Test_OptimizePkgIDs(t *testing.T) {
 				},
 			},
 			"pkg2": {
-				URL:     project2URL,
+				URL:     path.ToEscapedURLPath(project2URL),
 				Version: project2Version,
 			},
 			"pkg3": {
-				URL:     project3URL,
+				URL:     path.ToEscapedURLPath(project3URL),
 				Version: project3Version,
 			},
 			"other": {
@@ -137,7 +137,7 @@ func Test_OptimizePkgIDs(t *testing.T) {
 			url := parts[0]
 			version := parts[1]
 			lc.Packages[fmt.Sprintf("pkg%d", i)] = PackageEntry{
-				URL:     url,
+				URL:     path.ToEscapedURLPath(url),
 				Version: version,
 			}
 			i++
@@ -184,7 +184,7 @@ func Test_OptimizePkgIDs(t *testing.T) {
 			url := parts[0]
 			version := parts[1]
 			lc.Packages[fmt.Sprintf("pkg%d", i)] = PackageEntry{
-				URL:     url,
+				URL:     path.ToEscapedURLPath(url),
 				Version: version,
 			}
 			i++

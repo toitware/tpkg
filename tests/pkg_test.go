@@ -11,7 +11,6 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
-	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -127,19 +126,14 @@ func computeAssetDir(t *tedi.T) string {
 }
 
 func computeGitDir(p string) string {
-	testDirGitURL := url.URL{
-		Host: "path.toit.io",
-		Path: filepath.ToSlash(p),
-	}
-	return testDirGitURL.String()
+	return "path.toit.io/" + filepath.ToSlash(p)
 }
 
-func (pt PkgTest) computePathInCache(pkgDir string, version string, path string) string {
+func (pt PkgTest) computePathInCache(pkgDir string, version string, p string) string {
 	pkgURL := computeGitDir(filepath.Join(pt.dir, pkgDir))
-	u, err := url.Parse(pkgURL)
-	require.NoError(pt.t, err)
-	segments := strings.Split(u.Host+"/"+filepath.FromSlash(u.Path), "/")
-	return filepath.Join(append([]string{pt.pkgDir}, append(segments, version, path)...)...)
+	escaped := path.ToEscapedURLPath(pkgURL)
+	pkgPath := filepath.FromSlash(string(escaped))
+	return filepath.Join(pt.pkgDir, pkgPath, version, p)
 }
 
 func unzip(p string, dir string) error {

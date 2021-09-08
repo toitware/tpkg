@@ -5,7 +5,6 @@ package tpkg
 import (
 	"context"
 	"io/ioutil"
-	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -63,11 +62,6 @@ func DownloadGit(ctx context.Context, dir string, urlStr string, version string,
 		}
 	}
 
-	u, err := url.Parse(urlStr)
-	if err != nil {
-		return "", ui.ReportError("Invalid URL: '%s': %v", urlStr, err)
-	}
-
 	cloneURL := urlStr
 	path := ""
 	tag := version
@@ -79,8 +73,8 @@ func DownloadGit(ctx context.Context, dir string, urlStr string, version string,
 	// If the url's host is 'path.toit.io', then we know that the URL's path
 	// should be used as file path.
 	// Otherwise we assume it's a https-URL.
-	if u.Host == "path.toit.io" {
-		cloneURL = u.Path
+	if strings.HasPrefix(urlStr, "path.toit.io/") {
+		cloneURL = strings.TrimPrefix(urlStr, "path.toit.io/")
 		path = urlStr
 	} else {
 		cloneURL, path = decomposePkgURL(urlStr)

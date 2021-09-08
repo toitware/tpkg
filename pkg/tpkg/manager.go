@@ -131,7 +131,7 @@ func (m *ProjectPkgManager) downloadLockFilePackages(ctx context.Context, lf *Lo
 	encounteredError := false
 	for pkgID, pe := range lf.Packages {
 		if pe.Path == "" {
-			if err := m.download(ctx, pe.URL, pe.Version, pe.Hash); err != nil {
+			if err := m.download(ctx, pe.URL.ToURL(), pe.Version, pe.Hash); err != nil {
 				return err
 			}
 			continue
@@ -461,7 +461,7 @@ func (m *ProjectPkgManager) downloadAndUpdateLock(ctx context.Context, spec *Spe
 		for _, lockPkg := range oldLock.Packages {
 			if lockPkg.URL != "" {
 				preferred = append(preferred, versionedURL{
-					URL:     lockPkg.URL,
+					URL:     lockPkg.URL.ToURL(),
 					Version: lockPkg.Version,
 				})
 			}
@@ -521,7 +521,7 @@ func (m *ProjectPkgManager) CleanPackages() error {
 	// false: this is a path that needs to be keep, but we must recurse.
 	toKeep := map[string]bool{}
 	for _, pkg := range lf.Packages {
-		pkgPath, err := m.cache.FindPkg(rootPath, pkg.URL, pkg.Version)
+		pkgPath, err := m.cache.FindPkg(rootPath, pkg.URL.ToURL(), pkg.Version)
 		if err != nil {
 			return err
 		}
