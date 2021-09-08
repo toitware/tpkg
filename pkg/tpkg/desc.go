@@ -255,10 +255,10 @@ func extractDescriptionFromReadmeLines(lines []string, verbose func(string, ...i
 	descriptionLines := []string{}
 	for ; index < len(lines); index++ {
 		line := lines[index]
+		trimmed := strings.TrimSpace(line)
 		if line == "" {
 			break
 		}
-		trimmed := strings.TrimSpace(line)
 		descriptionLines = append(descriptionLines, trimmed)
 	}
 	description := strings.Join(descriptionLines, " ")
@@ -357,6 +357,8 @@ func scrapeDescriptionAt(path string, allowsLocalDeps AllowLocalDepsFlag, ui UI,
 			}
 			readme = string(readmeBytes)
 		}
+		// Just in case we get a Windows file in, replace the newlines.
+		readme = strings.ReplaceAll(readme, "\r\n", "\n")
 		lines := strings.Split(readme, "\n")
 		if desc.Name == "" {
 			name := extractNameFromReadmeLines(lines, verbose)
