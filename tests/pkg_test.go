@@ -991,9 +991,11 @@ func test_toitPkg(t *tedi.T) {
 		})
 		// Delete the registry cache.
 		escapedRegistry := filepath.FromSlash(string(path.ToEscapedURLPath(filepath.ToSlash(regPath))))
+		println(escapedRegistry)
 		err := os.RemoveAll(filepath.Join(pt.registryCacheDir, escapedRegistry))
 		assert.NoError(t, err)
 		escapedPkgPath := pt.computePathInCache(pt.dir, "", "")
+		println(escapedPkgPath)
 		err = os.RemoveAll(filepath.Join(pt.pkgCacheDir, escapedPkgPath))
 		assert.NoError(t, err)
 
