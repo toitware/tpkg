@@ -1301,6 +1301,11 @@ func test_toitPkg(t *tedi.T) {
 		err := os.Mkdir(nestedDir, 0700)
 		assert.NoError(t, err)
 		pt.overwriteRunDir = nestedDir
+		// Remove all single-quotes from the gold file.
+		// The output of this test is non-deterministic depending on the path in which
+		// the test is run. Sometimes arguments are quoted, sometimes they aren't.
+		// For simplicity just remove the quotes all the time.
+		pt.goldRepls["'"] = ""
 		pt.GoldToit("post", [][]string{
 			{"pkg", "install", "github.com/toitware/toit-morse"},
 		})
