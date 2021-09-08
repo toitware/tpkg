@@ -993,7 +993,7 @@ func test_toitPkg(t *tedi.T) {
 		escapedRegistry := filepath.FromSlash(string(path.ToEscapedURLPath(filepath.ToSlash(regPath))))
 		err := os.RemoveAll(filepath.Join(pt.registryCacheDir, escapedRegistry))
 		assert.NoError(t, err)
-		escapedPkgPath := pt.computePathInCache(regPath, "", "")
+		escapedPkgPath := pt.computePathInCache(pt.dir, "", "")
 		err = os.RemoveAll(filepath.Join(pt.pkgCacheDir, escapedPkgPath))
 		assert.NoError(t, err)
 
