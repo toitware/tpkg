@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/toitware/tpkg/pkg/path"
+	"github.com/toitware/tpkg/pkg/compiler"
 )
 
 func Test_OptimizePkgIDs(t *testing.T) {
@@ -24,7 +24,7 @@ func Test_OptimizePkgIDs(t *testing.T) {
 
 		lc.Packages = map[string]PackageEntry{
 			"pkg1": {
-				URL:     path.ToEscapedURLPath(projectURL),
+				URL:     compiler.ToURIPath(projectURL),
 				Version: projectVersion,
 				Prefixes: PrefixMap{
 					"pre1": "pkg1",
@@ -34,15 +34,15 @@ func Test_OptimizePkgIDs(t *testing.T) {
 				},
 			},
 			"pkg2": {
-				URL:     path.ToEscapedURLPath(project2URL),
+				URL:     compiler.ToURIPath(project2URL),
 				Version: project2Version,
 			},
 			"pkg3": {
-				URL:     path.ToEscapedURLPath(project3URL),
+				URL:     compiler.ToURIPath(project3URL),
 				Version: project3Version,
 			},
 			"other": {
-				Path: path.ToCompilerPath(otherPath),
+				Path: compiler.ToPath(otherPath),
 			},
 		}
 		lc.Prefixes = PrefixMap{
@@ -73,28 +73,28 @@ func Test_OptimizePkgIDs(t *testing.T) {
 		entry, ok := lc.Packages["project"]
 		checkPrefixes(entry.Prefixes)
 		assert.True(t, ok)
-		assert.Equal(t, "", entry.Path.ToLocal())
-		assert.Equal(t, projectURL, entry.URL.ToURL())
+		assert.Equal(t, "", entry.Path.FilePath())
+		assert.Equal(t, projectURL, entry.URL.URL())
 		assert.Equal(t, projectVersion, entry.Version)
 
 		entry, ok = lc.Packages["project2"]
 		assert.True(t, ok)
 		assert.Nil(t, entry.Prefixes)
-		assert.Equal(t, "", entry.Path.ToLocal())
-		assert.Equal(t, project2URL, entry.URL.ToURL())
+		assert.Equal(t, "", entry.Path.FilePath())
+		assert.Equal(t, project2URL, entry.URL.URL())
 		assert.Equal(t, project2Version, entry.Version)
 
 		entry, ok = lc.Packages["project3"]
 		assert.True(t, ok)
 		assert.Nil(t, entry.Prefixes)
-		assert.Equal(t, "", entry.Path.ToLocal())
-		assert.Equal(t, project3URL, entry.URL.ToURL())
+		assert.Equal(t, "", entry.Path.FilePath())
+		assert.Equal(t, project3URL, entry.URL.URL())
 		assert.Equal(t, project3Version, entry.Version)
 
 		entry, ok = lc.Packages["other"]
 		assert.True(t, ok)
 		assert.Nil(t, entry.Prefixes)
-		assert.Equal(t, otherPath, entry.Path.ToLocal())
+		assert.Equal(t, otherPath, entry.Path.FilePath())
 
 		checkPrefixes(lc.Prefixes)
 	})
@@ -137,7 +137,7 @@ func Test_OptimizePkgIDs(t *testing.T) {
 			url := parts[0]
 			version := parts[1]
 			lc.Packages[fmt.Sprintf("pkg%d", i)] = PackageEntry{
-				URL:     path.ToEscapedURLPath(url),
+				URL:     compiler.ToURIPath(url),
 				Version: version,
 			}
 			i++
@@ -153,8 +153,8 @@ func Test_OptimizePkgIDs(t *testing.T) {
 			version := parts[1]
 			entry, ok := lc.Packages[expectedID]
 			assert.True(t, ok)
-			assert.Equal(t, "", entry.Path.ToLocal())
-			assert.Equal(t, url, entry.URL.ToURL())
+			assert.Equal(t, "", entry.Path.FilePath())
+			assert.Equal(t, url, entry.URL.URL())
 			assert.Equal(t, version, entry.Version)
 		}
 	})
@@ -184,7 +184,7 @@ func Test_OptimizePkgIDs(t *testing.T) {
 			url := parts[0]
 			version := parts[1]
 			lc.Packages[fmt.Sprintf("pkg%d", i)] = PackageEntry{
-				URL:     path.ToEscapedURLPath(url),
+				URL:     compiler.ToURIPath(url),
 				Version: version,
 			}
 			i++
@@ -207,7 +207,7 @@ func Test_OptimizePkgIDs(t *testing.T) {
 		}
 		for actualID, entry := range lc.Packages {
 			assert.Contains(t, expectedIDs, actualID)
-			urlVersion := fmt.Sprintf("%s-%s", entry.URL.ToURL(), entry.Version)
+			urlVersion := fmt.Sprintf("%s-%s", entry.URL.URL(), entry.Version)
 			assert.Contains(t, paths, urlVersion)
 			assert.NotContains(t, alreadySeen, actualID)
 			alreadySeen[actualID] = true
