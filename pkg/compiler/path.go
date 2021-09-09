@@ -73,3 +73,10 @@ func (up URIPath) URL() string {
 func (up URIPath) FilePath() string {
 	return filepath.FromSlash(string(up))
 }
+
+// FilePathToURIPath encodes a file path as a URIPath.
+// For this operation it just converts the path to slash without
+// any escaping.
+func FilePathToURIPath(p string) URIPath {
+	return ToURIPath(filepath.ToSlash(p))
+}
