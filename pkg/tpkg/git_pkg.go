@@ -12,6 +12,8 @@ import (
 	"github.com/toitware/tpkg/pkg/git"
 )
 
+const TestGitPathHost = "path.toit.local"
+
 func makeContainedReadOnly(dir string, ui UI) {
 	_ = filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if err != nil || path == dir {
@@ -70,11 +72,11 @@ func DownloadGit(ctx context.Context, dir string, urlStr string, version string,
 	}
 	checkoutDir := dir
 
-	// If the url's host is 'path.toit.io', then we know that the URL's path
+	// If the url's host is our test-host, then we know that the URL's path
 	// should be used as file path.
 	// Otherwise we assume it's a https-URL.
-	if strings.HasPrefix(urlStr, "path.toit.io/") {
-		cloneURL = filepath.FromSlash(strings.TrimPrefix(urlStr, "path.toit.io/"))
+	if strings.HasPrefix(urlStr, TestGitPathHost+"/") {
+		cloneURL = filepath.FromSlash(strings.TrimPrefix(urlStr, TestGitPathHost+"/"))
 		path = urlStr
 	} else {
 		cloneURL, path = decomposePkgURL(urlStr)

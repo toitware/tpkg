@@ -8,7 +8,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/toitware/tpkg/pkg/path"
+	"github.com/toitware/tpkg/pkg/compiler"
 )
 
 // Cache handles all package-Cache related functionality.
@@ -95,7 +95,7 @@ func (c Cache) PreferredPkgPath(projectRootPath string, url string, version stri
 // PreferredRegistryPath returns the preferred path for the given registry url.
 func (c Cache) PreferredRegistryPath(url string) string {
 	// The first cache path is the preferred location.
-	escapedURL := string(path.ToEscapedURLPath(url))
+	escapedURL := string(compiler.ToURIPath(url))
 	return filepath.Join(c.registryCachePaths[0], filepath.FromSlash(escapedURL))
 }
 

@@ -12,9 +12,9 @@ func TestMain(m *testing.M) {
 	t := tedi.New(m)
 
 	// TestLabels:
+	t.TestLabel("regression")
 	t.TestLabel("unit")
 	t.TestLabel("integration")
-	t.TestLabel("regression")
 
 	os.Exit(t.Run())
 }
