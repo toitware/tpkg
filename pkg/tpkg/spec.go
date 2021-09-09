@@ -187,7 +187,7 @@ func (s *Spec) BuildLockFile(solution Solution, cache Cache, registries Registri
 			// If we can't find the hash we just use "".
 			hash, _ := registries.hashFor(url, version)
 			result.Packages[pkgID] = PackageEntry{
-				URL:      path.ToEscapedURLPath(url),
+				URL:      compiler.ToURIPath(url),
 				Version:  version,
 				Hash:     hash,
 				Prefixes: prefixes,
@@ -392,7 +392,7 @@ func (pe PackageEntry) toSpecPackage() SpecPackage {
 		version = "^" + version
 	}
 	sp := SpecPackage{
-		URL:     pe.URL.ToURL(),
+		URL:     pe.URL.URL(),
 		Version: version,
 		Path:    pe.Path,
 	}

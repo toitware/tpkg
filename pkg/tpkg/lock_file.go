@@ -35,11 +35,11 @@ type LockFile struct {
 // If 'url' is given, then 'version' must be given as well. The entry then refers to
 // a non-local package and is found in the package cache.
 type PackageEntry struct {
-	URL      path.EscapedURLPath `yaml:"url,omitempty"`
-	Version  string        `yaml:"version,omitempty"`
-	Path     compiler.Path `yaml:"path,omitempty"`
-	Hash     string        `yaml:"hash,omitempty"`
-	Prefixes PrefixMap     `yaml:"prefixes,omitempty"`
+	URL      compiler.URIPath `yaml:"url,omitempty"`
+	Version  string           `yaml:"version,omitempty"`
+	Path     compiler.Path    `yaml:"path,omitempty"`
+	Hash     string           `yaml:"hash,omitempty"`
+	Prefixes PrefixMap        `yaml:"prefixes,omitempty"`
 }
 
 // PrefixMap has a mapping from prefix to package-id.
@@ -138,7 +138,7 @@ func (pe *PackageEntry) buildIDSegments() []string {
 		path := toValidPkgID(filepath.ToSlash(pe.Path.FilePath()))
 		return strings.Split(path, "/")
 	}
-	url := toValidPkgID(pe.URL.ToURL())
+	url := toValidPkgID(pe.URL.URL())
 	return strings.Split(url, "/")
 }
 
@@ -179,7 +179,7 @@ func (lf *LockFile) optimizePkgIDs() {
 			allSegments[oldID] = entry.buildIDSegments()
 			continue
 		}
-		url := entry.URL.ToURL()
+		url := entry.URL.URL()
 		if seen, ok := pkgURLs[url]; ok {
 			versionsOfSeen := differentVersionOf[oldID]
 			differentVersionOf[seen] = append(versionsOfSeen, oldID)
