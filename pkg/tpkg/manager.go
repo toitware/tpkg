@@ -108,7 +108,14 @@ func (m *ProjectPkgManager) download(ctx context.Context, url string, version st
 		return err
 	}
 	p := m.cache.PreferredPkgPath(projectRoot, url, version)
-	_, err = DownloadGit(ctx, p, url, version, hash, m.ui)
+	_, err = DownloadGit(ctx, DownloadGitOptions{
+		Directory:  p,
+		URL:        url,
+		Version:    version,
+		Hash:       hash,
+		UI:         m.ui,
+		NoReadOnly: false,
+	})
 
 	event := &tracking.TrackingEvent{
 		Category: "pkg",
