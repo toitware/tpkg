@@ -1,4 +1,4 @@
-package path
+package compiler
 
 import (
 	"path/filepath"
@@ -15,31 +15,27 @@ Fundamentally it requires:
 These functions must be kept in sync with the one from toitlsp.
 */
 
-type CompilerPath string
+type Path string
 
-func ToCompilerPath(path string) CompilerPath {
+func ToPath(path string) Path {
 	return toCompilerPath(path, runtime.GOOS == "windows")
 }
 
-func toCompilerPath(path string, windows bool) CompilerPath {
+func toCompilerPath(path string, windows bool) Path {
 	if !windows {
-		return CompilerPath(path)
+		return Path(path)
 	}
 	if filepath.IsAbs(path) {
 		path = "/" + path
 	}
-	return CompilerPath(filepath.ToSlash(path))
+	return Path(filepath.ToSlash(path))
 }
 
-func (path CompilerPath) ToLocal() string {
-	return FromCompilerPath(path)
-}
-
-func FromCompilerPath(path CompilerPath) string {
+func (path Path) FilePath() string {
 	return fromCompilerPath(path, runtime.GOOS == "windows")
 }
 
-func fromCompilerPath(path CompilerPath, onWindows bool) string {
+func fromCompilerPath(path Path, onWindows bool) string {
 	p := string(path)
 	if !onWindows {
 		return p
