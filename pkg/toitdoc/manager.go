@@ -131,11 +131,11 @@ func (l *loader) start(desc *tpkg.Desc, mgr *manager) (doc *toitdoc, err error) 
 	if err != nil {
 		return nil, err
 	}
-	// defer func() {
-	// 	if err != nil {
-	// 		os.RemoveAll(tmpDir)
-	// 	}
-	// }()
+	defer func() {
+		if err != nil {
+			os.RemoveAll(tmpDir)
+		}
+	}()
 
 	repoDir := filepath.Join(tmpDir, "repo")
 	if _, err := tpkg.DownloadGit(l.ctx, tpkg.DownloadGitOptions{
