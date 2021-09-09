@@ -11,6 +11,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/toitware/tpkg/pkg/compiler"
 	"github.com/toitware/tpkg/pkg/set"
 )
 
@@ -117,7 +118,7 @@ dependencies:
 			dep = spec.Deps["good_path_override"]
 			assert.Equal(t, "github.com/foo/bar", dep.URL)
 			assert.Equal(t, "^2.0.0", dep.Version)
-			assert.Equal(t, "../foobar", dep.Path)
+			assert.Equal(t, "../foobar", dep.Path.FilePath())
 		})
 
 		t.Run("version no url", func(t *testing.T) {
@@ -256,7 +257,7 @@ func Test_VisitLocalDeps(t *testing.T) {
 			if counter == 0 {
 				assert.Equal(t, "", pkgPath)
 				assert.Len(t, depSpec.Deps, 1)
-				assert.Equal(t, "sub", depSpec.Deps["prefix0"].Path)
+				assert.Equal(t, "sub", depSpec.Deps["prefix0"].Path.FilePath())
 			} else if counter == 1 {
 				assert.Equal(t, "sub", pkgPath)
 				assert.Len(t, depSpec.Deps, 1)
@@ -274,12 +275,12 @@ func Test_VisitLocalDeps(t *testing.T) {
 		tsc := newTestSpecCreator(t, &ui)
 		spec := tsc.createLocal("entry", []SpecPackage{
 			{
-				Path: filepath.Join("..", "dotdot"),
+				Path: compiler.ToPath(filepath.Join("..", "dotdot")),
 			},
 		})
 		tsc.createLocal("dotdot", []SpecPackage{
 			{
-				Path: filepath.Join(tsc.dir, "abs"),
+				Path: compiler.ToPath(filepath.Join(tsc.dir, "abs")),
 			},
 		})
 		tsc.createLocal("abs", []SpecPackage{
@@ -433,14 +434,14 @@ func Test_SpecToLock(t *testing.T) {
 		require.True(t, ok)
 		pkgEntry, ok := lf.Packages[pkgID]
 		require.True(t, ok)
-		assert.Equal(t, "local_path", pkgEntry.Path)
+		assert.Equal(t, "local_path", pkgEntry.Path.FilePath())
 		assert.Equal(t, 0, len(pkgEntry.Prefixes))
 
 		pkgID, ok = lf.Prefixes["prefix1"]
 		require.True(t, ok)
 		pkgEntry, ok = lf.Packages[pkgID]
 		require.True(t, ok)
-		assert.Equal(t, "local_path2", pkgEntry.Path)
+		assert.Equal(t, "local_path2", pkgEntry.Path.FilePath())
 		assert.Equal(t, 0, len(pkgEntry.Prefixes))
 	})
 	t.Run("Constraints", func(t *testing.T) {
@@ -481,7 +482,7 @@ func Test_SpecToLock(t *testing.T) {
 		require.True(t, ok)
 		pkgEntry, ok := lf.Packages[pkgID]
 		require.True(t, ok)
-		assert.Equal(t, "", pkgEntry.Path)
+		assert.Equal(t, "", pkgEntry.Path.FilePath())
 		assert.Equal(t, "simple-url", pkgEntry.URL)
 		assert.Equal(t, "1.0.0", pkgEntry.Version)
 		assert.Equal(t, 1, len(pkgEntry.Prefixes))
@@ -496,7 +497,7 @@ func Test_SpecToLock(t *testing.T) {
 		require.True(t, ok)
 		pkgEntry, ok = lf.Packages[pkgID]
 		require.True(t, ok)
-		assert.Equal(t, "", pkgEntry.Path)
+		assert.Equal(t, "", pkgEntry.Path.FilePath())
 		assert.Equal(t, "simple-url2", pkgEntry.URL)
 		assert.Equal(t, "1.2.5", pkgEntry.Version)
 		assert.Equal(t, 0, len(pkgEntry.Prefixes))
@@ -505,7 +506,7 @@ func Test_SpecToLock(t *testing.T) {
 		require.True(t, ok)
 		pkgEntry, ok = lf.Packages[pkgID]
 		require.True(t, ok)
-		assert.Equal(t, "", pkgEntry.Path)
+		assert.Equal(t, "", pkgEntry.Path.FilePath())
 		assert.Equal(t, "simple-url2", pkgEntry.URL)
 		assert.Equal(t, "2.3.4", pkgEntry.Version)
 		assert.Equal(t, 0, len(pkgEntry.Prefixes))

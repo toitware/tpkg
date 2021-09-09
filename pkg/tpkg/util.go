@@ -6,7 +6,6 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-
 )
 
 func isDirectory(p string) (bool, error) {
