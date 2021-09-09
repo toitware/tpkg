@@ -7,15 +7,15 @@ prefixes:
   pre2: bar_git
 packages:
   bar_git:
-    url: <TEST>/bar_git
+    url: <GIT_URL>/bar_git
     version: 2.0.1
     prefixes:
       foo: foo_git
       sub: sub_git
   foo_git:
-    url: <TEST>/foo_git
+    url: <GIT_URL>/foo_git
     version: 1.2.3
   sub_git:
-    url: <TEST>/sub_git
+    url: <GIT_URL>/sub_git
     version: 3.1.4
 

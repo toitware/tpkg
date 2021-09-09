@@ -28,6 +28,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/toitware/tpkg/pkg/compiler"
+	"github.com/toitware/tpkg/pkg/tpkg"
 )
 
 const (
@@ -80,6 +81,18 @@ const updateGoldEnv string = "UPDATE_PKG_GOLD"
 // Every asset file will have this pattern replaced.
 const testDirPattern string = "<[*TEST_DIR*]>"
 
+// The pattern that will be replaced with the test git url dir.
+// Every asset file will have this pattern replaced.
+// These URLs are recognized by the tpkg-tool and will treat local paths
+// as if they were URLs.
+const testDirGitPattern string = "<[*TEST_GIT_DIR*]>"
+
+// The pattern that will be replaced with the escaped test git url dir.
+// Every asset file will have this pattern replaced.
+// These URLs are recognized by the tpkg-tool and will treat local paths
+// as if they were URLs.
+const testDirGitEscapePattern string = "<[*TEST_GIT_DIR_ESCAPE*]>"
+
 // The name of the directory that is used for cached entries.
 const cacheDir string = "CACHE"
 
@@ -117,6 +130,17 @@ func computeAssetDir(t *tedi.T) string {
 	nameParts := strings.Split(t.Name(), "/")
 	return filepath.Join(append([]string{"assets", "pkg"}, nameParts[1:]...)...)
 
+}
+
+func computeGitDir(p string) string {
+	return tpkg.TestGitPathHost + "/" + filepath.ToSlash(p)
+}
+
+func (pt PkgTest) computePathInCache(pkgDir string, version string, p string) string {
+	pkgURL := computeGitDir(filepath.Join(pt.dir, pkgDir))
+	escaped := compiler.ToURIPath(pkgURL)
+	pkgPath := escaped.FilePath()
+	return filepath.Join(pt.pkgDir, pkgPath, version, p)
 }
 
 func unzip(p string, dir string) error {
@@ -255,6 +279,10 @@ func copyRec(t *tedi.T, testDir string, sourceDir string, targetDir string) {
 		}
 		testDirCompilerPath := compiler.ToPath(testDir)
 		data = bytes.ReplaceAll(data, []byte(testDirPattern), []byte(testDirCompilerPath))
+		testDirGitURL := computeGitDir(testDir)
+		data = bytes.ReplaceAll(data, []byte(testDirGitPattern), []byte(testDirGitURL))
+		escapedTestDirGitURL := string(compiler.ToURIPath(testDirGitURL))
+		data = bytes.ReplaceAll(data, []byte(testDirGitEscapePattern), []byte(escapedTestDirGitURL))
 		return ioutil.WriteFile(target, data, info.Mode().Perm())
 	})
 	require.NoError(t, err)
@@ -418,6 +446,13 @@ func (pt PkgTest) ToitNegative(args ...string) string {
 }
 
 func (pt PkgTest) normalizeGold(gold string) string {
+	gitDir := computeGitDir(pt.dir)
+	gold = strings.ReplaceAll(gold, gitDir, "<GIT_URL>")
+	// When showing lock-file entries we might also see escaped git entries.
+	// We can't use a different replacement, as the escaping is dependent on the OS.
+	escapedGitURL := string(compiler.ToURIPath(gitDir))
+	gold = strings.ReplaceAll(gold, escapedGitURL, "<GIT_URL>")
+	gold = strings.ReplaceAll(gold, computeGitDir(pt.dir), "<GIT_URL>")
 	for pattern, replacement := range pt.goldRepls {
 		gold = strings.ReplaceAll(gold, pattern, replacement)
 	}
@@ -744,7 +779,7 @@ func test_toitPkg(t *tedi.T) {
 		readmePath := filepath.Join(pt.pkgDir, "README.md")
 		assert.FileExists(t, readmePath)
 
-		fooFile := filepath.Join(pt.pkgDir, pt.dir, "foo_git", "1.2.3", "package.yaml")
+		fooFile := pt.computePathInCache("foo_git", "1.2.3", "package.yaml")
 		fooStat, err := os.Stat(fooFile)
 		assert.NoError(t, err)
 		assert.Contains(t, fooStat.Mode().String(), "r")
@@ -771,18 +806,16 @@ func test_toitPkg(t *tedi.T) {
 			{"exec", "main.toit"},
 		})
 
-		fooURL := filepath.Join(pt.dir, "foo_git")
 		fooVersion := "1.2.3"
-		fooPath := filepath.Join(pt.pkgDir, fooURL, fooVersion)
+		fooPath := pt.computePathInCache("foo_git", fooVersion, "")
 		info, err := os.Stat(fooPath)
 		require.NoError(t, err)
 		require.True(t, info.IsDir())
 		err = os.RemoveAll(fooPath)
 		require.NoError(t, err)
 
-		barURL := filepath.Join(pt.dir, "bar_git")
 		barVersion := "2.0.1"
-		barPath := filepath.Join(pt.pkgDir, barURL, barVersion)
+		barPath := pt.computePathInCache("bar_git", barVersion, "")
 		info, err = os.Stat(barPath)
 		require.NoError(t, err)
 		require.True(t, info.IsDir())
@@ -867,11 +900,11 @@ func test_toitPkg(t *tedi.T) {
 			{"// Ambiguous pkg1"},
 			{"pkg", "install", "pkg1"},
 			{"// Disambiguate by giving full URL."},
-			{"pkg", "install", pt.dir + "/git_pkgs/pkg1"},
+			{"pkg", "install", computeGitDir(filepath.Join(pt.dir, "git_pkgs", "pkg1"))},
 			{"// Ambiguous pkg2"},
 			{"pkg", "search", "--verbose", "pkg2"},
 			{"// Disambiguate by giving full URL even though that's the suffix of the longer one."},
-			{"pkg", "install", pt.dir + "/git_pkgs/pkg2"},
+			{"pkg", "install", computeGitDir(filepath.Join(pt.dir, "git_pkgs", "pkg2"))},
 			{"// Ambiguous 'ambiguous'"},
 			{"pkg", "search", "--verbose", "ambiguous"},
 			{"// Need to add more segments to disambiguate."},
@@ -1316,9 +1349,9 @@ func test_toitPkg(t *tedi.T) {
 			{"pkg", "install", "pkg1"},
 			{"pkg", "install", "pkg2"},
 		})
-		pkg1Path := filepath.Join(pt.dir, pkgDir, pt.dir, "git_pkgs", "pkg1", "1.0.0")
-		pkg2Path := filepath.Join(pt.dir, pkgDir, pt.dir, "git_pkgs", "pkg2", "2.4.2")
-		pkg3Path := filepath.Join(pt.dir, pkgDir, pt.dir, "git_pkgs", "pkg3", "3.1.2")
+		pkg1Path := pt.computePathInCache(filepath.Join("git_pkgs", "pkg1"), "1.0.0", "")
+		pkg2Path := pt.computePathInCache(filepath.Join("git_pkgs", "pkg2"), "2.4.2", "")
+		pkg3Path := pt.computePathInCache(filepath.Join("git_pkgs", "pkg3"), "3.1.2", "")
 		assert.DirExists(t, pkg1Path)
 		assert.DirExists(t, pkg2Path)
 		assert.DirExists(t, pkg3Path)

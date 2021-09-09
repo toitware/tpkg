@@ -483,7 +483,7 @@ func Test_SpecToLock(t *testing.T) {
 		pkgEntry, ok := lf.Packages[pkgID]
 		require.True(t, ok)
 		assert.Equal(t, "", pkgEntry.Path.FilePath())
-		assert.Equal(t, "simple-url", pkgEntry.URL)
+		assert.Equal(t, "simple-url", pkgEntry.URL.URL())
 		assert.Equal(t, "1.0.0", pkgEntry.Version)
 		assert.Equal(t, 1, len(pkgEntry.Prefixes))
 		pkgID, ok = pkgEntry.Prefixes["prefix0"]
@@ -498,7 +498,7 @@ func Test_SpecToLock(t *testing.T) {
 		pkgEntry, ok = lf.Packages[pkgID]
 		require.True(t, ok)
 		assert.Equal(t, "", pkgEntry.Path.FilePath())
-		assert.Equal(t, "simple-url2", pkgEntry.URL)
+		assert.Equal(t, "simple-url2", pkgEntry.URL.URL())
 		assert.Equal(t, "1.2.5", pkgEntry.Version)
 		assert.Equal(t, 0, len(pkgEntry.Prefixes))
 
@@ -507,7 +507,7 @@ func Test_SpecToLock(t *testing.T) {
 		pkgEntry, ok = lf.Packages[pkgID]
 		require.True(t, ok)
 		assert.Equal(t, "", pkgEntry.Path.FilePath())
-		assert.Equal(t, "simple-url2", pkgEntry.URL)
+		assert.Equal(t, "simple-url2", pkgEntry.URL.URL())
 		assert.Equal(t, "2.3.4", pkgEntry.Version)
 		assert.Equal(t, 0, len(pkgEntry.Prefixes))
 	})

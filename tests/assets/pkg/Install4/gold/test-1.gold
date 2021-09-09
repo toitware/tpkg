@@ -41,7 +41,7 @@ Exit Code: 0
 ===================
 pkg install pkg4 --prefix=pkg4_pre
 Exit Code: 0
-Info: Package '<TEST>/git_pkgs/pkg4@4.9.9' installed with prefix 'pkg4_pre'
+Info: Package '<GIT_URL>/git_pkgs/pkg4@4.9.9' installed with prefix 'pkg4_pre'
 ===================
 // main.toit should work now.
 ===================
@@ -55,7 +55,7 @@ Info: Package '<TEST>/git_pkgs/pkg4@4.9.9' installed with prefix 'pkg4_pre'
 ===================
 pkg install pkg1
 Exit Code: 0
-Info: Package '<TEST>/git_pkgs/pkg1@1.0.0' installed with prefix 'pkg1'
+Info: Package '<GIT_URL>/git_pkgs/pkg1@1.0.0' installed with prefix 'pkg1'
 ===================
 // main2.toit should also work now.
 ===================

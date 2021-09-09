@@ -3,9 +3,10 @@
 package tpkg
 
 import (
-	"net/url"
 	"os"
 	"path/filepath"
+
+	"github.com/toitware/tpkg/pkg/compiler"
 )
 
 func isDirectory(p string) (bool, error) {
@@ -32,11 +33,6 @@ func URLVersionToRelPath(url string, version string) string {
 	return filepath.Join(urlToRelPath(url), version)
 }
 
-func urlToRelPath(str string) string {
-	u, err := url.Parse(str)
-	if err != nil {
-		// Assume that the urlString is just a normal path.
-		return filepath.FromSlash(str)
-	}
-	return filepath.Join(u.Host, filepath.FromSlash(u.Path))
+func urlToRelPath(url string) string {
+	return compiler.ToURIPath(url).FilePath()
 }
