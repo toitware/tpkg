@@ -755,7 +755,7 @@ func (h *pkgHandler) pkgRegistryAdd(cmd *cobra.Command, args []string) error {
 
 func (h *pkgHandler) pkgRegistryRemove(cmd *cobra.Command, args []string) error {
 	name := args[0]
-	configs, err := h.cfg.GetRegistryConfigs()
+	configs, err := h.getRegistryConfigsOrDefault()
 	if err != nil {
 		return err
 	}
