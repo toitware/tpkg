@@ -98,7 +98,7 @@ pipeline {
                                 TOITC_PATH="${env.WORKSPACE}/test-tools/toitc"
                             }
                             steps {
-                                sh "tedi test -v -cover -race -bench=. ./tests/... 2>&1 | tee tests.out"
+                                sh "TEST_FLAGS='-race -bench=.' make test 2>&1 | tee tests.out"
                                 sh "cat tests.out | go-junit-report > tests.xml"
                             }
                             post {
@@ -120,6 +120,7 @@ pipeline {
                                 bat "mkdir test-tools"
                                 bat "tar x -zf windows_sdk.tgz -C test-tools"
                                 bat "go get -u github.com/jstemmer/go-junit-report"
+                                bat "go get -u github.com/jstroem/tedi/cmd/tedi"
                                 unstash "win_tpkg"
                             }
                         }
@@ -131,16 +132,14 @@ pipeline {
                                 TOITC_PATH="${env.WORKSPACE}\\test-tools\\toitc.exe"
                             }
                             steps {
-                                bat "dir"
-                                // TODO(florian): enable Windows tests.
-                                // bat "tedi test -v ./tests/..."
-                                // bat "tedi test -v -cover -race -bench=. ./tests/... 2>&1 | go-junit-report > tests.xml"
+                                bat "tedi test -cover -bench=. -v ./cmd/... 2>&1 | go-junit-report > ../../sdk_test.xml"
                             }
-                            // post {
-                            //     always {
-                            //        junit "tests.xml"
-                            //    }
-                            // }
+                            post {
+                                always {
+                                    junit "sdk_test.xml"
+                                    cleanWs(cleanWhenNotBuilt: false, notFailBuild: true)
+                                }
+                            }
                         }
                     }
                 }
