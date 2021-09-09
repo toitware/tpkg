@@ -12,9 +12,9 @@ func TestMain(m *testing.M) {
 	t := tedi.New(m)
 
 	// TestLabels:
-	t.TestLabel("unit")
 	t.TestLabel("integration")
 	t.TestLabel("regression")
+	t.TestLabel("unit")
 
 	// Fixtures:
 	t.Fixture(fix_gomockController)

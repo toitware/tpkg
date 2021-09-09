@@ -27,7 +27,8 @@ import (
 	"github.com/pmezard/go-difflib/difflib"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/toitware/tpkg/pkg/path"
+	"github.com/toitware/tpkg/pkg/compiler"
+	"github.com/toitware/tpkg/pkg/tpkg"
 )
 
 const (
@@ -132,13 +133,13 @@ func computeAssetDir(t *tedi.T) string {
 }
 
 func computeGitDir(p string) string {
-	return "path.toit.io/" + filepath.ToSlash(p)
+	return tpkg.TestGitPathHost + "/" + filepath.ToSlash(p)
 }
 
 func (pt PkgTest) computePathInCache(pkgDir string, version string, p string) string {
 	pkgURL := computeGitDir(filepath.Join(pt.dir, pkgDir))
-	escaped := path.ToEscapedURLPath(pkgURL)
-	pkgPath := filepath.FromSlash(string(escaped))
+	escaped := compiler.ToURIPath(pkgURL)
+	pkgPath := escaped.FilePath()
 	return filepath.Join(pt.pkgDir, pkgPath, version, p)
 }
 
@@ -276,11 +277,11 @@ func copyRec(t *tedi.T, testDir string, sourceDir string, targetDir string) {
 		if err != nil {
 			return err
 		}
-		testDirCompilerPath := path.ToCompilerPath(testDir)
+		testDirCompilerPath := compiler.ToPath(testDir)
 		data = bytes.ReplaceAll(data, []byte(testDirPattern), []byte(testDirCompilerPath))
 		testDirGitURL := computeGitDir(testDir)
 		data = bytes.ReplaceAll(data, []byte(testDirGitPattern), []byte(testDirGitURL))
-		escapedTestDirGitURL := string(path.ToEscapedURLPath(testDirGitURL))
+		escapedTestDirGitURL := string(compiler.ToURIPath(testDirGitURL))
 		data = bytes.ReplaceAll(data, []byte(testDirGitEscapePattern), []byte(escapedTestDirGitURL))
 		return ioutil.WriteFile(target, data, info.Mode().Perm())
 	})
@@ -449,7 +450,7 @@ func (pt PkgTest) normalizeGold(gold string) string {
 	gold = strings.ReplaceAll(gold, gitDir, "<GIT_URL>")
 	// When showing lock-file entries we might also see escaped git entries.
 	// We can't use a different replacement, as the escaping is dependent on the OS.
-	escapedGitURL := string(path.ToEscapedURLPath(gitDir))
+	escapedGitURL := string(compiler.ToURIPath(gitDir))
 	gold = strings.ReplaceAll(gold, escapedGitURL, "<GIT_URL>")
 	gold = strings.ReplaceAll(gold, computeGitDir(pt.dir), "<GIT_URL>")
 	for pattern, replacement := range pt.goldRepls {
@@ -458,7 +459,7 @@ func (pt PkgTest) normalizeGold(gold string) string {
 	if runtime.GOOS == "windows" {
 		gold = strings.ReplaceAll(gold, "\r\n", "\n")
 		gold = strings.ReplaceAll(gold, "\\", "/")
-		testDirCompilerPath := string(path.ToCompilerPath(pt.dir))
+		testDirCompilerPath := string(compiler.ToPath(pt.dir))
 		gold = strings.ReplaceAll(gold, testDirCompilerPath, "<TEST>")
 	}
 	errorUnderline := regexp.MustCompile(`[\^][~]+`)
@@ -604,7 +605,7 @@ func test_toitPkg(t *tedi.T) {
 	t.Run("GitTagDir", func(pt PkgTest) {
 		// Just a simple check that our test-setup function works.
 		gitDir := filepath.Join(pt.dir, "git_dir")
-		dirInFiles := string(path.ToCompilerPath(pt.dir + "/git_dir"))
+		dirInFiles := string(compiler.ToPath(pt.dir + "/git_dir"))
 		repository, err := git.PlainOpen(gitDir)
 		require.NoError(t, err)
 		wt, err := repository.Worktree()

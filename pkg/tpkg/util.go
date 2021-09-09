@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/toitware/tpkg/pkg/path"
+	"github.com/toitware/tpkg/pkg/compiler"
 )
 
 func isDirectory(p string) (bool, error) {
@@ -34,6 +34,5 @@ func URLVersionToRelPath(url string, version string) string {
 }
 
 func urlToRelPath(url string) string {
-	escaped := string(path.ToEscapedURLPath(url))
-	return filepath.FromSlash(escaped)
+	return compiler.ToURIPath(url).FilePath()
 }
