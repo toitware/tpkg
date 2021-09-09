@@ -2,7 +2,6 @@ package toitdoc
 
 import (
 	"context"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -151,7 +150,6 @@ func (l *loader) start(desc *tpkg.Desc, mgr *manager) (doc *toitdoc, err error) 
 
 	projectManager := tpkg.NewProjectPkgManager(mgr.manager, projectPaths)
 	if err := projectManager.Install(l.ctx, false); err != nil {
-		fmt.Println("Install failed", err)
 		return nil, err
 	}
 
