@@ -8,7 +8,7 @@ pipeline {
 
     environment {
         // See "Upload" step on the buildbot to find a newer version.
-        TOIT_FIRMWARE_VERSION = "v1.3.0-pre.29+ed090adcb"
+        TOIT_FIRMWARE_VERSION = "v1.3.0-pre.38+1f3c248cd"
     }
 
     stages {
