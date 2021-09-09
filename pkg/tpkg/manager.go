@@ -131,13 +131,13 @@ func (m *ProjectPkgManager) downloadLockFilePackages(ctx context.Context, lf *Lo
 	encounteredError := false
 	for pkgID, pe := range lf.Packages {
 		if pe.Path == "" {
-			if err := m.download(ctx, pe.URL.ToURL(), pe.Version, pe.Hash); err != nil {
+			if err := m.download(ctx, pe.URL.URL(), pe.Version, pe.Hash); err != nil {
 				return err
 			}
 			continue
 		}
 		// Just check that the path is actually there and is a directory.
-		local := pe.Path.ToLocal()
+		local := pe.Path.FilePath()
 		isDir, err := isDirectory(local)
 		if !isDir {
 			m.ui.ReportError("Target of '%s' not a directory: '%s'", pkgID, local)
@@ -461,7 +461,7 @@ func (m *ProjectPkgManager) downloadAndUpdateLock(ctx context.Context, spec *Spe
 		for _, lockPkg := range oldLock.Packages {
 			if lockPkg.URL != "" {
 				preferred = append(preferred, versionedURL{
-					URL:     lockPkg.URL.ToURL(),
+					URL:     lockPkg.URL.URL(),
 					Version: lockPkg.Version,
 				})
 			}
@@ -521,7 +521,7 @@ func (m *ProjectPkgManager) CleanPackages() error {
 	// false: this is a path that needs to be keep, but we must recurse.
 	toKeep := map[string]bool{}
 	for _, pkg := range lf.Packages {
-		pkgPath, err := m.cache.FindPkg(rootPath, pkg.URL.ToURL(), pkg.Version)
+		pkgPath, err := m.cache.FindPkg(rootPath, pkg.URL.URL(), pkg.Version)
 		if err != nil {
 			return err
 		}
