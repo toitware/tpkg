@@ -454,7 +454,13 @@ func ScrapeDescriptionGit(ctx context.Context, url string, v string, allowsLocal
 
 	verbose("Cloning '%s' into '%s'", httpURL, dir)
 
-	downloadedHash, err := DownloadGit(ctx, dir, url, v, "", ui)
+	downloadedHash, err := DownloadGit(ctx, DownloadGitOptions{
+		Directory: dir,
+		URL:       url,
+		Version:   v,
+		Hash:      "",
+		UI:        ui,
+	})
 	if err != nil {
 		return nil, err
 	}
