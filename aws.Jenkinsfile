@@ -132,7 +132,7 @@ pipeline {
                                 TOITC_PATH="${env.WORKSPACE}\\test-tools\\toitc.exe"
                             }
                             steps {
-                                bat "tedi test -cover -bench=. -v ./cmd/... 2>&1 | go-junit-report > ../../sdk_test.xml"
+                                bat "tedi test -cover -bench=. -v ./cmd/... 2>&1 | go-junit-report > sdk_test.xml"
                             }
                             post {
                                 always {
