@@ -7,7 +7,7 @@ import (
 )
 
 func provideTpkgRegistry(cfg *config.Config, cache tpkg.Cache) (tpkg.Registry, error) {
-	return tpkg.NewGitRegistry("registry", cfg.Registry.Url, cache)
+	return tpkg.NewSSHGitRegistry("registry", cfg.Registry.Url, cache, cfg.Registry.SSHKeyFile, cfg.Registry.Branch)
 }
 
 func provideManager(registry tpkg.Registry, cache tpkg.Cache, ui tpkg.UI) *tpkg.Manager {

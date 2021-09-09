@@ -24,12 +24,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func provideRegistry(config *config.Config, cache tpkg.Cache, logger *zap.Logger, ui tpkg.UI) (*registry, Registry, error) {
-	r, err := tpkg.NewSSHGitRegistry("registry", config.Registry.Url, cache, config.Registry.SSHKeyFile, config.Registry.Branch)
-	if err != nil {
-		return nil, nil, err
-	}
-
+func provideRegistry(config *config.Config, cache tpkg.Cache, logger *zap.Logger, ui tpkg.UI, r tpkg.Registry) (*registry, Registry, error) {
 	if _, err := os.Stat(config.Registry.SSHKeyFile); os.IsNotExist(err) {
 		return nil, nil, fmt.Errorf("Failed to load SSH key from path: '%s'", config.Registry.SSHKeyFile)
 	}

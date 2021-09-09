@@ -138,7 +138,14 @@ func (l *loader) start(desc *tpkg.Desc, mgr *manager) (doc *toitdoc, err error) 
 	}()
 
 	repoDir := filepath.Join(tmpDir, "repo")
-	if _, err := tpkg.DownloadGit(l.ctx, repoDir, desc.URL, desc.Version, desc.Hash, mgr.ui); err != nil {
+	if _, err := tpkg.DownloadGit(l.ctx, tpkg.DownloadGitOptions{
+		Directory:  repoDir,
+		URL:        desc.URL,
+		Version:    desc.Version,
+		Hash:       desc.Hash,
+		UI:         mgr.ui,
+		NoReadOnly: true,
+	}); err != nil {
 		return nil, err
 	}
 
