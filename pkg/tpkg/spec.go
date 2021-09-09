@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"regexp"
 
-	"github.com/toitware/tpkg/pkg/path"
+	"github.com/toitware/tpkg/pkg/compiler"
 	"github.com/toitware/tpkg/pkg/set"
 	"gopkg.in/yaml.v2"
 )
@@ -42,7 +42,7 @@ type SpecPackage struct {
 	// Path is set if the package should be found locally.
 	// This field overrides all other fields. This makes it possible to
 	// temporarily (during development) switch to a local version.
-	Path path.CompilerPath `yaml:"path,omitempty"`
+	Path compiler.Path `yaml:"path,omitempty"`
 }
 
 // TODO (jesper): Parse and WriteYAML should preserve comments.
@@ -207,7 +207,7 @@ func (s *Spec) BuildLockFile(solution Solution, cache Cache, registries Registri
 			if specPkg.Path == "" {
 				continue
 			}
-			p := specPkg.Path.ToLocal()
+			p := specPkg.Path.FilePath()
 			fullPath := p
 			if !filepath.IsAbs(fullPath) {
 				fullPath = filepath.Clean(filepath.Join(dir, p))
@@ -246,7 +246,7 @@ func (s *Spec) BuildLockFile(solution Solution, cache Cache, registries Registri
 			addLocalDependencies(depSpec, prefixes)
 		}
 		result.Packages[pkgID] = PackageEntry{
-			Path:     path.ToCompilerPath(pkgPath),
+			Path:     compiler.ToPath(pkgPath),
 			Prefixes: prefixes,
 		}
 		return nil
@@ -280,7 +280,7 @@ func (s *Spec) visitLocalDeps(ui UI, cb func(pkgPath string, fullPath string, de
 				continue
 			}
 
-			pkgPath := dep.Path.ToLocal()
+			pkgPath := dep.Path.FilePath()
 			if !filepath.IsAbs(pkgPath) && spec != s {
 				pkgPath = filepath.Join(filepath.Dir(spec.path), pkgPath)
 			}
@@ -352,7 +352,7 @@ func (s *Spec) addDep(prefix string, url string, version string, p string, ui UI
 	s.Deps[prefix] = SpecPackage{
 		URL:     url,
 		Version: version,
-		Path:    path.ToCompilerPath(p),
+		Path:    compiler.ToPath(p),
 	}
 	return nil
 }

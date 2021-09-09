@@ -5,9 +5,10 @@ package tpkg
 import (
 	"fmt"
 	"io/ioutil"
+	"path/filepath"
 	"strings"
 
-	"github.com/toitware/tpkg/pkg/path"
+	"github.com/toitware/tpkg/pkg/compiler"
 	"gopkg.in/yaml.v2"
 )
 
@@ -34,11 +35,11 @@ type LockFile struct {
 // If 'url' is given, then 'version' must be given as well. The entry then refers to
 // a non-local package and is found in the package cache.
 type PackageEntry struct {
-	URL      string            `yaml:"url,omitempty"`
-	Version  string            `yaml:"version,omitempty"`
-	Path     path.CompilerPath `yaml:"path,omitempty"`
-	Hash     string            `yaml:"hash,omitempty"`
-	Prefixes PrefixMap         `yaml:"prefixes,omitempty"`
+	URL      string        `yaml:"url,omitempty"`
+	Version  string        `yaml:"version,omitempty"`
+	Path     compiler.Path `yaml:"path,omitempty"`
+	Hash     string        `yaml:"hash,omitempty"`
+	Prefixes PrefixMap     `yaml:"prefixes,omitempty"`
 }
 
 // PrefixMap has a mapping from prefix to package-id.
@@ -134,7 +135,7 @@ func (pe *PackageEntry) buildIDSegments() []string {
 	// the IDs valid (see toValidPkgID). The caller must then change the ids to
 	// make them unique.
 	if pe.Path != "" {
-		path := toValidPkgID(string(pe.Path))
+		path := toValidPkgID(filepath.ToSlash(pe.Path.FilePath()))
 		return strings.Split(path, "/")
 	}
 	url := toValidPkgID(pe.URL)
