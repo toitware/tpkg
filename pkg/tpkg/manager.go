@@ -137,7 +137,7 @@ func (m *ProjectPkgManager) downloadLockFilePackages(ctx context.Context, lf *Lo
 			continue
 		}
 		// Just check that the path is actually there and is a directory.
-		local := pe.Path.ToLocal()
+		local := pe.Path.FilePath()
 		isDir, err := isDirectory(local)
 		if !isDir {
 			m.ui.ReportError("Target of '%s' not a directory: '%s'", pkgID, local)

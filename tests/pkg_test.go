@@ -27,7 +27,7 @@ import (
 	"github.com/pmezard/go-difflib/difflib"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/toitware/tpkg/pkg/path"
+	"github.com/toitware/tpkg/pkg/compiler"
 )
 
 const (
@@ -247,7 +247,7 @@ func copyRec(t *tedi.T, testDir string, sourceDir string, targetDir string) {
 		if err != nil {
 			return err
 		}
-		testDirCompilerPath := path.ToCompilerPath(testDir)
+		testDirCompilerPath := compiler.ToPath(testDir)
 		data = bytes.ReplaceAll(data, []byte(testDirPattern), []byte(testDirCompilerPath))
 		return ioutil.WriteFile(target, data, info.Mode().Perm())
 	})
@@ -418,7 +418,7 @@ func (pt PkgTest) normalizeGold(gold string) string {
 	if runtime.GOOS == "windows" {
 		gold = strings.ReplaceAll(gold, "\r\n", "\n")
 		gold = strings.ReplaceAll(gold, "\\", "/")
-		testDirCompilerPath := string(path.ToCompilerPath(pt.dir))
+		testDirCompilerPath := string(compiler.ToPath(pt.dir))
 		gold = strings.ReplaceAll(gold, testDirCompilerPath, "<TEST>")
 	}
 	errorUnderline := regexp.MustCompile(`[\^][~]+`)
@@ -564,7 +564,7 @@ func test_toitPkg(t *tedi.T) {
 	t.Run("GitTagDir", func(pt PkgTest) {
 		// Just a simple check that our test-setup function works.
 		gitDir := filepath.Join(pt.dir, "git_dir")
-		dirInFiles := string(path.ToCompilerPath(pt.dir + "/git_dir"))
+		dirInFiles := string(compiler.ToPath(pt.dir + "/git_dir"))
 		repository, err := git.PlainOpen(gitDir)
 		require.NoError(t, err)
 		wt, err := repository.Worktree()
