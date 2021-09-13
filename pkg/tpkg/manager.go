@@ -475,17 +475,17 @@ func (m *ProjectPkgManager) downloadAndUpdateLock(ctx context.Context, spec *Spe
 		}
 	}
 	solver.SetPreferred(preferred)
-	solution, err := solver.Solve(solverDeps)
-	if err != nil {
-		return nil, err
+	solution := solver.Solve(solverDeps)
+	if solution == nil {
+		return nil, m.ui.ReportError("Couldn't find a valid solution for the package constraints")
 	}
 	// Note that we need the downloaded packages, as we need their spec files to build
 	// the updated lock file. Otherwise we don't have the prefixes of the packages.
 	for url, versions := range solution {
-		for version := range versions {
+		for _, version := range versions {
 			// If we can't find the hash in the registries, we just use the empty string.
-			hash, _ := m.registries.hashFor(url, version)
-			err := m.download(ctx, url, version, hash)
+			hash, _ := m.registries.hashFor(url, version.vStr)
+			err := m.download(ctx, url, version.vStr, hash)
 			if err != nil {
 				return nil, err
 			}

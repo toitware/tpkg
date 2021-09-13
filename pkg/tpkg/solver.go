@@ -5,6 +5,7 @@ package tpkg
 import (
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/hashicorp/go-version"
 	"github.com/toitware/tpkg/pkg/set"
@@ -12,8 +13,10 @@ import (
 
 // Solver is a simple constraint solver for the Toit package manager.
 type Solver struct {
-	db pkgDB
-	ui UI
+	db            pkgDB
+	ui            UI
+	state         solverState
+	printedErrors set.String
 }
 
 // pkgDB is a map from package-url to all the existing packages of that url.
@@ -36,8 +39,55 @@ type SolverDep struct {
 	constraints version.Constraints
 }
 
-// Solution is a map from pkg-url to a set of versions.
-type Solution map[string]set.String
+// Solution is a map from pkg-url to a set of version-strings.
+type Solution map[string][]StringVersion
+
+type StringVersion struct {
+	vStr string
+	v    *version.Version
+}
+
+type solverState struct {
+	// The partial solution so far.
+	// Goes from url-major to the precise version.
+	pkgs map[string]*version.Version
+
+	// The dependencies we are trying to satisfy.
+	// Dependencies on the same package may appear multiple times. In that case
+	// the entry will take into account which version was chosen earlier.
+	workingQueue []*workingEntry
+
+	// continuationsQueue contains the information necessary to continue
+	// exploring all possible packages for a dependency.
+	continuationsQueue []solverContinuation
+
+	// Undo information if a candidate didn't work.
+	// We need to undo the modifications we made before we try the next entry in
+	// the list of possible packages.
+	undoQueue []undoInfo
+}
+
+// The dependency we are trying to satisfy.
+type workingEntry struct {
+	dep SolverDep
+}
+
+// The index into the solverPkg slice as given by the pkgDB.
+// The solver will go through all possible entries and see if one works.
+// If an earlier workingEntry already added a concrete version to the
+// partial solution, then the solver will only try major versions for this
+// entry.
+type solverContinuation struct {
+	index int
+}
+
+type undoInfo struct {
+	// The length of the working queue at the time we encounter the new entry.
+	// We have to trim all entries we added.
+	workingQueueLen int
+	// The urlVersion we have to remove. Empty if there was already one.
+	urlVersion string
+}
 
 // versionedURL combines a URL and a version.
 type versionedURL struct {
@@ -148,63 +198,155 @@ func (s *Solver) SetPreferred(preferred []versionedURL) {
 	}
 }
 
-func (s *Solver) solveDep(dep SolverDep, solution Solution) error {
-	// For now just find the first package that satisfies the constraint.
-	// Since the packages are sorted, we should find the package with the highest
-	// version.
+func (s *Solver) solveEntry(entry *workingEntry, cont solverContinuation) (bool, solverContinuation, undoInfo) {
+	dep := entry.dep
 	url := dep.url
 	available, ok := s.db[url]
+
 	if !ok {
-		return s.ui.ReportError("Package '%s' not found", url)
+		msg := fmt.Sprintf("Package '%s' not found", url)
+		if !s.printedErrors.Contains(msg) {
+			s.ui.ReportWarning(msg)
+			s.printedErrors.Add(msg)
+		}
+		return false, solverContinuation{}, undoInfo{}
 	}
+
+	index := cont.index
 	constraints := dep.constraints
-	// TODO(florian): this now ends up being an O(n * m) operation, where
-	// 'n' is the number of referenced packages, and 'm' is the number of versions
-	// for the package. It's relatively easy to make this more efficient.
-	// TODO(florian): we want to agree on a common package for minor versions.
-	// Currently we just take the highest version that satisfies the constraint,
-	// potentially leading to multiple versions of the same package that only differ
-	// in the minor version.
-	for _, pkg := range available {
-		if constraints.Check(pkg.version) {
-			// Found a valid version.
-			versions, ok := solution[url]
-			if !ok {
-				versions = set.String{}
-				solution[url] = versions
+	foundSatisfying := index != 0 // We already found one last time.
+	// Annoyingly we still need to run through all available packages,
+	// even if an earlier entry already fixed a version. This is, because
+	// the dependency might allow multiple major versions, and we only
+	// use earlier selections if they have the same major version.
+	for index < len(available) {
+		candidate := available[index]
+		index++
+		if !constraints.Check(candidate.version) {
+			continue
+		}
+		foundSatisfying = true
+		major := candidate.version.Segments()[0]
+		urlVersion := url + "-" + fmt.Sprint(major)
+		existing, ok := s.state.pkgs[urlVersion]
+		if ok {
+			if candidate.version != existing {
+				// We only look at the same version as defined by an earlier dependency.
+				continue
 			}
-			versionStr := pkg.version.String()
-			if !versions.Contains(versionStr) {
-				versions.Add(versionStr)
-				err := s.solveDeps(pkg.deps, solution)
-				if err != nil {
-					return err
-				}
-			}
+		}
+
+		undo := undoInfo{
+			// Keep track of which dependencies we add for this dependency.
+			workingQueueLen: len(s.state.workingQueue),
+		}
+		if !ok {
+			// First time we set a concrete version for this URL-major.
+			s.state.pkgs[urlVersion] = candidate.version
+			s.addDeps(candidate.deps)
+			// If we undo this entry, we have to remove it from the partial solution.
+			undo.urlVersion = urlVersion
+		}
+		return true, solverContinuation{index: index}, undo
+	}
+	if !foundSatisfying {
+		msg := fmt.Sprintf("No version of '%s' satisfies constraint '%s'", url, constraints.String())
+		if !s.printedErrors.Contains(msg) {
+			s.ui.ReportWarning(msg)
+			s.printedErrors.Add(msg)
+		}
+	}
+
+	// Return a failure.
+	return false, solverContinuation{}, undoInfo{}
+}
+
+// addDeps adds all dependencies to the working queue.
+// They will be checked when it's their turn.
+func (s *Solver) addDeps(deps []SolverDep) {
+	for _, dep := range deps {
+		s.state.workingQueue = append(s.state.workingQueue, &workingEntry{
+			dep: dep,
+		})
+	}
+}
+
+func (s *Solver) applyUndo(undo undoInfo) {
+	if undo.workingQueueLen != 0 {
+		s.state.workingQueue = s.state.workingQueue[:undo.workingQueueLen]
+	}
+	if undo.urlVersion != "" {
+		delete(s.state.pkgs, undo.urlVersion)
+	}
+}
+
+func (s *Solver) Solve(deps []SolverDep) Solution {
+	s.state = solverState{
+		pkgs:               map[string]*version.Version{},
+		workingQueue:       []*workingEntry{},
+		undoQueue:          []undoInfo{},
+		continuationsQueue: []solverContinuation{},
+	}
+	s.addDeps(deps)
+	workingIndex := 0
+	// Solving strategy:
+	// - The working queue contains dependencies that haven't been solved yet.
+	//   There might already be a concrete version for them in the partial solution
+	//   but we haven't checked that yet.
+	// - For each entry we try all possible solutions, taking earlier selection into
+	//   account. Note that some dependencies might allow multiple major versions, in
+	//   which case an earlier entry with the same dependency URL might not be used.
+	// - We try to find a working solution at each entry and then proceed to the next
+	//   one. (Before that we add the new dependencies).
+	// - The continuations queue contains the information necessary to test the next
+	//   package if we don't find a solution with the current one.
+	// - The undo-queue contains the backtracking information.
+	for {
+		if workingIndex >= len(s.state.workingQueue) {
+			// We have successfully handled all workingQueue entries.
+			// This means we found a solution.
+			return s.state.Solution()
+		}
+		if workingIndex < 0 {
+			// No solution was found.
 			return nil
 		}
-	}
-	// No package found.
-	return s.ui.ReportError("No version of '%s' satisfying '%s'", url, constraints.String())
-}
 
-func (s *Solver) solveDeps(deps []SolverDep, solution Solution) error {
-	for _, dep := range deps {
-		err := s.solveDep(dep, solution)
-		if err != nil {
-			return err
+		entry := s.state.workingQueue[workingIndex]
+		cont := solverContinuation{}
+		if len(s.state.continuationsQueue) > workingIndex {
+			// We have a continuation for this working entry.
+			// Use it.
+			cont = s.state.continuationsQueue[workingIndex]
+			s.state.continuationsQueue = s.state.continuationsQueue[:workingIndex]
+		}
+		success, cont, undo := s.solveEntry(entry, cont)
+		if success {
+			workingIndex++
+			s.state.continuationsQueue = append(s.state.continuationsQueue, cont)
+			s.state.undoQueue = append(s.state.undoQueue, undo)
+		} else {
+			workingIndex--
+			undoLen := len(s.state.undoQueue)
+			if undoLen != 0 {
+				undo := s.state.undoQueue[undoLen-1]
+				s.state.undoQueue = s.state.undoQueue[:undoLen-1]
+				s.applyUndo(undo)
+			}
 		}
 	}
-	return nil
 }
 
-func (s *Solver) Solve(deps []SolverDep) (Solution, error) {
+func (ss solverState) Solution() Solution {
 	result := Solution{}
-	err := s.solveDeps(deps, result)
-	if err != nil {
-		return nil, err
+	for urlMajor, v := range ss.pkgs {
+		url := urlMajor[:strings.LastIndex(urlMajor, "-")]
+		result[url] = append(result[url], StringVersion{
+			vStr: v.String(),
+			v:    v,
+		})
 	}
-	return result, nil
+	return result
 }
 
 // versionFor returns the concrete version of the package url with the given constraintsString.
@@ -219,13 +361,9 @@ func (sol Solution) versionFor(url string, constraintsString string, ui UI) (str
 	}
 	// TODO(florian): we are parsing the version multiple times, and are running
 	// through all existing versions multiple times. This can be optimized.
-	for versionString := range versions {
-		version, err := version.NewVersion(versionString)
-		if err != nil {
-			return "", err
-		}
-		if constraints.Check(version) {
-			return versionString, nil
+	for _, stringVersion := range versions {
+		if constraints.Check(stringVersion.v) {
+			return stringVersion.vStr, nil
 		}
 	}
 	return "", fmt.Errorf("package solution missing target for '%s' with constraint '%s'", url, constraintsString)
