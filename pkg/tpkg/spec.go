@@ -131,8 +131,8 @@ func (s *Spec) BuildLockFile(solution Solution, cache Cache, registries Registri
 	idCounter := 0
 	for url, versions := range solution {
 		pkgIDs[url] = map[string]string{}
-		for version := range versions {
-			pkgIDs[url][version] = fmt.Sprintf("pkg%d", idCounter)
+		for _, version := range versions {
+			pkgIDs[url][version.vStr] = fmt.Sprintf("pkg%d", idCounter)
 			idCounter++
 		}
 	}
