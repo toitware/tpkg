@@ -300,7 +300,7 @@ func (gr *gitRegistry) Load(ctx context.Context, sync bool, cache Cache, ui UI) 
 
 			var err error
 			for _, branch := range []string{"master", "main", "trunk"} {
-				_, err = git.Clone(ctx, p, &git.CloneOptions{
+				_, err = git.Clone(ctx, p, git.CloneOptions{
 					URL:          url,
 					SingleBranch: true,
 					Branch:       branch,
@@ -314,7 +314,7 @@ func (gr *gitRegistry) Load(ctx context.Context, sync bool, cache Cache, ui UI) 
 			}
 			gr.pathRegistry.path = p
 		} else {
-			err := git.Pull(gr.path)
+			err := git.Pull(gr.path, git.PullOptions{})
 			if err != nil {
 				return err
 			}
@@ -400,10 +400,9 @@ func (gr *sshGitRegistry) Load(ctx context.Context, sync bool, cache Cache, ui U
 
 		if gr.path == "" {
 			p := cache.PreferredRegistryPath(gr.url)
-			_, err := git.Clone(ctx, p, &git.CloneOptions{
-				URL:    gr.url,
-				Branch: gr.branch,
-
+			_, err := git.Clone(ctx, p, git.CloneOptions{
+				URL:          gr.url,
+				Branch:       gr.branch,
 				SingleBranch: true,
 				SSHPath:      gr.sshPath,
 			})
@@ -412,7 +411,9 @@ func (gr *sshGitRegistry) Load(ctx context.Context, sync bool, cache Cache, ui U
 			}
 			gr.pathRegistry.path = p
 		} else {
-			err := git.Pull(gr.path)
+			err := git.Pull(gr.path, git.PullOptions{
+				SSHPath: gr.sshPath,
+			})
 			if err != nil {
 				return err
 			}

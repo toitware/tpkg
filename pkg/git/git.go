@@ -35,7 +35,7 @@ func convertURLToSSH(str string) (string, error) {
 
 // Clone clones the repository with the given [options] into [dir].
 // Returns the checked out hash.
-func Clone(ctx context.Context, dir string, options *CloneOptions) (string, error) {
+func Clone(ctx context.Context, dir string, options CloneOptions) (string, error) {
 	url := options.URL
 	if !filepath.IsAbs(url) {
 		url = "https://" + url
@@ -122,7 +122,11 @@ func Clone(ctx context.Context, dir string, options *CloneOptions) (string, erro
 	return head.Hash().String(), nil
 }
 
-func Pull(path string) error {
+type PullOptions struct {
+	SSHPath string
+}
+
+func Pull(path string, options PullOptions) error {
 	repository, err := gogit.PlainOpen(path)
 	if err != nil {
 		return err
@@ -131,7 +135,20 @@ func Pull(path string) error {
 	if err != nil {
 		return err
 	}
-	err = wt.Pull(&gogit.PullOptions{})
+
+	pullOptions := &gogit.PullOptions{
+		Force: true,
+	}
+
+	if options.SSHPath != "" {
+		auth, err := ssh.NewPublicKeysFromFile("git", options.SSHPath, "")
+		if err != nil {
+			return err
+		}
+		pullOptions.Auth = auth
+	}
+
+	err = wt.Pull(pullOptions)
 	if err != nil && err != gogit.NoErrAlreadyUpToDate {
 		return err
 	}
