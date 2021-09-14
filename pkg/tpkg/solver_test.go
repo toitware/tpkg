@@ -53,7 +53,7 @@ func checkSolution(t *testing.T, solution Solution, descs ...*Desc) {
 	}
 	for _, desc := range descs {
 		versions, ok := solution[desc.URL]
-		assert.True(t, ok)
+		require.True(t, ok)
 		assert.Len(t, versions, len(perURL[desc.URL]))
 		assert.True(t, containsVersion(versions, desc.Version))
 	}
@@ -235,24 +235,24 @@ func Test_Solver(t *testing.T) {
 	})
 
 	t.Run("Uniq error message", func(t *testing.T) {
-		a170 := mkPkg("a-1.7.0", "b >=1.0.0", "c >= 1.0.0")
+		a170 := mkPkg("a-1.7.0", "b >=1.0.0", "c >=1.0.0")
 		// The solver will try b200, then b180, each time needing to backtrack because
 		// of the bad d-dependency which can't be satisfied.
 		// It will re-evaluate the 'c' dependency each time, which has warnings.
 		// Similarly, it will encounter the d200 at least twice.
 		// These warnings must not be printed multiple times.
 		b140 := mkPkg("b-1.4.0")
-		b180 := mkPkg("b-1.8.0", "d >= 1.3.0")
-		b200 := mkPkg("b-2.0.0", "d >= 1.3.0")
+		b180 := mkPkg("b-1.8.0", "d >=1.3.0")
+		b200 := mkPkg("b-2.0.0", "d >=1.3.0")
 		c100 := mkPkg("c-1.0.0")
-		c150 := mkPkg("c-1.5.0", "b >= 3.0.0") // No b-package satisfies this requirement.
+		c150 := mkPkg("c-1.5.0", "b >=3.0.0") // No b-package satisfies this requirement.
 		d123 := mkPkg("d-1.2.3")
-		d200 := mkPkg("d-1.5.0", "e >= 3.0.0") // No e-package exists.
+		d200 := mkPkg("d-1.5.0", "e >=3.0.0") // No e-package exists.
 		registries := makeRegistries(a170, b140, b180, b200, c100, c150, d123, d200)
 		solution, ui := findSolutionUI(t, a170, registries)
 		checkSolution(t, solution, a170, b140, c100)
 		assert.Len(t, ui.messages, 2)
-		assert.Equal(t, "Warning: No version of 'b' satisfies constraint '>= 3.0.0'", ui.messages[0])
+		assert.Equal(t, "Warning: No version of 'b' satisfies constraint '>=3.0.0'", ui.messages[0])
 		assert.Equal(t, "Warning: Package 'e' not found", ui.messages[1])
 	})
 }

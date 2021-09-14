@@ -55,21 +55,41 @@ type solverState struct {
 	// The dependencies we are trying to satisfy.
 	// Dependencies on the same package may appear multiple times. In that case
 	// the entry will take into account which version was chosen earlier.
-	workingQueue []*workingEntry
+	workingQueue []*SolverDep
 
-	// continuationsQueue contains the information necessary to continue
+	// continuations contains the information necessary to continue
 	// exploring all possible packages for a dependency.
-	continuationsQueue []solverContinuation
+	continuations continuationsStack
 
 	// Undo information if a candidate didn't work.
 	// We need to undo the modifications we made before we try the next entry in
 	// the list of possible packages.
-	undoQueue []undoInfo
+	undos undoStack
 }
 
-// The dependency we are trying to satisfy.
-type workingEntry struct {
-	dep SolverDep
+type continuationsStack []solverContinuation
+type undoStack []undoInfo
+
+func (cs *continuationsStack) Push(cont solverContinuation) {
+	*cs = append(*cs, cont)
+}
+
+func (cs *continuationsStack) Pop() solverContinuation {
+	l := len(*cs)
+	result := (*cs)[l-1]
+	*cs = (*cs)[:l-1]
+	return result
+}
+
+func (us *undoStack) Push(undo undoInfo) {
+	*us = append(*us, undo)
+}
+
+func (us *undoStack) Pop() undoInfo {
+	l := len(*us)
+	result := (*us)[l-1]
+	*us = (*us)[:l-1]
+	return result
 }
 
 // The index into the solverPkg slice as given by the pkgDB.
@@ -198,8 +218,7 @@ func (s *Solver) SetPreferred(preferred []versionedURL) {
 	}
 }
 
-func (s *Solver) solveEntry(entry *workingEntry, cont solverContinuation) (bool, solverContinuation, undoInfo) {
-	dep := entry.dep
+func (s *Solver) solveDep(dep *SolverDep, cont solverContinuation) (bool, solverContinuation, undoInfo) {
 	url := dep.url
 	available, ok := s.db[url]
 
@@ -265,9 +284,8 @@ func (s *Solver) solveEntry(entry *workingEntry, cont solverContinuation) (bool,
 // They will be checked when it's their turn.
 func (s *Solver) addDeps(deps []SolverDep) {
 	for _, dep := range deps {
-		s.state.workingQueue = append(s.state.workingQueue, &workingEntry{
-			dep: dep,
-		})
+		localDep := dep
+		s.state.workingQueue = append(s.state.workingQueue, &localDep)
 	}
 }
 
@@ -282,10 +300,10 @@ func (s *Solver) applyUndo(undo undoInfo) {
 
 func (s *Solver) Solve(deps []SolverDep) Solution {
 	s.state = solverState{
-		pkgs:               map[string]*version.Version{},
-		workingQueue:       []*workingEntry{},
-		undoQueue:          []undoInfo{},
-		continuationsQueue: []solverContinuation{},
+		pkgs:          map[string]*version.Version{},
+		workingQueue:  []*SolverDep{},
+		undos:         []undoInfo{},
+		continuations: []solverContinuation{},
 	}
 	s.addDeps(deps)
 	workingIndex := 0
@@ -314,23 +332,20 @@ func (s *Solver) Solve(deps []SolverDep) Solution {
 
 		entry := s.state.workingQueue[workingIndex]
 		cont := solverContinuation{}
-		if len(s.state.continuationsQueue) > workingIndex {
+		if len(s.state.continuations) == workingIndex+1 {
 			// We have a continuation for this working entry.
 			// Use it.
-			cont = s.state.continuationsQueue[workingIndex]
-			s.state.continuationsQueue = s.state.continuationsQueue[:workingIndex]
+			cont = s.state.continuations.Pop()
 		}
-		success, cont, undo := s.solveEntry(entry, cont)
+		success, cont, undo := s.solveDep(entry, cont)
 		if success {
 			workingIndex++
-			s.state.continuationsQueue = append(s.state.continuationsQueue, cont)
-			s.state.undoQueue = append(s.state.undoQueue, undo)
+			s.state.continuations.Push(cont)
+			s.state.undos.Push(undo)
 		} else {
 			workingIndex--
-			undoLen := len(s.state.undoQueue)
-			if undoLen != 0 {
-				undo := s.state.undoQueue[undoLen-1]
-				s.state.undoQueue = s.state.undoQueue[:undoLen-1]
+			if len(s.state.undos) != 0 {
+				undo := s.state.undos.Pop()
 				s.applyUndo(undo)
 			}
 		}
