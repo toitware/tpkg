@@ -153,7 +153,13 @@ func (h *httpHandlers) web(rw http.ResponseWriter, r *http.Request) error {
 	}
 
 	p = filepath.Join(h.webFilePath, p)
-	return serveFile(rw, r, p, filepath.Join(h.webFilePath, "index.html"))
+	mainIndexPath := filepath.Join(h.webFilePath, "index.html")
+	err := serveFile(rw, r, p, mainIndexPath)
+	if status.Code(err) == codes.NotFound {
+		http.ServeFile(rw, r, mainIndexPath)
+		return nil
+	}
+	return err
 }
 
 type toitdocFileServer struct {
