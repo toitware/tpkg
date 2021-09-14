@@ -74,7 +74,7 @@ func DownloadGit(ctx context.Context, o DownloadGitOptions) (string, error) {
 		}
 	}
 
-	cloneURL := o.URL
+	cloneURL := ""
 	path := ""
 	tag := o.Version
 	if !strings.HasPrefix(tag, "v") {
