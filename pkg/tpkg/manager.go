@@ -475,13 +475,17 @@ func (m *ProjectPkgManager) downloadAndUpdateLock(ctx context.Context, spec *Spe
 		}
 	}
 	solver.SetPreferred(preferred)
-	solution := solver.Solve(solverDeps)
+	minSDK, err := sdkConstraintToMinSDK(spec.Environment.sdk)
+	if err != nil {
+		return nil, err
+	}
+	solution := solver.Solve(minSDK, solverDeps)
 	if solution == nil {
 		return nil, m.ui.ReportError("Couldn't find a valid solution for the package constraints")
 	}
 	// Note that we need the downloaded packages, as we need their spec files to build
 	// the updated lock file. Otherwise we don't have the prefixes of the packages.
-	for url, versions := range solution {
+	for url, versions := range solution.pkgs {
 		for _, version := range versions {
 			// If we can't find the hash in the registries, we just use the empty string.
 			hash, _ := m.registries.hashFor(url, version.vStr)

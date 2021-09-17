@@ -437,7 +437,7 @@ func Test_SpecToLock(t *testing.T) {
 				Path: "local_path2",
 			},
 		})
-		solution := Solution{}
+		solution := &Solution{}
 		lf, err := spec.BuildLockFile(solution, tsc.c, Registries{}, &ui)
 		require.NoError(t, err)
 		assert.Equal(t, filepath.Join(tsc.dir, DefaultLockFileName), lf.path)
@@ -482,9 +482,11 @@ func Test_SpecToLock(t *testing.T) {
 		})
 		tsc.createUri("simple-url2", "1.2.5", []SpecPackage{})
 		tsc.createUri("simple-url2", "2.3.4", []SpecPackage{})
-		solution := Solution{
-			"simple-url":  makeStringVersions(t, "1.0.0"),
-			"simple-url2": makeStringVersions(t, "1.2.5", "2.3.4"),
+		solution := &Solution{
+			pkgs: map[string][]StringVersion{
+				"simple-url":  makeStringVersions(t, "1.0.0"),
+				"simple-url2": makeStringVersions(t, "1.2.5", "2.3.4"),
+			},
 		}
 		lf, err := spec.BuildLockFile(solution, tsc.c, Registries{}, &ui)
 		require.NoError(t, err)

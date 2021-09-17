@@ -30,6 +30,7 @@ type pkgDB map[string][]solverPkg
 type solverPkg struct {
 	version *version.Version
 	deps    []SolverDep
+	minSDK  *version.Version
 }
 
 // SolverDep represents a dependency for the solver.
@@ -40,7 +41,10 @@ type SolverDep struct {
 }
 
 // Solution is a map from pkg-url to a set of version-strings.
-type Solution map[string][]StringVersion
+type Solution struct {
+	pkgs   map[string][]StringVersion
+	minSDK *version.Version
+}
 
 type StringVersion struct {
 	vStr string
@@ -51,6 +55,10 @@ type solverState struct {
 	// The partial solution so far.
 	// Goes from url-major to the precise version.
 	pkgs map[string]*version.Version
+
+	// The minimal SDK version that is required for the partial solution.
+	// May be nil if there isn't any constraint.
+	minSDK *version.Version
 
 	// The dependencies we are trying to satisfy.
 	// Dependencies on the same package may appear multiple times. In that case
@@ -107,6 +115,8 @@ type undoInfo struct {
 	workingQueueLen int
 	// The urlVersion we have to remove. Empty if there was already one.
 	urlVersion string
+	// The minimal SDK version that is required for the partial solution.
+	minSDK *version.Version
 }
 
 // versionedURL combines a URL and a version.
@@ -161,10 +171,15 @@ func NewSolver(registries Registries, ui UI) (*Solver, error) {
 			if err != nil {
 				return nil, err
 			}
+			minSDK, err := sdkConstraintToMinSDK(desc.Environment.SDK)
+			if err != nil {
+				return nil, err
+			}
 			pkgs := result.db[desc.URL]
 			pkgs = append(pkgs, solverPkg{
 				version: v,
 				deps:    deps,
+				minSDK:  minSDK,
 			})
 			result.db[desc.URL] = pkgs
 		}
@@ -256,11 +271,16 @@ func (s *Solver) solveDep(dep *SolverDep, cont solverContinuation) (bool, solver
 		}
 
 		undo := undoInfo{
+			minSDK: s.state.minSDK,
 			// Keep track of which dependencies we add for this dependency.
 			workingQueueLen: len(s.state.workingQueue),
 		}
 		if !ok {
 			// First time we set a concrete version for this URL-major.
+			if s.state.minSDK == nil ||
+				(candidate.minSDK != nil && candidate.minSDK.GreaterThan(s.state.minSDK)) {
+				s.state.minSDK = candidate.minSDK
+			}
 			s.state.pkgs[urlVersion] = candidate.version
 			s.addDeps(candidate.deps)
 			// If we undo this entry, we have to remove it from the partial solution.
@@ -296,11 +316,13 @@ func (s *Solver) applyUndo(undo undoInfo) {
 	if undo.urlVersion != "" {
 		delete(s.state.pkgs, undo.urlVersion)
 	}
+	s.state.minSDK = undo.minSDK
 }
 
-func (s *Solver) Solve(deps []SolverDep) Solution {
+func (s *Solver) Solve(minSDK *version.Version, deps []SolverDep) *Solution {
 	s.state = solverState{
 		pkgs:          map[string]*version.Version{},
+		minSDK:        minSDK,
 		workingQueue:  []*SolverDep{},
 		undos:         []undoInfo{},
 		continuations: []solverContinuation{},
@@ -352,21 +374,24 @@ func (s *Solver) Solve(deps []SolverDep) Solution {
 	}
 }
 
-func (ss solverState) Solution() Solution {
-	result := Solution{}
+func (ss solverState) Solution() *Solution {
+	result := Solution{
+		pkgs:   map[string][]StringVersion{},
+		minSDK: ss.minSDK,
+	}
 	for urlMajor, v := range ss.pkgs {
 		url := urlMajor[:strings.LastIndex(urlMajor, "-")]
-		result[url] = append(result[url], StringVersion{
+		result.pkgs[url] = append(result.pkgs[url], StringVersion{
 			vStr: v.String(),
 			v:    v,
 		})
 	}
-	return result
+	return &result
 }
 
 // versionFor returns the concrete version of the package url with the given constraintsString.
 func (sol Solution) versionFor(url string, constraintsString string, ui UI) (string, error) {
-	versions, ok := sol[url]
+	versions, ok := sol.pkgs[url]
 	if !ok {
 		return "", fmt.Errorf("package solution missing package '%s'", url)
 	}

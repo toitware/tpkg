@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/hashicorp/go-version"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -32,7 +33,7 @@ func mkPkg(nameVersion string, depStrs ...string) *Desc {
 			Version: dep[index+1:],
 		})
 	}
-	return NewDesc(name, "", name, version, "MIT", "", deps)
+	return NewDesc(name, "", name, version, "", "MIT", "", deps)
 }
 
 func makeRegistries(testPkgs ...*Desc) Registries {
@@ -45,20 +46,20 @@ func makeRegistries(testPkgs ...*Desc) Registries {
 	}
 }
 
-func checkSolution(t *testing.T, solution Solution, descs ...*Desc) {
+func checkSolution(t *testing.T, solution *Solution, descs ...*Desc) {
 	require.NotNil(t, solution)
 	perURL := map[string][]*Desc{}
 	for _, desc := range descs {
 		perURL[desc.URL] = append(perURL[desc.URL], desc)
 	}
 	for _, desc := range descs {
-		versions, ok := solution[desc.URL]
+		versions, ok := solution.pkgs[desc.URL]
 		require.True(t, ok)
 		assert.Len(t, versions, len(perURL[desc.URL]))
 		assert.True(t, containsVersion(versions, desc.Version))
 	}
 	count := 0
-	for _, versions := range solution {
+	for _, versions := range solution.pkgs {
 		count = count + len(versions)
 	}
 	assert.Equal(t, count, len(descs))
@@ -75,7 +76,7 @@ func preferred(descs ...*Desc) []versionedURL {
 	return result
 }
 
-func findSolutionUI(t *testing.T, solveFor *Desc, registries Registries, preferred ...[]versionedURL) (Solution, *testUI) {
+func findSolutionUI(t *testing.T, solveFor *Desc, registries Registries, preferred ...[]versionedURL) (*Solution, *testUI) {
 	ui := testUI{}
 	solver, err := NewSolver(registries, &ui)
 	require.NoError(t, err)
@@ -86,7 +87,7 @@ func findSolutionUI(t *testing.T, solveFor *Desc, registries Registries, preferr
 	}
 	startConstraint, err := parseConstraint(solveFor.Version)
 	require.NoError(t, err)
-	solution := solver.Solve([]SolverDep{
+	solution := solver.Solve(nil, []SolverDep{
 		{
 			url:         solveFor.URL,
 			constraints: startConstraint,
@@ -95,7 +96,7 @@ func findSolutionUI(t *testing.T, solveFor *Desc, registries Registries, preferr
 	return solution, &ui
 }
 
-func findSolution(t *testing.T, solveFor *Desc, registries Registries, preferred ...[]versionedURL) Solution {
+func findSolution(t *testing.T, solveFor *Desc, registries Registries, preferred ...[]versionedURL) *Solution {
 	result, ui := findSolutionUI(t, solveFor, registries, preferred...)
 	for _, msg := range ui.messages {
 		fmt.Println(msg)
@@ -254,5 +255,26 @@ func Test_Solver(t *testing.T) {
 		assert.Len(t, ui.messages, 2)
 		assert.Equal(t, "Warning: No version of 'b' satisfies constraint '>=3.0.0'", ui.messages[0])
 		assert.Equal(t, "Warning: Package 'e' not found", ui.messages[1])
+	})
+
+	t.Run("MinSDK", func(t *testing.T) {
+		a170 := mkPkg("a-1.7.0", "b ^2.0.0", "c ^1.0.0")
+		b140 := mkPkg("b-1.4.0")
+		b180 := mkPkg("b-1.8.0")
+		b200 := mkPkg("b-2.0.0")
+		c100 := mkPkg("c-1.0.0", "b >=1.0.0,<1.5.0")
+		v110, err := version.NewVersion("1.1.0")
+		require.NoError(t, err)
+		v120, err := version.NewVersion("1.2.0")
+		require.NoError(t, err)
+		v130, err := version.NewVersion("1.3.0")
+		require.NoError(t, err)
+		b140.Environment.SDK = "^" + v110.String()
+		b180.Environment.SDK = "^" + v130.String()
+		b200.Environment.SDK = "^" + v120.String()
+		registries := makeRegistries(a170, b140, b180, b200, c100)
+		solution := findSolution(t, a170, registries)
+		checkSolution(t, solution, a170, b140, b200, c100)
+		assert.Equal(t, v120.String(), solution.minSDK.String())
 	})
 }

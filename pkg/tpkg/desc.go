@@ -32,8 +32,9 @@ type Desc struct {
 	License string `yaml:"license,omitempty" json:"license"`
 	// We might want to add a url-kind in the future, but currently we
 	// don't need it, and just assume that every url is a git location.
-	URL     string `yaml:"url" json:"url"`
-	Version string `yaml:"version" json:"version"`
+	URL         string          `yaml:"url" json:"url"`
+	Version     string          `yaml:"version" json:"version"`
+	Environment DescEnvironment `yaml:"environment,omitempty" json:"environment,omitempty"`
 
 	// The git-hash of the package.
 	Hash string `yaml:"hash,omitempty" json:"hash"`
@@ -41,15 +42,22 @@ type Desc struct {
 	Deps []descPackage `yaml:"dependencies,omitempty" json:"dependencies"`
 }
 
-func NewDesc(name string, description string, url string, version string, license string, hash string, deps []descPackage) *Desc {
+type DescEnvironment struct {
+	SDK string `yaml:"sdk,omitempty" json:"sdk,omitempty"`
+}
+
+func NewDesc(name string, description string, url string, version string, sdk string, license string, hash string, deps []descPackage) *Desc {
 	return &Desc{
 		Name:        name,
 		Description: description,
 		Version:     version,
-		License:     license,
-		URL:         url,
-		Hash:        hash,
-		Deps:        deps,
+		Environment: DescEnvironment{
+			SDK: sdk,
+		},
+		License: license,
+		URL:     url,
+		Hash:    hash,
+		Deps:    deps,
 	}
 }
 
@@ -128,6 +136,17 @@ func (d *Desc) Validate(ui UI) error {
 	}
 	if d.URL == "" {
 		return ui.ReportError("Specification '%s' has an empty URL", d.Name)
+	}
+
+	if d.Environment.SDK != "" {
+		sdk := d.Environment.SDK
+		if !strings.HasPrefix(sdk, "^") {
+			return ui.ReportError("SDK constraint must be of form '^version': '%s'", sdk)
+		}
+		_, err := parseConstraintRange(sdk[1:], semverRange)
+		if err != nil {
+			return ui.ReportError("Invalid SDK constraint '%s'", sdk)
+		}
 	}
 
 	// TODO(florian): enable this check.
@@ -331,6 +350,7 @@ func scrapeDescriptionAt(path string, allowsLocalDeps AllowLocalDepsFlag, ui UI,
 		spec.Description,
 		"<Not scraped for local paths>",
 		"<Not scraped for local paths>",
+		spec.Environment.sdk,
 		spec.License,
 		"<Not scraped for local paths>",
 		mapSpecDepsToDescDeps(spec.Deps),

@@ -3,9 +3,12 @@
 package tpkg
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
+	"github.com/hashicorp/go-version"
 	"github.com/toitware/tpkg/pkg/compiler"
 )
 
@@ -35,4 +38,18 @@ func URLVersionToRelPath(url string, version string) string {
 
 func urlToRelPath(url string) string {
 	return compiler.ToURIPath(url).FilePath()
+}
+
+func sdkConstraintToMinSDK(sdk string) (*version.Version, error) {
+	if sdk == "" {
+		return nil, nil
+	}
+	if !strings.HasPrefix(sdk, "^") {
+		return nil, fmt.Errorf("unexpected sdk constraint: '%s'", sdk)
+	}
+	minSDK, err := version.NewVersion(sdk[1:])
+	if err != nil {
+		return nil, err
+	}
+	return minSDK, nil
 }
