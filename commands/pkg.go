@@ -485,13 +485,24 @@ func (h pkgHandler) pkgInstall(cmd *cobra.Command, args []string) error {
 		h.ui.ReportError("The '--recompute' flag  can only be used without arguments")
 	}
 
-	p := args[0]
-	installedPrefix, pkgString, err := m.InstallPkg(ctx, isLocal, prefix, p)
+	installedPrefix := ""
+	pkgString := ""
 
-	if err != nil {
-		return err
-
+	if isLocal {
+		p := args[0]
+		installedPrefix, err = m.InstallLocalPkg(ctx, prefix, p)
+		pkgString = p
+		if err != nil {
+			return err
+		}
+	} else {
+		id := args[0]
+		installedPrefix, pkgString, err = m.InstallURLPkg(ctx, prefix, id)
+		if err != nil {
+			return err
+		}
 	}
+
 	tpkgUI.ReportInfo("Package '%s' installed with prefix '%s'", pkgString, installedPrefix)
 
 	h.track(ctx, &tracking.TrackingEvent{
@@ -864,7 +875,7 @@ func (h *pkgHandler) pkgSearch(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	found, err = found.WithoutLowerVersions(nil)
+	found, err = found.WithoutLowerVersions()
 	if err != nil {
 		return err
 	}

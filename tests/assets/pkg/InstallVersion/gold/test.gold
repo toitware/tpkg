@@ -16,6 +16,10 @@ pkg install many
 Exit Code: 0
 Info: Package '<GIT_URL>/pkgs_many_versions/many@3.0.2' installed with prefix 'many'
 ===================
+pkg install many@99
+Exit Code: 1
+Error: No package 'many' with version 99 found
+===================
 pkg install many@1
 Exit Code: 1
 Error: Project has already a package with prefix 'many'

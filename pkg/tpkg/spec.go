@@ -277,6 +277,7 @@ func (s *Spec) BuildLockFile(solution *Solution, cache Cache, registries Registr
 		return nil, err
 	}
 
+	result.optimizePkgIDs()
 	return &result, nil
 }
 

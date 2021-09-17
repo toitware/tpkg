@@ -4,6 +4,7 @@ package tpkg
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -11,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/go-version"
+	"github.com/toitware/tpkg/pkg/set"
 	"github.com/toitware/tpkg/pkg/tracking"
 )
 
@@ -71,26 +73,6 @@ func NewProjectPkgManager(manager *Manager, paths *ProjectPaths) *ProjectPkgMana
 		Manager: manager,
 		Paths:   paths,
 	}
-}
-
-// prepareInstallLocal prepares the installation of a local package.
-// It verifies that the path is valid.
-// Returns a suggested prefix.
-func (m *Manager) prepareInstallLocal(path string) (string, error) {
-	abs, err := filepath.Abs(path)
-	if err != nil {
-		return "", err
-	}
-	if isDir, err := isDirectory(abs); !isDir || err != nil {
-		if err == nil {
-			return "", m.ui.ReportError("Target '%s' is not a directory", path)
-		} else if os.IsNotExist(err) {
-			return "", m.ui.ReportError("Target '%s' does not exist", path)
-		}
-		return "", m.ui.ReportError("Target '%s' is not a directory: %v", path, err)
-	}
-	prefix := filepath.Base(abs)
-	return prefix, nil
 }
 
 // download fetches the given url/version, unless it's already in the cache.
@@ -160,10 +142,19 @@ func (m *ProjectPkgManager) downloadLockFilePackages(ctx context.Context, lf *Lo
 	return nil
 }
 
-// prepareInstallGit prepares the installation of a git package.
-// It finds the description of the package that should be installed.
-// Returns the suggested prefix, the url, and the version
-func (m *ProjectPkgManager) prepareInstallGit(ctx context.Context, pkgName string) (*Desc, error) {
+// pkgInstallRequest defines a package that should be installed.
+// When a user initiates `pkg install foo`, this structure constains the
+// information about which package exactly should be installed.
+type pkgInstallRequest struct {
+	name        string
+	url         string
+	major       int
+	constraints string
+}
+
+// identifyInstallURL finds the package with the given pkgName.
+// Returns the URL, its major version, and a version constraint if the pkgName had one.
+func (m *ProjectPkgManager) identifyInstallURL(ctx context.Context, pkgName string) (*pkgInstallRequest, error) {
 	if pkgName == "" {
 		return nil, m.ui.ReportError("Missing package name")
 	}
@@ -173,6 +164,18 @@ func (m *ProjectPkgManager) prepareInstallGit(ctx context.Context, pkgName strin
 		v := pkgName[atPos+1:]
 		versionStr = &v
 		pkgName = pkgName[:atPos]
+	}
+
+	var constraints version.Constraints
+	if versionStr != nil {
+		if *versionStr == "" {
+			return nil, m.ui.ReportError("Missing version after '@' in '%s@'", pkgName)
+		}
+		var err error
+		constraints, err = parseInstallConstraint(*versionStr)
+		if err != nil {
+			return nil, m.ui.ReportError("Invalid version: '%s'", *versionStr)
+		}
 	}
 
 	// Always search for shortened URLs.
@@ -194,36 +197,21 @@ func (m *ProjectPkgManager) prepareInstallGit(ctx context.Context, pkgName strin
 		return nil, m.ui.ReportError("Package '%s' not found", pkgName)
 	}
 
-	if versionStr == nil {
-		found, err = found.WithoutLowerVersions(nil)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		if *versionStr == "" {
-			return nil, m.ui.ReportError("Missing version after '@' in '%s@'", pkgName)
-		}
-		constraints, err := parseInstallConstraint(*versionStr)
-		if err != nil {
-			return nil, m.ui.ReportError("Invalid version: '%s'", *versionStr)
-		}
-		found, err = found.WithoutLowerVersions(constraints)
-		if err != nil {
-			return nil, err
-		}
+	urlCandidates := set.String{}
+	for _, dr := range found {
+		urlCandidates.Add(dr.Desc.URL)
 	}
-	var desc *Desc
 
-	if len(found) == 0 {
-		return nil, m.ui.ReportError("Package '%s-%s' not found", pkgName, versionStr)
-	} else if len(found) > 1 {
+	url := found[0].Desc.URL
+
+	if len(urlCandidates) > 1 {
 		// Make one last attempt: if there is a package with the exact URL match, then we ignore
 		// the other packages. In theory someone could have a bad name (although registries should
 		// not accept them), or a URL could end with a full URL. For example: attack.com/github.com/real_package
 		foundFullMatch := false
 		for _, descReg := range found {
 			if descReg.Desc.URL == pkgName {
-				desc = descReg.Desc
+				url = descReg.Desc.URL
 				foundFullMatch = true
 				break
 			}
@@ -232,11 +220,44 @@ func (m *ProjectPkgManager) prepareInstallGit(ctx context.Context, pkgName strin
 			// TODO(florian): print all matching packages.
 			return nil, m.ui.ReportError("More than one matching package '%s' found", pkgName)
 		}
-	} else {
-		desc = found[0].Desc
 	}
 
-	return desc, nil
+	candidates, err := m.registries.SearchURL(url)
+	if err != nil {
+		return nil, err
+	}
+
+	var maxVersion *version.Version
+	name := ""
+	for _, candidate := range candidates {
+		desc := candidate.Desc
+		v, err := version.NewVersion(desc.Version)
+		if err != nil {
+			return nil, err
+		}
+		if constraints != nil && !constraints.Check(v) {
+			continue
+		}
+		if maxVersion == nil || v.GreaterThan(maxVersion) {
+			maxVersion = v
+			name = desc.Name
+		}
+	}
+
+	if maxVersion == nil {
+		return nil, m.ui.ReportError("No package '%s' with version %s found", pkgName, *versionStr)
+	}
+
+	constraintsStr := ""
+	if constraints != nil {
+		constraintsStr = constraints.String()
+	}
+	return &pkgInstallRequest{
+		url:         url,
+		major:       maxVersion.Segments()[0],
+		name:        name,
+		constraints: constraintsStr,
+	}, nil
 }
 
 func (m *ProjectPkgManager) readSpecAndLock() (*Spec, *LockFile, error) {
@@ -271,7 +292,6 @@ func (m *ProjectPkgManager) readSpecAndLock() (*Spec, *LockFile, error) {
 
 	if lfExists && specExists {
 		// Do a check to ensure that the lockfile is correct. We don't want
-
 		// to overwrite/discard the lockfile if someone just creates an empty
 		// spec file.
 
@@ -311,47 +331,94 @@ func (m *ProjectPkgManager) writeSpecAndLock(spec *Spec, lf *LockFile) error {
 	return lf.WriteToFile()
 }
 
-// InstallPkg install the package identified by its identifier id.
-// The id can be a path (when `isLocal` is true), a (suffix of a) package URL, or
-// a package name. For non-local packages, the identifier can also be suffixed by
-// a `@` followed by a version.
+// InstallLocalPkg installs the local package at the given path.
+// When provided, the package is installed with the given prefix. Otherwise, the
+// packages name is extracted from the path.
+// Returns the prefix that was used for the package.
+// TODO(florian): the package name should be extracted from the package.yaml, or the README.
+func (m *ProjectPkgManager) InstallLocalPkg(ctx context.Context, prefix string, path string) (string, error) {
+	abs, err := filepath.Abs(path)
+	if err != nil {
+		return "", err
+	}
+	if isDir, err := isDirectory(abs); !isDir || err != nil {
+		if err == nil {
+			return "", m.ui.ReportError("Target '%s' is not a directory", path)
+		} else if os.IsNotExist(err) {
+			return "", m.ui.ReportError("Target '%s' does not exist", path)
+		}
+		return "", m.ui.ReportError("Target '%s' is not a directory: %v", path, err)
+	}
+	if prefix == "" {
+		prefix = filepath.Base(abs)
+	}
+
+	spec, lf, err := m.readSpecAndLock()
+	if err != nil {
+		return "", err
+	}
+
+	if !isValidPrefix(prefix) {
+		return "", m.ui.ReportError("Invalid prefix: '%s'", prefix)
+	}
+
+	if _, ok := spec.Deps[prefix]; ok {
+		return "", m.ui.ReportError("Project has already a package with prefix '%s'", prefix)
+
+	}
+
+	// Add the local dependency to the deps before we build the solver deps.
+	spec.addDep(prefix, "", "", path, m.ui)
+
+	solverDeps, err := spec.BuildSolverDeps(m.ui)
+	if err != nil {
+		return "", err
+	}
+
+	solution, err := m.findSolution(spec.Environment.sdk, solverDeps, lf, nil)
+	if err != nil {
+		return "", err
+	}
+	if solution == nil {
+		return "", m.ui.ReportError("Couldn't find a valid solution for the package constraints")
+	}
+
+	// Note that we need the downloaded packages, as we need their spec files to build
+	// the updated lock file. Otherwise we don't have the prefixes of the packages.
+	if err := m.downloadSolution(ctx, solution); err != nil {
+		return "", err
+	}
+
+	updatedLock, err := spec.BuildLockFile(solution, m.cache, m.registries, m.ui)
+	if err != nil {
+		return "", err
+	}
+
+	err = m.writeSpecAndLock(spec, updatedLock)
+	if err != nil {
+		return "", err
+	}
+
+	return prefix, nil
+}
+
+// InstallURLPkg install the package identified by its identifier id.
+// The id can be a (suffix of a) package URL, or a package name. The identifier
+// can also be suffixed by a `@` followed by a version.
 // When provided, the package is installed with the given prefix. Otherwise, the
 // packages name (extracted from the description) is used.
 // Returns (prefix, package-string, err).
-func (m *ProjectPkgManager) InstallPkg(ctx context.Context, isLocal bool, prefix string, id string) (string, string, error) {
+func (m *ProjectPkgManager) InstallURLPkg(ctx context.Context, prefix string, id string) (string, string, error) {
 
-	var suggestedPrefix string
-	var url string
-	var concreteVersion string
-	var versionConstraint string
-	preferred := []versionedURL{}
+	prefixIsInferred := prefix == ""
 
-	if isLocal {
-		var err error
-		suggestedPrefix, err = m.prepareInstallLocal(id)
-		if err != nil {
-			return "", "", err
-		}
-	} else {
-		desc, err := m.prepareInstallGit(ctx, id)
-		if err != nil {
-			return "", "", err
-		}
-		suggestedPrefix = desc.Name
-		url = desc.URL
-		concreteVersion = desc.Version
-		// The installation process automatically adjusts the version constraint of
-		// installed packages to accept semver compatible versions.
-		versionConstraint = "^" + concreteVersion
-		id = ""
-		preferred = append(preferred, versionedURL{
-			URL:     url,
-			Version: concreteVersion,
-		})
+	installPkg, err := m.identifyInstallURL(ctx, id)
+	if err != nil {
+		return "", "", err
 	}
 
 	if prefix == "" {
-		prefix = suggestedPrefix
+		prefix = installPkg.name
 	}
 
 	spec, lf, err := m.readSpecAndLock()
@@ -359,13 +426,96 @@ func (m *ProjectPkgManager) InstallPkg(ctx context.Context, isLocal bool, prefix
 		return "", "", err
 	}
 
-	// Add the new dependency to the spec.
-	err = spec.addDep(prefix, url, versionConstraint, id, m.ui)
+	if !isValidPrefix(prefix) {
+		return "", "", m.ui.ReportError("Invalid prefix: '%s'", prefix)
+	}
+
+	// Packages can theoretically change names with different versions.
+	// We will recheck before adding the new dependency.
+	if _, ok := spec.Deps[prefix]; ok {
+		return "", "", m.ui.ReportError("Project has already a package with prefix '%s'", prefix)
+
+	}
+
+	// Create the solver deps first and then only add a new dependency.
+	// This is, because we don't yet know the exact version and prefix of the new
+	// package.
+	solverDeps, err := spec.BuildSolverDeps(m.ui)
+	if err != nil {
+		return "", "", err
+	}
+	solverDep, err := NewSolverDep(installPkg.url, installPkg.constraints)
+	if err != nil {
+		return "", "", err
+	}
+	solverDeps = append(solverDeps, solverDep)
+
+	var unpreferred *PackageEntry
+	// If the lock-file already contains an entry of this url-major, unprefer it, so we
+	// get the latest one.
+	if lf != nil {
+		for _, pkg := range lf.Packages {
+			if pkg.URL.URL() == installPkg.url {
+				v, err := version.NewVersion(pkg.Version)
+				if err != nil {
+					return "", "", err
+				}
+				if installPkg.major == v.Segments()[0] {
+					unpreferred = &pkg
+					break
+				}
+			}
+		}
+	}
+
+	solution, err := m.findSolution(spec.Environment.sdk, solverDeps, lf, unpreferred)
+	if err != nil {
+		return "", "", err
+	}
+	if solution == nil {
+		return "", "", m.ui.ReportError("Couldn't find a valid solution for the package constraints")
+	}
+
+	// We still need to add the package to the dependencies.
+	// Also, if the prefix was inferred, we need to check that the prefix is still the
+	// right one, and check that we don't override an existing prefix.
+	solvedVersion, err := solution.versionFor(installPkg.url, installPkg.constraints, m.ui)
 	if err != nil {
 		return "", "", err
 	}
 
-	updatedLock, err := m.downloadAndUpdateLock(ctx, spec, lf, preferred)
+	if prefixIsInferred {
+		// Packages might change their name. This could change their preferred prefix.
+		descReg, err := m.registries.SearchURLVersion(installPkg.url, solvedVersion)
+		if err != nil {
+			return "", "", err
+		}
+		if len(descReg) == 0 {
+			return "", "", fmt.Errorf("couldn't find package '%s-%s' in registries", installPkg.url, solvedVersion)
+		}
+		if descReg[0].Desc.Name != prefix {
+			m.ui.ReportInfo("Package '%s' has different names with different versions ('%s', '%s')", installPkg.url, prefix, descReg[0].Desc.Name)
+			// The prefix of the package isn't the same as the one we expected.
+			// We don't need to check if the prefix already exists, as adding it (with `addDep`) will
+			// do that for us.
+			prefix = descReg[0].Desc.Name
+		}
+
+	}
+	// The installation process automatically adjusts the version constraint of
+	// installed packages to accept semver compatible versions.
+	versionConstraint := "^" + solvedVersion
+	if err := spec.addDep(prefix, installPkg.url, versionConstraint, "", m.ui); err != nil {
+		return "", "", err
+	}
+
+	// Note that we need the downloaded packages, as we need their spec files to build
+	// the updated lock file. Otherwise we don't have the prefixes of the packages.
+	if err := m.downloadSolution(ctx, solution); err != nil {
+		return "", "", err
+	}
+
+	updatedLock, err := spec.BuildLockFile(solution, m.cache, m.registries, m.ui)
 	if err != nil {
 		return "", "", err
 	}
@@ -375,12 +525,8 @@ func (m *ProjectPkgManager) InstallPkg(ctx context.Context, isLocal bool, prefix
 		return "", "", err
 	}
 
-	pkgString := id
-	if id == "" {
-		pkgString = url + "@" + concreteVersion
-	}
-
-	return prefix, pkgString, nil
+	installedPkgStr := installPkg.url + "@" + solvedVersion
+	return prefix, installedPkgStr, nil
 }
 
 func (m *ProjectPkgManager) Uninstall(ctx context.Context, prefix string) error {
@@ -394,7 +540,7 @@ func (m *ProjectPkgManager) Uninstall(ctx context.Context, prefix string) error 
 	}
 	delete(spec.Deps, prefix)
 
-	updatedLock, err := m.downloadAndUpdateLock(ctx, spec, lf, nil)
+	updatedLock, err := m.solveAndDownload(ctx, spec, lf)
 	if err != nil {
 		return err
 	}
@@ -440,7 +586,7 @@ func (m *ProjectPkgManager) update(ctx context.Context, spec *Spec, lf *LockFile
 	if preferLock {
 		preferredLock = lf
 	}
-	updatedLock, err := m.downloadAndUpdateLock(ctx, spec, preferredLock, nil)
+	updatedLock, err := m.solveAndDownload(ctx, spec, preferredLock)
 	if err != nil {
 		return err
 	}
@@ -452,20 +598,17 @@ func (m *ProjectPkgManager) update(ctx context.Context, spec *Spec, lf *LockFile
 	return m.writeSpecAndLock(spec, updatedLock)
 }
 
-// downloadAndUpdateLock takes the current spec file and downloads all dependencies.
-// It uses the old lockfile as hints for which package versions are preferred.
-// Returns a lock-file corresponding to the resolved packages of the spec.
-func (m *ProjectPkgManager) downloadAndUpdateLock(ctx context.Context, spec *Spec, oldLock *LockFile, preferred []versionedURL) (*LockFile, error) {
-	solverDeps, err := spec.BuildSolverDeps(m.ui)
-	if err != nil {
-		return nil, err
-	}
+func (m *ProjectPkgManager) findSolution(minSDKStr string, solverDeps []SolverDep, oldLock *LockFile, unpreferred *PackageEntry) (*Solution, error) {
 	solver, err := NewSolver(m.registries, m.ui)
 	if err != nil {
 		return nil, err
 	}
 	if oldLock != nil {
+		preferred := []versionedURL{}
 		for _, lockPkg := range oldLock.Packages {
+			if unpreferred != nil && lockPkg.URL == unpreferred.URL && lockPkg.Version == unpreferred.Version {
+				continue
+			}
 			if lockPkg.URL != "" {
 				preferred = append(preferred, versionedURL{
 					URL:     lockPkg.URL.URL(),
@@ -473,34 +616,56 @@ func (m *ProjectPkgManager) downloadAndUpdateLock(ctx context.Context, spec *Spe
 				})
 			}
 		}
+		solver.SetPreferred(preferred)
 	}
-	solver.SetPreferred(preferred)
-	minSDK, err := sdkConstraintToMinSDK(spec.Environment.sdk)
+	minSDK, err := sdkConstraintToMinSDK(minSDKStr)
 	if err != nil {
 		return nil, err
 	}
-	solution := solver.Solve(minSDK, solverDeps)
-	if solution == nil {
-		return nil, m.ui.ReportError("Couldn't find a valid solution for the package constraints")
+	return solver.Solve(minSDK, solverDeps), nil
+}
+
+func (m *ProjectPkgManager) findSolutionFromSpec(spec *Spec, oldLock *LockFile) (*Solution, error) {
+	solverDeps, err := spec.BuildSolverDeps(m.ui)
+	if err != nil {
+		return nil, err
 	}
-	// Note that we need the downloaded packages, as we need their spec files to build
-	// the updated lock file. Otherwise we don't have the prefixes of the packages.
+	return m.findSolution(spec.Environment.sdk, solverDeps, oldLock, nil)
+
+}
+
+// downloadSolution downloads all packages in the given solution.
+func (m *ProjectPkgManager) downloadSolution(ctx context.Context, solution *Solution) error {
 	for url, versions := range solution.pkgs {
 		for _, version := range versions {
 			// If we can't find the hash in the registries, we just use the empty string.
 			hash, _ := m.registries.hashFor(url, version.vStr)
 			err := m.download(ctx, url, version.vStr, hash)
 			if err != nil {
-				return nil, err
+				return err
 			}
 		}
 	}
-	updatedLock, err := spec.BuildLockFile(solution, m.cache, m.registries, m.ui)
+	return nil
+}
+
+// solveAndDownload takes the current spec file and downloads all dependencies.
+// It uses the old lockfile as hints for which package versions are preferred.
+// Returns a lock-file corresponding to the resolved packages of the spec.
+func (m *ProjectPkgManager) solveAndDownload(ctx context.Context, spec *Spec, oldLock *LockFile) (*LockFile, error) {
+	solution, err := m.findSolutionFromSpec(spec, oldLock)
 	if err != nil {
 		return nil, err
 	}
-	updatedLock.optimizePkgIDs()
-	return updatedLock, nil
+	if solution == nil {
+		return nil, m.ui.ReportError("Couldn't find a valid solution for the package constraints")
+	}
+	// Note that we need the downloaded packages, as we need their spec files to build
+	// the updated lock file. Otherwise we don't have the prefixes of the packages.
+	if err := m.downloadSolution(ctx, solution); err != nil {
+		return nil, err
+	}
+	return spec.BuildLockFile(solution, m.cache, m.registries, m.ui)
 }
 
 // CleanPackages removes unused downloaded packages from the local cache.
@@ -672,48 +837,29 @@ func NewProjectPaths(projectRoot string, lockPath string, specPath string) (*Pro
 // version exists.
 // If a constraint is given, then descriptions are first filtered out according to
 // the constraint.
-func (descs DescRegistries) WithoutLowerVersions(constraint version.Constraints) (DescRegistries, error) {
+func (descs DescRegistries) WithoutLowerVersions() (DescRegistries, error) {
 	if len(descs) == 0 {
 		return descs, nil
 	}
 
-	filtered := DescRegistries{}
-	if constraint == nil {
-		filtered = descs
-	} else {
-		for _, desc := range descs {
-			v, err := version.NewVersion(desc.Desc.Version)
-			if err != nil {
-				return nil, err
-			}
-			if constraint.Check(v) {
-				filtered = append(filtered, desc)
-			}
-		}
-	}
-
-	if len(filtered) == 0 {
-		return filtered, nil
-	}
-
-	sort.SliceStable(filtered, func(p, q int) bool {
-		a := filtered[p]
-		b := filtered[q]
+	sort.SliceStable(descs, func(p, q int) bool {
+		a := descs[p]
+		b := descs[q]
 		return a.Desc.IDCompare(b.Desc) < 0
 	})
 	// Only keep the highest version of a package.
 	to := 0
-	for i := 1; i < len(filtered); i++ {
-		current := filtered[i]
-		previous := filtered[i-1]
+	for i := 1; i < len(descs); i++ {
+		current := descs[i]
+		previous := descs[i-1]
 		if current.Desc.URL == previous.Desc.URL {
 			// Same package. Maybe different version, but the latter is either higher or equal.
-			filtered[to] = current
+			descs[to] = current
 		} else {
 			to++
-			filtered[to] = current
+			descs[to] = current
 		}
 	}
-	filtered = filtered[0 : to+1]
-	return filtered, nil
+	descs = descs[0 : to+1]
+	return descs, nil
 }
