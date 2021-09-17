@@ -1436,4 +1436,19 @@ func test_toitPkg(t *tedi.T) {
 			{"exec", "main.toit"},
 		})
 	})
+
+	t.Run("SDKVersion", func(pt PkgTest) {
+		regPath1 := filepath.Join(pt.dir, "registry")
+		pt.GoldToit("test", [][]string{
+			{"pkg", "registry", "add", "--local", "test-reg", regPath1},
+			{"pkg", "list", "--verbose"},
+			{"pkg", "init"},
+			{"pkg", "--sdk-version=0.0.0", "install", "foo"},
+			{"pkg", "install", "foo"},
+			{"exec", "main.toit"},
+			{"pkg", "uninstall", "foo"},
+			{"pkg", "--sdk-version=1.1.10", "install", "foo"},
+			{"exec", "main.toit"},
+		})
+	})
 }

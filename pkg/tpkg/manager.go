@@ -39,6 +39,10 @@ type Manager struct {
 	// The UI to communicate with the user.
 	ui UI
 
+	// The version of the current SDK. Used to select which packages are OK.
+	// May be nil, in which case all packages are acceptable.
+	sdkVersion *version.Version
+
 	track tracking.Track
 }
 
@@ -59,11 +63,12 @@ type DescRegistry struct {
 type DescRegistries []DescRegistry
 
 // NewManager returns a new Manager.
-func NewManager(registries Registries, cache Cache, ui UI, track tracking.Track) *Manager {
+func NewManager(registries Registries, cache Cache, sdkVersion *version.Version, ui UI, track tracking.Track) *Manager {
 	return &Manager{
 		registries: registries,
 		cache:      cache,
 		ui:         ui,
+		sdkVersion: sdkVersion,
 		track:      track,
 	}
 }
@@ -599,7 +604,7 @@ func (m *ProjectPkgManager) update(ctx context.Context, spec *Spec, lf *LockFile
 }
 
 func (m *ProjectPkgManager) findSolution(minSDKStr string, solverDeps []SolverDep, oldLock *LockFile, unpreferred *PackageEntry) (*Solution, error) {
-	solver, err := NewSolver(m.registries, m.ui)
+	solver, err := NewSolver(m.registries, m.sdkVersion, m.ui)
 	if err != nil {
 		return nil, err
 	}

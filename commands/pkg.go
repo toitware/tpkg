@@ -14,6 +14,7 @@ import (
 	"text/template"
 
 	"github.com/alessio/shellescape"
+	"github.com/hashicorp/go-version"
 	"github.com/spf13/cobra"
 	"github.com/toitware/tpkg/pkg/tpkg"
 	"github.com/toitware/tpkg/pkg/tracking"
@@ -25,6 +26,7 @@ type Config interface {
 	HasRegistryConfigs() bool
 	GetRegistryConfigs() (tpkg.RegistryConfigs, error)
 	SaveRegistryConfigs(configs tpkg.RegistryConfigs) error
+	SDKVersion() (*version.Version, error)
 }
 
 var defaultRegistry = tpkg.RegistryConfig{
@@ -67,7 +69,11 @@ func (h *pkgHandler) buildManager(ctx context.Context) (*tpkg.Manager, error) {
 	if err != nil {
 		return nil, err
 	}
-	return tpkg.NewManager(tpkg.Registries(registries), cache, h.ui, h.track), nil
+	sdkVersion, err := h.cfg.SDKVersion()
+	if err != nil {
+		return nil, err
+	}
+	return tpkg.NewManager(tpkg.Registries(registries), cache, sdkVersion, h.ui, h.track), nil
 }
 
 func (h *pkgHandler) buildProjectPkgManager(cmd *cobra.Command) (*tpkg.ProjectPkgManager, error) {

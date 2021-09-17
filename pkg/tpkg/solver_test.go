@@ -76,9 +76,9 @@ func preferred(descs ...*Desc) []versionedURL {
 	return result
 }
 
-func findSolutionUI(t *testing.T, solveFor *Desc, registries Registries, preferred ...[]versionedURL) (*Solution, *testUI) {
+func findSolutionSDKUI(t *testing.T, solveFor *Desc, registries Registries, sdkVersion *version.Version, preferred ...[]versionedURL) (*Solution, *testUI) {
 	ui := testUI{}
-	solver, err := NewSolver(registries, &ui)
+	solver, err := NewSolver(registries, sdkVersion, &ui)
 	require.NoError(t, err)
 	if len(preferred) != 0 {
 		for _, pref := range preferred {
@@ -87,7 +87,11 @@ func findSolutionUI(t *testing.T, solveFor *Desc, registries Registries, preferr
 	}
 	startConstraint, err := parseConstraint(solveFor.Version)
 	require.NoError(t, err)
-	solution := solver.Solve(nil, []SolverDep{
+
+	solveForSDK, err := sdkConstraintToMinSDK(solveFor.Environment.SDK)
+	require.NoError(t, err)
+
+	solution := solver.Solve(solveForSDK, []SolverDep{
 		{
 			url:         solveFor.URL,
 			constraints: startConstraint,
@@ -96,8 +100,16 @@ func findSolutionUI(t *testing.T, solveFor *Desc, registries Registries, preferr
 	return solution, &ui
 }
 
+func findSolutionUI(t *testing.T, solveFor *Desc, registries Registries, preferred ...[]versionedURL) (*Solution, *testUI) {
+	return findSolutionSDKUI(t, solveFor, registries, nil, preferred...)
+}
+
 func findSolution(t *testing.T, solveFor *Desc, registries Registries, preferred ...[]versionedURL) *Solution {
-	result, ui := findSolutionUI(t, solveFor, registries, preferred...)
+	return findSolutionSDK(t, solveFor, registries, nil, preferred...)
+}
+
+func findSolutionSDK(t *testing.T, solveFor *Desc, registries Registries, sdkVersion *version.Version, preferred ...[]versionedURL) *Solution {
+	result, ui := findSolutionSDKUI(t, solveFor, registries, sdkVersion, preferred...)
 	for _, msg := range ui.messages {
 		fmt.Println(msg)
 	}
@@ -276,5 +288,61 @@ func Test_Solver(t *testing.T) {
 		solution := findSolution(t, a170, registries)
 		checkSolution(t, solution, a170, b140, b200, c100)
 		assert.Equal(t, v120.String(), solution.minSDK.String())
+	})
+
+	t.Run("SDKVersion", func(t *testing.T) {
+		a170 := mkPkg("a-1.7.0", "b ^1.0.0")
+		b140 := mkPkg("b-1.4.0")
+		b160 := mkPkg("b-1.6.0")
+		b180 := mkPkg("b-1.8.0")
+		v110, err := version.NewVersion("1.1.0")
+		require.NoError(t, err)
+		v115, err := version.NewVersion("1.1.5")
+		require.NoError(t, err)
+		v120, err := version.NewVersion("1.2.0")
+		require.NoError(t, err)
+		v130, err := version.NewVersion("1.3.0")
+		require.NoError(t, err)
+		b140.Environment.SDK = "^" + v110.String()
+		b160.Environment.SDK = "^" + v120.String()
+		b180.Environment.SDK = "^" + v130.String()
+		registries := makeRegistries(a170, b140, b160, b180)
+		solution := findSolution(t, a170, registries)
+		checkSolution(t, solution, a170, b180)
+		assert.Equal(t, v130.String(), solution.minSDK.String())
+
+		solution = findSolutionSDK(t, a170, registries, v115)
+		checkSolution(t, solution, a170, b140)
+		assert.Equal(t, v110.String(), solution.minSDK.String())
+	})
+
+	t.Run("SDKVersion Fail", func(t *testing.T) {
+		a170 := mkPkg("a-1.7.0", "b ^1.0.0")
+		b140 := mkPkg("b-1.4.0")
+		b160 := mkPkg("b-1.6.0")
+		b180 := mkPkg("b-1.8.0")
+		v105, err := version.NewVersion("1.0.5")
+		require.NoError(t, err)
+		v110, err := version.NewVersion("1.1.0")
+		require.NoError(t, err)
+		v120, err := version.NewVersion("1.2.0")
+		require.NoError(t, err)
+		v130, err := version.NewVersion("1.3.0")
+		require.NoError(t, err)
+		b140.Environment.SDK = "^" + v110.String()
+		b160.Environment.SDK = "^" + v120.String()
+		b180.Environment.SDK = "^" + v130.String()
+		registries := makeRegistries(a170, b140, b160, b180)
+
+		solution, ui := findSolutionSDKUI(t, a170, registries, v105)
+		assert.Nil(t, solution)
+		assert.Len(t, ui.messages, 1)
+		assert.Equal(t, "Warning: No version of 'b' satisfies constraint '>=1.0.0,<2.0.0' with SDK version 1.0.5", ui.messages[0])
+
+		a170.Environment.SDK = "^" + v110.String()
+		solution, ui = findSolutionSDKUI(t, a170, registries, v105)
+		assert.Nil(t, solution)
+		assert.Len(t, ui.messages, 1)
+		assert.Equal(t, "Warning: SDK version '1.0.5' does not satisfy the minimal SDK requirement '^1.1.0'", ui.messages[0])
 	})
 }
