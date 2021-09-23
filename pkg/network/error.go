@@ -1,9 +1,11 @@
 package network
 
 import (
+	"compress/gzip"
 	"context"
 	"net/http"
 
+	"github.com/gorilla/handlers"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -26,8 +28,8 @@ func ErrorCode(err error) codes.Code {
 
 type HttpHandlerWithError func(http.ResponseWriter, *http.Request) error
 
-func HTTPHandle(handler HttpHandlerWithError) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func HTTPHandle(handler HttpHandlerWithError) http.Handler {
+	return handlers.CompressHandlerLevel(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if err := handler(w, r); err != nil {
 			if err, ok := err.(ErrorWithStatusCode); ok {
 				w.WriteHeader(err.StatusCode())
@@ -44,7 +46,7 @@ func HTTPHandle(handler HttpHandlerWithError) http.HandlerFunc {
 			w.Write([]byte(err.Error()))
 			return
 		}
-	}
+	}), gzip.BestSpeed)
 }
 
 type ErrorWithStatusCode interface {
