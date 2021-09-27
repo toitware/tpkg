@@ -18,7 +18,8 @@ foo:
   description: Description of foo. foo-desc.
   url: <GIT_URL>/foo_git
   version: 1.2.3
-  sdk: ^1.1.30
+  environment:
+    sdk: ^1.1.30
   
 ===================
 pkg search bar
