@@ -603,7 +603,9 @@ func printDesc(d *tpkg.Desc, indent string, isVerbose bool, isJson bool) {
   description: {{.Description}}
   url: {{.URL}}
   version: {{.Version}}
-  {{if .License}}license: {{.License}}
+  {{if .Environment.SDK}}environment:
+    sdk: {{.Environment.SDK}}
+  {{end}}{{if .License}}license: {{.License}}
   {{end}}{{if .Hash}}hash: {{.Hash}}
   {{end}}{{if .Deps }}Dependencies:{{ range $_, $d := .Deps }}
     {{$d.URL}} - {{$d.Version}}{{ end}}{{end}}`))

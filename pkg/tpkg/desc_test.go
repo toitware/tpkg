@@ -13,10 +13,10 @@ import (
 func Test_DescIDCompare(t *testing.T) {
 	t.Run("Id Compare", func(t *testing.T) {
 		// Name ("z", "x", "a" or "b") doesn't matter in IDCompare.
-		a1 := NewDesc("z", "", "a", "1.0.0", "MIT", "", []descPackage{})
-		a2 := NewDesc("x", "", "a", "1.0.2", "MIT", "", []descPackage{})
-		b := NewDesc("a", "", "b", "0.0.1", "MIT", "", []descPackage{})
-		bSame := NewDesc("B", "", "b", "0.0.1", "MIT", "", []descPackage{})
+		a1 := NewDesc("z", "", "a", "1.0.0", "", "MIT", "", []descPackage{})
+		a2 := NewDesc("x", "", "a", "1.0.2", "", "MIT", "", []descPackage{})
+		b := NewDesc("a", "", "b", "0.0.1", "", "MIT", "", []descPackage{})
+		bSame := NewDesc("B", "", "b", "0.0.1", "", "MIT", "", []descPackage{})
 		assert.Equal(t, 0, a1.IDCompare(a1))
 		assert.Equal(t, 0, a2.IDCompare(a2))
 		assert.Equal(t, 0, b.IDCompare(b))
