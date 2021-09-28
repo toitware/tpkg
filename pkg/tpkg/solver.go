@@ -132,9 +132,13 @@ func (a byVersion) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a byVersion) Less(i, j int) bool { return a[i].version.LessThan(a[j].version) }
 
 func NewSolverDep(url string, constraintString string) (SolverDep, error) {
-	constraints, err := parseConstraint(constraintString)
-	if err != nil {
-		return SolverDep{}, err
+	constraints := version.Constraints{}
+	if constraintString != "" {
+		var err error
+		constraints, err = parseConstraint(constraintString)
+		if err != nil {
+			return SolverDep{}, err
+		}
 	}
 
 	return SolverDep{
@@ -395,9 +399,13 @@ func (sol Solution) versionFor(url string, constraintsString string, ui UI) (str
 	if !ok {
 		return "", fmt.Errorf("package solution missing package '%s'", url)
 	}
-	constraints, err := parseConstraint(constraintsString)
-	if err != nil {
-		return "", err
+	constraints := version.Constraints{}
+	if constraintsString != "" {
+		var err error
+		constraints, err = parseConstraint(constraintsString)
+		if err != nil {
+			return "", err
+		}
 	}
 	// TODO(florian): we are parsing the version multiple times, and are running
 	// through all existing versions multiple times. This can be optimized.
