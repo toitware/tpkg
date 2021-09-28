@@ -358,13 +358,13 @@ func (m *ProjectPkgManager) InstallLocalPkg(ctx context.Context, prefix string, 
 		prefix = filepath.Base(abs)
 	}
 
+	if !isValidPrefix(prefix) {
+		return "", m.ui.ReportError("Invalid prefix: '%s'", prefix)
+	}
+
 	spec, lf, err := m.readSpecAndLock()
 	if err != nil {
 		return "", err
-	}
-
-	if !isValidPrefix(prefix) {
-		return "", m.ui.ReportError("Invalid prefix: '%s'", prefix)
 	}
 
 	if _, ok := spec.Deps[prefix]; ok {
@@ -426,13 +426,13 @@ func (m *ProjectPkgManager) InstallURLPkg(ctx context.Context, prefix string, id
 		prefix = installPkg.name
 	}
 
+	if !isValidPrefix(prefix) {
+		return "", "", m.ui.ReportError("Invalid prefix: '%s'", prefix)
+	}
+
 	spec, lf, err := m.readSpecAndLock()
 	if err != nil {
 		return "", "", err
-	}
-
-	if !isValidPrefix(prefix) {
-		return "", "", m.ui.ReportError("Invalid prefix: '%s'", prefix)
 	}
 
 	// Packages can theoretically change names with different versions.
