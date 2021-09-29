@@ -17,6 +17,9 @@ type Solver struct {
 	ui            UI
 	state         solverState
 	printedErrors set.String
+	// sdkVersion is the SDK version the application runs on.
+	// All packages must satisfy this version.
+	sdkVersion *version.Version
 }
 
 // pkgDB is a map from package-url to all the existing packages of that url.
@@ -159,10 +162,11 @@ func convertDeps(descDeps []descPackage) ([]SolverDep, error) {
 	return result, nil
 }
 
-func NewSolver(registries Registries, ui UI) (*Solver, error) {
+func NewSolver(registries Registries, sdkVersion *version.Version, ui UI) (*Solver, error) {
 	result := &Solver{
-		db: map[string][]solverPkg{},
-		ui: ui,
+		db:         map[string][]solverPkg{},
+		ui:         ui,
+		sdkVersion: sdkVersion,
 	}
 
 	for _, reg := range registries {
@@ -253,6 +257,7 @@ func (s *Solver) solveDep(dep *SolverDep, cont solverContinuation) (bool, solver
 	index := cont.index
 	constraints := dep.constraints
 	foundSatisfying := index != 0 // We already found one last time.
+	sdkMismatch := false
 	// Annoyingly we still need to run through all available packages,
 	// even if an earlier entry already fixed a version. This is, because
 	// the dependency might allow multiple major versions, and we only
@@ -261,6 +266,10 @@ func (s *Solver) solveDep(dep *SolverDep, cont solverContinuation) (bool, solver
 		candidate := available[index]
 		index++
 		if !constraints.Check(candidate.version) {
+			continue
+		}
+		if s.sdkVersion != nil && candidate.minSDK != nil && s.sdkVersion.LessThan(candidate.minSDK) {
+			sdkMismatch = true
 			continue
 		}
 		foundSatisfying = true
@@ -293,7 +302,15 @@ func (s *Solver) solveDep(dep *SolverDep, cont solverContinuation) (bool, solver
 		return true, solverContinuation{index: index}, undo
 	}
 	if !foundSatisfying {
-		msg := fmt.Sprintf("No version of '%s' satisfies constraint '%s'", url, constraints.String())
+		msg := ""
+		if constraints.String() != "" {
+			msg = fmt.Sprintf("No version of '%s' satisfies constraint '%s'", url, constraints.String())
+			if sdkMismatch {
+				msg += " with SDK version " + s.sdkVersion.String()
+			}
+		} else {
+			msg = fmt.Sprintf("No version of '%s' exists for SDK version '%s'", url, s.sdkVersion.String())
+		}
 		if !s.printedErrors.Contains(msg) {
 			s.ui.ReportWarning(msg)
 			s.printedErrors.Add(msg)
@@ -324,6 +341,13 @@ func (s *Solver) applyUndo(undo undoInfo) {
 }
 
 func (s *Solver) Solve(minSDK *version.Version, deps []SolverDep) *Solution {
+	if s.sdkVersion != nil && minSDK != nil {
+		if s.sdkVersion.LessThan(minSDK) {
+			s.ui.ReportWarning("SDK version '%s' does not satisfy the minimal SDK requirement '^%s'",
+				s.sdkVersion.String(), minSDK.String())
+			return nil
+		}
+	}
 	s.state = solverState{
 		pkgs:          map[string]*version.Version{},
 		minSDK:        minSDK,

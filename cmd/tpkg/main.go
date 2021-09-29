@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/hashicorp/go-version"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/toitware/tpkg/commands"
@@ -32,6 +33,7 @@ var (
 	cacheDir            string
 	noDefaultRegistry   bool
 	shouldPrintTracking bool
+	sdkVersion          string
 
 	rootCmd = &cobra.Command{
 		Use:              "tpkg",
@@ -51,6 +53,7 @@ func main() {
 	rootCmd.MarkPersistentFlagRequired("cache")
 	rootCmd.PersistentFlags().BoolVar(&noDefaultRegistry, "no-default-registry", false, "Don't use default registry if none exists")
 	rootCmd.PersistentFlags().BoolVar(&shouldPrintTracking, "track", false, "Print tracking information")
+	rootCmd.PersistentFlags().StringVar(&sdkVersion, "sdk-version", "", "The SDK version")
 
 	runWrapper := func(f commands.CobraErrorCommand) commands.CobraCommand {
 		return func(cmd *cobra.Command, args []string) {
@@ -134,4 +137,11 @@ func (t *viperConf) SaveRegistryConfigs(configs tpkg.RegistryConfigs) error {
 
 func (t *viperConf) HasRegistryConfigs() bool {
 	return noDefaultRegistry || viper.IsSet(registriesConfigKey)
+}
+
+func (t *viperConf) SDKVersion() (*version.Version, error) {
+	if sdkVersion == "" {
+		return nil, nil
+	}
+	return version.NewVersion(sdkVersion)
 }
