@@ -20,8 +20,10 @@ type Cache struct {
 
 type cacheOptions struct {
 	// If set, the location where new packages should be installed.
+	// Otherwise uses `ProjectPackagesPath` (normally `.packages`) in the project root.
 	installPkgPath *string
 	// The locations where packages can be found.
+	// if InstallPkgPath is set, it will be added as the first path in pkgCachePaths.
 	pkgCachePaths []string
 	// The locations where git registries can be found.
 	// The first path is used to install new git registries.
