@@ -11,5 +11,5 @@ func provideTpkgRegistry(cfg *config.Config, cache tpkg.Cache) (tpkg.Registry, e
 }
 
 func provideManager(registry tpkg.Registry, cache tpkg.Cache, ui tpkg.UI) *tpkg.Manager {
-	return tpkg.NewManager(tpkg.Registries{registry}, cache, ui, tracking.NopTrack)
+	return tpkg.NewManager(tpkg.Registries{registry}, cache, nil, ui, tracking.NopTrack)
 }

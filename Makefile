@@ -87,14 +87,14 @@ $(BUILD_DIR)/web_toitdocs/$(WEB_TOITDOCS_VERSION):
 	cd $(BUILD_DIR)/web_toitdocs/$(WEB_TOITDOCS_VERSION) && tar -xzf $(WEB_TOITDOCS_VERSION).tar.gz
 	rm -rf $(BUILD_DIR)/web_toitdocs/$(WEB_TOITDOCS_VERSION)/$(WEB_TOITDOCS_VERSION).tar.gz
 
-SDK_VERSION ?= v1.2.0
+SDK_VERSION ?= v1.3.0
 $(BUILD_DIR)/sdk/$(SDK_VERSION):
 	mkdir -p $(BUILD_DIR)/sdk/$(SDK_VERSION)
 	gsutil cp gs://toit-archive/toit-devkit/linux/$(SDK_VERSION).tgz $(BUILD_DIR)/sdk/$(SDK_VERSION)
 	cd $(BUILD_DIR)/sdk/$(SDK_VERSION) && tar -xzf $(SDK_VERSION).tgz
 	rm -rf $(BUILD_DIR)/sdk/$(SDK_VERSION)/$(SDK_VERSION).tgz
 
-WEB_TPKG_VERSION ?= v0.0.1-pre.68+decb82a
+WEB_TPKG_VERSION ?= v0.0.1-pre.70+4ceb66e
 $(BUILD_DIR)/web_tpkg/$(WEB_TPKG_VERSION):
 	mkdir -p $(BUILD_DIR)/web_tpkg/$(WEB_TPKG_VERSION)
 	gsutil cp gs://toit-web/pkg.toit.io/$(WEB_TPKG_VERSION).tgz $(BUILD_DIR)/web_tpkg/$(WEB_TPKG_VERSION)

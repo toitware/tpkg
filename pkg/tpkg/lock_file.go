@@ -23,6 +23,9 @@ import (
 type LockFile struct {
 	// The path to the lock file. If any.
 	path string `yaml:"-"`
+	// SDK constraint, if any.
+	// Must be of form '^version'.
+	SDK string `yaml:"sdk,omitempty"`
 	// Prefixes for the entry module.
 	Prefixes PrefixMap `yaml:"prefixes,omitempty"`
 	// All dependent packages: from package-id to their PackageEntry

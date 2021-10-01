@@ -921,6 +921,7 @@ func test_toitPkg(t *tedi.T) {
 			{"pkg", "registry", "add", "test-reg", regPath},
 			{"pkg", "list"},
 			{"pkg", "install", "many"},
+			{"pkg", "install", "many@99"},
 			{"pkg", "install", "many@1"},
 			{"pkg", "install", "--prefix=foo", "many@1.0"},
 			{"pkg", "lockfile"},
@@ -960,6 +961,18 @@ func test_toitPkg(t *tedi.T) {
 			{"pkg", "install", "--local"},
 			{"// Prefix must be valid."},
 			{"pkg", "install", "--prefix", "invalid prefix", "pkg2"},
+		})
+	})
+
+	t.Run("InstallChangeName", func(pt PkgTest) {
+		regPath := filepath.Join(pt.dir, "registry_change")
+		pt.GoldToit("test", [][]string{
+			{"pkg", "registry", "add", "--local", "test-reg", regPath},
+			{"pkg", "install", "foo@1.1"},
+			{"pkg", "install", "bar"},
+			{"pkg", "uninstall", "other_name"},
+			{"pkg", "uninstall", "bar"},
+			{"pkg", "install", "foo"},
 		})
 	})
 
@@ -1440,6 +1453,21 @@ func test_toitPkg(t *tedi.T) {
 	t.Run("GitNative", func(t *tedi.T, pt PkgTest) {
 		pt.GoldToit("test", [][]string{
 			{"pkg", "install"},
+			{"exec", "main.toit"},
+		})
+	})
+
+	t.Run("SDKVersion", func(pt PkgTest) {
+		regPath1 := filepath.Join(pt.dir, "registry")
+		pt.GoldToit("test", [][]string{
+			{"pkg", "registry", "add", "--local", "test-reg", regPath1},
+			{"pkg", "list", "--verbose"},
+			{"pkg", "init"},
+			{"pkg", "--sdk-version=0.0.0", "install", "foo"},
+			{"pkg", "install", "foo"},
+			{"exec", "main.toit"},
+			{"pkg", "uninstall", "foo"},
+			{"pkg", "--sdk-version=1.1.10", "install", "foo"},
 			{"exec", "main.toit"},
 		})
 	})

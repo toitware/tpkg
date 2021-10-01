@@ -36,7 +36,9 @@ type Registry interface {
 	// to find the package.
 	SearchAll(needle string) ([]*Desc, error)
 	// Searches for a package with the given URL and version.
-	SearchURL(url string, version string) ([]*Desc, error)
+	SearchURLVersion(url string, version string) ([]*Desc, error)
+	// Searches for all package with the given URL.
+	SearchURL(url string) ([]*Desc, error)
 	// searchShortURL searches for the given 'shortened' parameter.
 	// Either shortened must be equal to the URL, or it must be a suffix of it, so
 	// that the remaining URL ends with '/'.
@@ -248,10 +250,20 @@ func (p *pathRegistry) SearchAll(needle string) ([]*Desc, error) {
 	return result, nil
 }
 
-func (p *pathRegistry) SearchURL(url string, version string) ([]*Desc, error) {
+func (p *pathRegistry) SearchURLVersion(url string, version string) ([]*Desc, error) {
 	result := []*Desc{}
 	for _, entry := range p.entries {
 		if entry.URL == url && entry.Version == version {
+			result = append(result, entry)
+		}
+	}
+	return result, nil
+}
+
+func (p *pathRegistry) SearchURL(url string) ([]*Desc, error) {
+	result := []*Desc{}
+	for _, entry := range p.entries {
+		if entry.URL == url {
 			result = append(result, entry)
 		}
 	}
@@ -300,7 +312,7 @@ func (gr *gitRegistry) Load(ctx context.Context, sync bool, cache Cache, ui UI) 
 
 			var err error
 			for _, branch := range []string{"master", "main", "trunk"} {
-				_, err = git.Clone(ctx, p, &git.CloneOptions{
+				_, err = git.Clone(ctx, p, git.CloneOptions{
 					URL:          url,
 					SingleBranch: true,
 					Branch:       branch,
@@ -314,7 +326,7 @@ func (gr *gitRegistry) Load(ctx context.Context, sync bool, cache Cache, ui UI) 
 			}
 			gr.pathRegistry.path = p
 		} else {
-			err := git.Pull(gr.path)
+			err := git.Pull(gr.path, git.PullOptions{})
 			if err != nil {
 				return err
 			}
@@ -359,10 +371,17 @@ func (registries Registries) SearchAll(needle string) (DescRegistries, error) {
 	})
 }
 
-// SearchURL searches for the package with the given url and version in all registries.
-func (registries Registries) searchURL(url string, version string) (DescRegistries, error) {
+// SearchURLVersion searches for the package with the given url and version in all registries.
+func (registries Registries) SearchURLVersion(url string, version string) (DescRegistries, error) {
 	return registries.searchInRegistries(func(registry Registry) ([]*Desc, error) {
-		return registry.SearchURL(url, version)
+		return registry.SearchURLVersion(url, version)
+	})
+}
+
+// SearchURLVersion searches for the package with the given url and version in all registries.
+func (registries Registries) SearchURL(url string) (DescRegistries, error) {
+	return registries.searchInRegistries(func(registry Registry) ([]*Desc, error) {
+		return registry.SearchURL(url)
 	})
 }
 
@@ -400,10 +419,9 @@ func (gr *sshGitRegistry) Load(ctx context.Context, sync bool, cache Cache, ui U
 
 		if gr.path == "" {
 			p := cache.PreferredRegistryPath(gr.url)
-			_, err := git.Clone(ctx, p, &git.CloneOptions{
-				URL:    gr.url,
-				Branch: gr.branch,
-
+			_, err := git.Clone(ctx, p, git.CloneOptions{
+				URL:          gr.url,
+				Branch:       gr.branch,
 				SingleBranch: true,
 				SSHPath:      gr.sshPath,
 			})
@@ -412,7 +430,9 @@ func (gr *sshGitRegistry) Load(ctx context.Context, sync bool, cache Cache, ui U
 			}
 			gr.pathRegistry.path = p
 		} else {
-			err := git.Pull(gr.path)
+			err := git.Pull(gr.path, git.PullOptions{
+				SSHPath: gr.sshPath,
+			})
 			if err != nil {
 				return err
 			}

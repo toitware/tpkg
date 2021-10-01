@@ -14,6 +14,7 @@ import (
 	"text/template"
 
 	"github.com/alessio/shellescape"
+	"github.com/hashicorp/go-version"
 	"github.com/spf13/cobra"
 	"github.com/toitware/tpkg/pkg/tpkg"
 	"github.com/toitware/tpkg/pkg/tracking"
@@ -26,6 +27,7 @@ type Config interface {
 	GetRegistryConfigs() (tpkg.RegistryConfigs, error)
 	GetPackageInstallPath() (string, bool)
 	SaveRegistryConfigs(configs tpkg.RegistryConfigs) error
+	SDKVersion() (*version.Version, error)
 }
 
 var defaultRegistry = tpkg.RegistryConfig{
@@ -78,7 +80,11 @@ func (h *pkgHandler) buildManager(ctx context.Context) (*tpkg.Manager, error) {
 	if err != nil {
 		return nil, err
 	}
-	return tpkg.NewManager(tpkg.Registries(registries), cache, h.ui, h.track), nil
+	sdkVersion, err := h.cfg.SDKVersion()
+	if err != nil {
+		return nil, err
+	}
+	return tpkg.NewManager(tpkg.Registries(registries), cache, sdkVersion, h.ui, h.track), nil
 }
 
 func (h *pkgHandler) buildProjectPkgManager(cmd *cobra.Command) (*tpkg.ProjectPkgManager, error) {
@@ -496,13 +502,24 @@ func (h pkgHandler) pkgInstall(cmd *cobra.Command, args []string) error {
 		h.ui.ReportError("The '--recompute' flag  can only be used without arguments")
 	}
 
-	p := args[0]
-	installedPrefix, pkgString, err := m.InstallPkg(ctx, isLocal, prefix, p)
+	installedPrefix := ""
+	pkgString := ""
 
-	if err != nil {
-		return err
-
+	if isLocal {
+		p := args[0]
+		installedPrefix, err = m.InstallLocalPkg(ctx, prefix, p)
+		pkgString = p
+		if err != nil {
+			return err
+		}
+	} else {
+		id := args[0]
+		installedPrefix, pkgString, err = m.InstallURLPkg(ctx, prefix, id)
+		if err != nil {
+			return err
+		}
 	}
+
 	tpkgUI.ReportInfo("Package '%s' installed with prefix '%s'", pkgString, installedPrefix)
 
 	h.track(ctx, &tracking.TrackingEvent{
@@ -614,7 +631,9 @@ func printDesc(d *tpkg.Desc, indent string, isVerbose bool, isJson bool) {
   description: {{.Description}}
   url: {{.URL}}
   version: {{.Version}}
-  {{if .License}}license: {{.License}}
+  {{if .Environment.SDK}}environment:
+    sdk: {{.Environment.SDK}}
+  {{end}}{{if .License}}license: {{.License}}
   {{end}}{{if .Hash}}hash: {{.Hash}}
   {{end}}{{if .Deps }}Dependencies:{{ range $_, $d := .Deps }}
     {{$d.URL}} - {{$d.Version}}{{ end}}{{end}}`))
@@ -874,7 +893,7 @@ func (h *pkgHandler) pkgSearch(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	found, err = found.WithoutLowerVersions(nil)
+	found, err = found.WithoutLowerVersions()
 	if err != nil {
 		return err
 	}

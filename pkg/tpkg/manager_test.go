@@ -53,23 +53,23 @@ func Test_DescForURL(t *testing.T) {
 			ui:         FmtUI,
 		}
 
-		found, err := m.registries.searchURL("desc1URL", "1.0.0")
+		found, err := m.registries.SearchURLVersion("desc1URL", "1.0.0")
 		require.NoError(t, err)
 		assert.Equal(t, 2, len(found))
 		assert.Equal(t, "desc1-1", found[0].Desc.Name)
 		assert.Equal(t, "different desc1-1", found[1].Desc.Name)
 
-		found, err = m.registries.searchURL("desc1URL", "2.0.0")
+		found, err = m.registries.SearchURLVersion("desc1URL", "2.0.0")
 		require.NoError(t, err)
 		assert.Equal(t, 1, len(found))
 		assert.Equal(t, "desc1-2", found[0].Desc.Name)
 
-		found, err = m.registries.searchURL("desc2URL", "1.0.0")
+		found, err = m.registries.SearchURLVersion("desc2URL", "1.0.0")
 		require.NoError(t, err)
 		assert.Equal(t, 1, len(found))
 		assert.Equal(t, "desc2-1", found[0].Desc.Name)
 
-		found, err = m.registries.searchURL("desc2URL", "3.0.0")
+		found, err = m.registries.SearchURLVersion("desc2URL", "3.0.0")
 		require.NoError(t, err)
 		assert.Equal(t, 0, len(found))
 	})

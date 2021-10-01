@@ -9,10 +9,10 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/hashicorp/go-version"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/toitware/tpkg/pkg/compiler"
-	"github.com/toitware/tpkg/pkg/set"
 )
 
 type testUI struct {
@@ -409,6 +409,19 @@ func Test_VisitLocalDeps(t *testing.T) {
 	})
 }
 
+func makeStringVersions(t *testing.T, vStrs ...string) []StringVersion {
+	result := []StringVersion{}
+	for _, vStr := range vStrs {
+		v, err := version.NewVersion(vStr)
+		require.NoError(t, err)
+		result = append(result, StringVersion{
+			vStr: vStr,
+			v:    v,
+		})
+	}
+	return result
+}
+
 func Test_SpecToLock(t *testing.T) {
 	t.Run("Local", func(t *testing.T) {
 		ui := testUI{}
@@ -421,7 +434,7 @@ func Test_SpecToLock(t *testing.T) {
 				Path: "local_path2",
 			},
 		})
-		solution := Solution{}
+		solution := &Solution{}
 		lf, err := spec.BuildLockFile(solution, tsc.c, Registries{}, &ui)
 		require.NoError(t, err)
 		assert.Equal(t, filepath.Join(tsc.dir, DefaultLockFileName), lf.path)
@@ -466,9 +479,11 @@ func Test_SpecToLock(t *testing.T) {
 		})
 		tsc.createUri("simple-url2", "1.2.5", []SpecPackage{})
 		tsc.createUri("simple-url2", "2.3.4", []SpecPackage{})
-		solution := Solution{
-			"simple-url":  set.NewString("1.0.0"),
-			"simple-url2": set.NewString("1.2.5", "2.3.4"),
+		solution := &Solution{
+			pkgs: map[string][]StringVersion{
+				"simple-url":  makeStringVersions(t, "1.0.0"),
+				"simple-url2": makeStringVersions(t, "1.2.5", "2.3.4"),
+			},
 		}
 		lf, err := spec.BuildLockFile(solution, tsc.c, Registries{}, &ui)
 		require.NoError(t, err)

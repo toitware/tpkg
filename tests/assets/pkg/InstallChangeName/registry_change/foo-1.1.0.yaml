@@ -1,5 +1,6 @@
-name: foo
+name: other_name
 description: Description of foo. foo-desc.
-license: BSD
+version: 1.1.0
+url: <[*TEST_GIT_DIR*]>/foo_name_git
 environment:
   sdk: ^1.1.0

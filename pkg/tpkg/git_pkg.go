@@ -74,7 +74,7 @@ func DownloadGit(ctx context.Context, o DownloadGitOptions) (string, error) {
 		}
 	}
 
-	cloneURL := o.URL
+	cloneURL := ""
 	path := ""
 	tag := o.Version
 	if !strings.HasPrefix(tag, "v") {
@@ -122,7 +122,7 @@ func DownloadGit(ctx context.Context, o DownloadGitOptions) (string, error) {
 		}
 	}()
 
-	downloadedHash, err := git.Clone(ctx, checkoutDir, &git.CloneOptions{
+	downloadedHash, err := git.Clone(ctx, checkoutDir, git.CloneOptions{
 		URL:          cloneURL,
 		SingleBranch: true,
 		Depth:        1,

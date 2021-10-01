@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 
 	"github.com/toitware/tpkg/pkg/compiler"
 	"github.com/toitware/tpkg/pkg/set"
@@ -20,11 +21,16 @@ import (
 // 1. create a package description for package registries.
 // 2. specify the prefix-dependency mapping.
 type Spec struct {
-	path        string        `yaml:"-"`
-	Name        string        `yaml:"name,omitempty"`
-	Description string        `yaml:"description,omitempty"`
-	License     string        `yaml:"license,omitempty"`
-	Deps        DependencyMap `yaml:"dependencies,omitempty"`
+	path        string          `yaml:"-"`
+	Name        string          `yaml:"name,omitempty"`
+	Description string          `yaml:"description,omitempty"`
+	License     string          `yaml:"license,omitempty"`
+	Environment SpecEnvironment `yaml:"environment,omitempty"`
+	Deps        DependencyMap   `yaml:"dependencies,omitempty"`
+}
+
+type SpecEnvironment struct {
+	sdk string `yaml:"sdk,omitempty"`
 }
 
 // DependencyMap is a map from prefix to package.
@@ -74,6 +80,16 @@ func (s *Spec) Validate(ui UI) error {
 			return err
 		}
 	}
+	if s.Environment.sdk != "" {
+		sdk := s.Environment.sdk
+		if !strings.HasPrefix(sdk, "^") {
+			return ui.ReportError("SDK constraint must be of form '^version': '%s'", sdk)
+		}
+		_, err := parseConstraintRange(sdk[1:], semverRange)
+		if err != nil {
+			return ui.ReportError("Invalid SDK constraint '%s'", sdk)
+		}
+	}
 	return nil
 }
 
@@ -118,10 +134,15 @@ func (s *Spec) WriteToFile() error {
 
 // BuildLockFile generates a lock file using the given solution.
 // Assumes that all packages in the solution are used.
-func (s *Spec) BuildLockFile(solution Solution, cache Cache, registries Registries, ui UI) (*LockFile, error) {
+func (s *Spec) BuildLockFile(solution *Solution, cache Cache, registries Registries, ui UI) (*LockFile, error) {
 	lockPath := filepath.Join(filepath.Dir(s.path), DefaultLockFileName)
+	sdkMin := ""
+	if solution.minSDK != nil {
+		sdkMin = "^" + solution.minSDK.String()
+	}
 	result := LockFile{
 		path:     lockPath,
+		SDK:      sdkMin,
 		Prefixes: nil, // Will be overwritten.
 		Packages: map[string]PackageEntry{},
 	}
@@ -129,10 +150,10 @@ func (s *Spec) BuildLockFile(solution Solution, cache Cache, registries Registri
 	// Map from URL/version to pkg-id.
 	pkgIDs := map[string]map[string]string{}
 	idCounter := 0
-	for url, versions := range solution {
+	for url, versions := range solution.pkgs {
 		pkgIDs[url] = map[string]string{}
-		for version := range versions {
-			pkgIDs[url][version] = fmt.Sprintf("pkg%d", idCounter)
+		for _, version := range versions {
+			pkgIDs[url][version.vStr] = fmt.Sprintf("pkg%d", idCounter)
 			idCounter++
 		}
 	}
@@ -256,6 +277,7 @@ func (s *Spec) BuildLockFile(solution Solution, cache Cache, registries Registri
 		return nil, err
 	}
 
+	result.optimizePkgIDs()
 	return &result, nil
 }
 
