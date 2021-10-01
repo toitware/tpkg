@@ -153,8 +153,8 @@ If the --project-root flag is used, initializes that directory instead.`,
 		Run:  errorRun(handler.pkgInit),
 		Args: cobra.NoArgs,
 	}
-	initCmd.Flags().Bool("pkg", false, "Create a package file")
-	initCmd.Flags().Bool("app", false, "Create a lock file for an application")
+	initCmd.Flags().Bool("pkg", false, "Create a package file. Deprecated")
+	initCmd.Flags().Bool("app", false, "Create a lock file for an application. Deprecated")
 	cmd.AddCommand(initCmd)
 
 	installCmd := &cobra.Command{
@@ -219,7 +219,8 @@ contain local packages.
 	}
 	installCmd.Flags().Bool("local", false, "Treat package argument as local path")
 	installCmd.Flags().Bool("recompute", false, "Recompute dependencies")
-	installCmd.Flags().String("prefix", "", "The prefix of the package")
+	installCmd.Flags().String("prefix", "", "The prefix of the package. Deprecated")
+	installCmd.Flags().String("name", "", "The prefix of the package")
 	cmd.AddCommand(installCmd)
 
 	cmd.AddCommand(&cobra.Command{
@@ -462,9 +463,21 @@ func (h pkgHandler) pkgInstall(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	prefix, err := cmd.Flags().GetString("prefix")
+	prefix, err := cmd.Flags().GetString("name")
 	if err != nil {
 		return err
+	}
+	prefixDeprecated, err := cmd.Flags().GetString("prefix")
+	if err != nil {
+		return err
+	}
+	if prefixDeprecated != "" {
+		if prefix != "" {
+			h.ui.ReportError("The '--prefix' and '--name' flag may not be used at the same time")
+			return newExitError(1)
+		}
+		h.ui.ReportWarning("The '--prefix' flag is deprecated in favor of '--name'")
+		prefix = prefixDeprecated
 	}
 	forceRecompute, err := cmd.Flags().GetBool("recompute")
 	if err != nil {
