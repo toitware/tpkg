@@ -103,7 +103,7 @@ func (s *registryService) Register(ctx context.Context, req *registry.RegisterRe
 }
 
 func provideCache(config *config.Config, ui tpkg.UI) tpkg.Cache {
-	return tpkg.NewCache(nil, []string{config.Registry.CachePath}, ui)
+	return tpkg.NewCache(config.Registry.CachePath, ui)
 }
 
 type loggerUI struct {

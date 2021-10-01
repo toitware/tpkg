@@ -25,6 +25,7 @@ type Config interface {
 	GetRegistryCachePaths() ([]string, error)
 	HasRegistryConfigs() bool
 	GetRegistryConfigs() (tpkg.RegistryConfigs, error)
+	GetPackageInstallPath() (string, bool)
 	SaveRegistryConfigs(configs tpkg.RegistryConfigs) error
 	SDKVersion() (*version.Version, error)
 }
@@ -57,7 +58,17 @@ func (h *pkgHandler) buildCache() (tpkg.Cache, error) {
 	if err != nil {
 		return tpkg.Cache{}, err
 	}
-	return tpkg.NewCache(pkgCachePaths, registryCachePaths, h.ui), nil
+	registryPath, registryCachePaths := registryCachePaths[0], registryCachePaths[1:]
+	options := []tpkg.CacheOption{
+		tpkg.WithPkgCachePath(pkgCachePaths...),
+		tpkg.WithRegistryCachePath(registryCachePaths...),
+	}
+
+	if pkgInstallPath, ok := h.cfg.GetPackageInstallPath(); ok {
+		options = append(options, tpkg.WithPkgInstallPath(pkgInstallPath))
+	}
+
+	return tpkg.NewCache(registryPath, h.ui, options...), nil
 }
 
 func (h *pkgHandler) buildManager(ctx context.Context) (*tpkg.Manager, error) {

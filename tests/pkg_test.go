@@ -596,13 +596,13 @@ func (pt PkgTest) GoldToit(name string, commands [][]string) {
 func test_toitPkg(t *tedi.T) {
 	t.Parallel()
 
-	t.Run("HelloWorld", func(pt PkgTest) {
+	t.Run("HelloWorld", func(t *tedi.T, pt PkgTest) {
 		pt.GoldToit("hello", [][]string{
 			{"exec", "hello.toit"},
 		})
 	})
 
-	t.Run("GitTagDir", func(pt PkgTest) {
+	t.Run("GitTagDir", func(t *tedi.T, pt PkgTest) {
 		// Just a simple check that our test-setup function works.
 		gitDir := filepath.Join(pt.dir, "git_dir")
 		dirInFiles := string(compiler.ToPath(pt.dir + "/git_dir"))
@@ -644,7 +644,7 @@ func test_toitPkg(t *tedi.T) {
 		assert.Equal(t, dirInFiles+"/c 2.0.0\n", dataStr)
 	})
 
-	t.Run("Install1", func(pt PkgTest) {
+	t.Run("Install1", func(t *tedi.T, pt PkgTest) {
 		pt.GoldToit("install", [][]string{
 			{"exec", "main.toit"},
 			{"pkg", "install", "--local", "pkg"},
@@ -669,7 +669,7 @@ func test_toitPkg(t *tedi.T) {
 		})
 	})
 
-	t.Run("List1", func(pt PkgTest) {
+	t.Run("List1", func(t *tedi.T, pt PkgTest) {
 		pt.GoldToit("list", [][]string{
 			{"pkg", "list", "list_registry"},
 		})
@@ -693,7 +693,7 @@ func test_toitPkg(t *tedi.T) {
 		})
 	})
 
-	t.Run("Registry1", func(pt PkgTest) {
+	t.Run("Registry1", func(t *tedi.T, pt PkgTest) {
 		regPath := filepath.Join(pt.dir, "registry")
 		pt.GoldToit("registry", [][]string{
 			{"// In a fresh configuration we don't expect to see any registry."},
@@ -714,7 +714,7 @@ func test_toitPkg(t *tedi.T) {
 		})
 	})
 
-	t.Run("Search1", func(pt PkgTest) {
+	t.Run("Search1", func(t *tedi.T, pt PkgTest) {
 		regPath := filepath.Join(pt.dir, "registry")
 		regPath2 := filepath.Join(pt.dir, "registry2")
 		pt.GoldToit("search", [][]string{
@@ -748,7 +748,7 @@ func test_toitPkg(t *tedi.T) {
 		})
 	})
 
-	t.Run("GitPackage", func(pt PkgTest) {
+	t.Run("GitPackage", func(t *tedi.T, pt PkgTest) {
 		pt.GoldToit("git package search", [][]string{
 			{"// Execution should fail, as the package is not installed yet"},
 			{"exec", "main.toit"},
@@ -786,7 +786,7 @@ func test_toitPkg(t *tedi.T) {
 		assert.NotContains(t, fooStat.Mode().String(), "w")
 	})
 
-	t.Run("InstallInPackage", func(pt PkgTest) {
+	t.Run("InstallInPackage", func(t *tedi.T, pt PkgTest) {
 		pt.GoldToit("test", [][]string{
 			{"pkg", "init"},
 			{"pkg", "registry", "add", "--local", "test-reg", "registry"},
@@ -797,7 +797,7 @@ func test_toitPkg(t *tedi.T) {
 		})
 	})
 
-	t.Run("Download1", func(pt PkgTest) {
+	t.Run("Download1", func(t *tedi.T, pt PkgTest) {
 		pt.GoldToit("install", [][]string{
 			{"pkg", "registry", "add", "--local", "test-reg", "registry"},
 			{"pkg", "install", "foo"},
@@ -842,7 +842,7 @@ func test_toitPkg(t *tedi.T) {
 		require.True(t, info.IsDir())
 	})
 
-	t.Run("Install2", func(pt PkgTest) {
+	t.Run("Install2", func(t *tedi.T, pt PkgTest) {
 		regPath := filepath.Join(pt.dir, "registry_git_pkgs")
 		pt.GoldToit("test", [][]string{
 			{"// No package installed yet."},
@@ -859,14 +859,14 @@ func test_toitPkg(t *tedi.T) {
 		})
 	})
 
-	t.Run("Install3", func(pt PkgTest) {
+	t.Run("Install3", func(t *tedi.T, pt PkgTest) {
 		pt.GoldToit("test", [][]string{
 			{"// Nothing to 'install'"},
 			{"pkg", "install"},
 		})
 	})
 
-	t.Run("Install4", func(pt PkgTest) {
+	t.Run("Install4", func(t *tedi.T, pt PkgTest) {
 		for i := 0; i < 2; i++ {
 			if i == 1 {
 				// Second round. Remove the package and lock file.
@@ -891,7 +891,7 @@ func test_toitPkg(t *tedi.T) {
 		}
 	})
 
-	t.Run("Install5", func(pt PkgTest) {
+	t.Run("Install5", func(t *tedi.T, pt PkgTest) {
 		regPath := filepath.Join(pt.dir, "registry_git_pkgs")
 		regPath2 := filepath.Join(pt.dir, "registry_ambiguous")
 		pt.GoldToit("test", [][]string{
@@ -915,7 +915,7 @@ func test_toitPkg(t *tedi.T) {
 		})
 	})
 
-	t.Run("InstallVersion", func(pt PkgTest) {
+	t.Run("InstallVersion", func(t *tedi.T, pt PkgTest) {
 		regPath := filepath.Join(pt.dir, "registry_many_versions")
 		pt.GoldToit("test", [][]string{
 			{"pkg", "registry", "add", "test-reg", regPath},
@@ -950,7 +950,7 @@ func test_toitPkg(t *tedi.T) {
 		}
 	})
 
-	t.Run("Install-bad", func(pt PkgTest) {
+	t.Run("Install-bad", func(t *tedi.T, pt PkgTest) {
 		regPath := filepath.Join(pt.dir, "registry_git_pkgs")
 		pt.GoldToit("test", [][]string{
 			{"// Add registry so we can find packages."},
@@ -976,7 +976,7 @@ func test_toitPkg(t *tedi.T) {
 		})
 	})
 
-	t.Run("RegistrySkipHidden", func(pt PkgTest) {
+	t.Run("RegistrySkipHidden", func(t *tedi.T, pt PkgTest) {
 		regPath := filepath.Join(pt.dir, "reg_with_hidden")
 		pt.GoldToit("test", [][]string{
 			{"pkg", "registry", "add", "--local", "test-reg", regPath},
@@ -985,7 +985,7 @@ func test_toitPkg(t *tedi.T) {
 		})
 	})
 
-	t.Run("GitRegistry1", func(pt PkgTest) {
+	t.Run("GitRegistry1", func(t *tedi.T, pt PkgTest) {
 		regPath := filepath.Join(pt.dir, "registry_git_pkgs")
 		pt.GoldToit("test", [][]string{
 			{"// Add git registry"},
@@ -997,7 +997,7 @@ func test_toitPkg(t *tedi.T) {
 		})
 	})
 
-	t.Run("GitRegistryNotSynced", func(pt PkgTest) {
+	t.Run("GitRegistryNotSynced", func(t *tedi.T, pt PkgTest) {
 		regPath := filepath.Join(pt.dir, "registry_git_pkgs")
 		pt.GoldToit("test-1", [][]string{
 			{"// Add git registry"},
@@ -1021,7 +1021,7 @@ func test_toitPkg(t *tedi.T) {
 		})
 	})
 
-	t.Run("GitRegistrySync", func(pt PkgTest) {
+	t.Run("GitRegistrySync", func(t *tedi.T, pt PkgTest) {
 		regPath := filepath.Join(pt.dir, "registry_git_pkgs")
 		pt.GoldToit("test-1", [][]string{
 			{"pkg", "registry", "add", "test-reg", regPath},
@@ -1061,13 +1061,13 @@ func test_toitPkg(t *tedi.T) {
 		})
 	})
 
-	t.Run("GitRegistrySyncBad", func(pt PkgTest) {
+	t.Run("GitRegistrySyncBad", func(t *tedi.T, pt PkgTest) {
 		pt.GoldToit("test", [][]string{
 			{"pkg", "registry", "sync", "bad"},
 		})
 	})
 
-	t.Run("Preferred", func(pt PkgTest) {
+	t.Run("Preferred", func(t *tedi.T, pt PkgTest) {
 		regPath1 := filepath.Join(pt.dir, "registry_git_pkgs")
 		regPath2 := filepath.Join(pt.dir, "registry")
 		regPath3 := filepath.Join(pt.dir, "registry_git_pkgs_newer_versions")
@@ -1095,7 +1095,7 @@ func test_toitPkg(t *tedi.T) {
 		})
 	})
 
-	t.Run("Update", func(pt PkgTest) {
+	t.Run("Update", func(t *tedi.T, pt PkgTest) {
 		regPath1 := filepath.Join(pt.dir, "registry_git_pkgs")
 		regPath2 := filepath.Join(pt.dir, "registry_git_pkgs_newer_versions")
 		pt.GoldToit("test", [][]string{
@@ -1179,7 +1179,7 @@ func test_toitPkg(t *tedi.T) {
 		assert.FileExists(t, filepath.Join(other, "package.lock"))
 	})
 
-	t.Run("InstallForPackage", func(pt PkgTest) {
+	t.Run("InstallForPackage", func(t *tedi.T, pt PkgTest) {
 		regPath1 := filepath.Join(pt.dir, "registry_git_pkgs")
 
 		pt.GoldToit("test", [][]string{
@@ -1204,7 +1204,27 @@ func test_toitPkg(t *tedi.T) {
 		})
 	})
 
-	t.Run("MoreLock", func(pt PkgTest) {
+	t.Run("InstallInCustomPackageDir", func(t *tedi.T, pt PkgTest) {
+		regPath1 := filepath.Join(pt.dir, "registry_git_pkgs")
+		customInstallPath := filepath.Join(pt.dir, "my_packages")
+		pt.env["TOIT_PACKAGE_INSTALL_PATH"] = customInstallPath
+		pt.GoldToit("test", [][]string{
+			{"pkg", "registry", "add", "test-reg", regPath1},
+			{"pkg", "init"},
+			{"pkg", "install", "pkg1"},
+			{"pkg", "install", "pkg2"},
+			{"pkg", "lockfile"},
+		})
+
+		_, err := os.Stat(filepath.Join(pt.dir, ".packages"))
+		assert.True(t, os.IsNotExist(err))
+
+		stat, err := os.Stat(customInstallPath)
+		require.NoError(t, err)
+		assert.True(t, stat.IsDir())
+	})
+
+	t.Run("MoreLock", func(t *tedi.T, pt PkgTest) {
 		regPath1 := filepath.Join(pt.dir, "registry_git_pkgs")
 
 		pt.GoldToit("test", [][]string{
@@ -1224,7 +1244,7 @@ func test_toitPkg(t *tedi.T) {
 		})
 	})
 
-	t.Run("DefaultRegistry", func(pt PkgTest) {
+	t.Run("DefaultRegistry", func(t *tedi.T, pt PkgTest) {
 		pt.useDefaultRegistry = true
 		pt.GoldToit("test", [][]string{
 			{"pkg", "registry", "list"},
@@ -1239,7 +1259,7 @@ func test_toitPkg(t *tedi.T) {
 		assert.Contains(t, string(data), "toitware/registry")
 	})
 
-	t.Run("RemoveRegistry", func(pt PkgTest) {
+	t.Run("RemoveRegistry", func(t *tedi.T, pt PkgTest) {
 		regPath1 := filepath.Join(pt.dir, "registry_git_pkgs")
 		regPath2 := filepath.Join(pt.dir, "registry")
 
@@ -1259,7 +1279,7 @@ func test_toitPkg(t *tedi.T) {
 		})
 	})
 
-	t.Run("Scrape", func(pt PkgTest) {
+	t.Run("Scrape", func(t *tedi.T, pt PkgTest) {
 		dirs, err := ioutil.ReadDir(filepath.Join(pt.dir, "pkg_dirs"))
 		assert.NoError(t, err)
 		for _, entry := range dirs {
@@ -1290,7 +1310,7 @@ func test_toitPkg(t *tedi.T) {
 		})
 	})
 
-	t.Run("ScrapeGit", func(pt PkgTest) {
+	t.Run("ScrapeGit", func(t *tedi.T, pt PkgTest) {
 		pt.GoldToit("morse", [][]string{
 			{"pkg", "describe", "github.com/toitware/toit-morse", "1.0.0"},
 		})
@@ -1327,7 +1347,7 @@ func test_toitPkg(t *tedi.T) {
 		assert.NoError(t, err)
 	})
 
-	t.Run("RequireProjectRoot", func(pt PkgTest) {
+	t.Run("RequireProjectRoot", func(t *tedi.T, pt PkgTest) {
 		pt.GoldToit("pre", [][]string{
 			{"pkg", "init"},
 		})
@@ -1345,7 +1365,7 @@ func test_toitPkg(t *tedi.T) {
 		})
 	})
 
-	t.Run("DeepPackage", func(pt PkgTest) {
+	t.Run("DeepPackage", func(t *tedi.T, pt PkgTest) {
 		registryDir := filepath.Join(pt.dir, "nested_registry")
 		pt.GoldToit("test", [][]string{
 			{"pkg", "registry", "add", "--local", "deep", registryDir},
@@ -1358,14 +1378,14 @@ func test_toitPkg(t *tedi.T) {
 		})
 	})
 
-	t.Run("GitHash", func(pt PkgTest) {
+	t.Run("GitHash", func(t *tedi.T, pt PkgTest) {
 		pt.GoldToit("test", [][]string{
 			{"pkg", "install"},
 			{"exec", "main.toit"},
 		})
 	})
 
-	t.Run("Uninstall", func(pt PkgTest) {
+	t.Run("Uninstall", func(t *tedi.T, pt PkgTest) {
 		regPath1 := filepath.Join(pt.dir, "registry_git_pkgs")
 		pt.GoldToit("test", [][]string{
 			{"pkg", "registry", "add", "test-reg", regPath1},
@@ -1380,7 +1400,7 @@ func test_toitPkg(t *tedi.T) {
 		})
 	})
 
-	t.Run("Clean", func(pt PkgTest) {
+	t.Run("Clean", func(t *tedi.T, pt PkgTest) {
 		regPath1 := filepath.Join(pt.dir, "registry_git_pkgs")
 		pt.GoldToit("test1", [][]string{
 			{"pkg", "registry", "add", "test-reg", regPath1},
@@ -1414,7 +1434,7 @@ func test_toitPkg(t *tedi.T) {
 		assert.NoDirExists(t, pkg3Path)
 	})
 
-	t.Run("Tracking", func(pt PkgTest) {
+	t.Run("Tracking", func(t *tedi.T, pt PkgTest) {
 		regPath1 := filepath.Join(pt.dir, "registry_git_pkgs")
 		pt.GoldToit("test", [][]string{
 			{"pkg", "--track", "registry", "add", "test-reg", regPath1},
@@ -1430,7 +1450,7 @@ func test_toitPkg(t *tedi.T) {
 		})
 	})
 
-	t.Run("GitNative", func(pt PkgTest) {
+	t.Run("GitNative", func(t *tedi.T, pt PkgTest) {
 		pt.GoldToit("test", [][]string{
 			{"pkg", "install"},
 			{"exec", "main.toit"},

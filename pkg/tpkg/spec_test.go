@@ -47,10 +47,7 @@ func newTestSpecCreator(t *testing.T, ui UI) testSpecCreator {
 	})
 
 	pkgCachePath := filepath.Join(dir, "PKG_CACHE")
-	c := Cache{
-		pkgCachePaths: []string{pkgCachePath},
-		ui:            ui,
-	}
+	c := NewCache("", ui, WithPkgCachePath(pkgCachePath))
 
 	return testSpecCreator{
 		t:   t,
