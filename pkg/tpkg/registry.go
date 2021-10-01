@@ -223,7 +223,7 @@ func matchName(name string, desc *Desc) bool {
 }
 
 func matchDescription(needle string, desc *Desc) bool {
-	return strings.Contains(desc.Description, needle)
+	return strings.Contains(strings.ToLower(desc.Description), strings.ToLower(needle))
 }
 
 func matchURL(needle string, desc *Desc) bool {

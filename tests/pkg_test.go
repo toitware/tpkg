@@ -724,6 +724,7 @@ func test_toitPkg(t *tedi.T) {
 			{"// Search should find packages now."},
 			{"pkg", "search", "foo"},
 			{"pkg", "search", "--verbose", "foo"},
+			{"pkg", "search", "Foo-Desc"},
 			{"pkg", "search", "bar"},
 			{"pkg", "search", "sub"},
 			{"// The gee package doesn't exist in this registry."},

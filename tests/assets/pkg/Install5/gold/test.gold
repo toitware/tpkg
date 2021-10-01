@@ -43,6 +43,12 @@ Info: Package '<GIT_URL>/git_pkgs/pkg2@2.4.2' installed with prefix 'pkg2'
 ===================
 pkg search --verbose ambiguous
 Exit Code: 0
+pkg2:
+  description: Ambiguous to pkg2. Prefixes URL.
+  url: example.com/<GIT_URL>/git_pkgs/pkg2
+  version: 1.0.0
+  hash: 3141592653
+  
 ambiguous:
   description: first of two packages that have long name that is equal
   url: <GIT_URL>/a/b/c/d/ambiguous
