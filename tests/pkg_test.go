@@ -1003,14 +1003,37 @@ func test_toitPkg(t *tedi.T) {
 			{"// Add git registry"},
 			{"pkg", "registry", "add", "test-reg", regPath},
 		})
-		// Delete the registry cache.
-		escapedRegistry := compiler.FilePathToURIPath(regPath).FilePath()
-		registryPath := filepath.Join(pt.registryCacheDir, escapedRegistry)
-		assert.DirExists(t, registryPath)
-		err := os.RemoveAll(registryPath)
-		assert.NoError(t, err)
 
-		pt.GoldToit("test-2", [][]string{
+		deleteRegCache := func() {
+			// Delete the registry cache.
+			escapedRegistry := compiler.FilePathToURIPath(regPath).FilePath()
+			registryPath := filepath.Join(pt.registryCacheDir, escapedRegistry)
+			assert.DirExists(t, registryPath)
+			err := os.RemoveAll(registryPath)
+			assert.NoError(t, err)
+		}
+
+		deleteRegCache()
+
+		pt.GoldToit("test-autosync-list", [][]string{
+			{"pkg", "list"},
+		})
+
+		deleteRegCache()
+		pt.GoldToit("test-autosync-install", [][]string{
+			{"pkg", "install"},
+		})
+
+		deleteRegCache()
+		pt.GoldToit("test-autosync-install2", [][]string{
+			{"pkg", "install", "pkg1"},
+		})
+
+		deleteRegCache()
+
+		pt.tpkg.args = append([]string{"--no-autosync"}, pt.tpkg.args...)
+
+		pt.GoldToit("test-no-autosync", [][]string{
 			{"// Without sync there shouldn't be any packages"},
 			{"pkg", "list"},
 			{"// Install should, however, still work"},
@@ -1022,43 +1045,65 @@ func test_toitPkg(t *tedi.T) {
 	})
 
 	t.Run("GitRegistrySync", func(t *tedi.T, pt PkgTest) {
-		regPath := filepath.Join(pt.dir, "registry_git_pkgs")
-		pt.GoldToit("test-1", [][]string{
-			{"pkg", "registry", "add", "test-reg", regPath},
-			{"pkg", "list"},
-		})
+		for i := 0; i < 2; i++ {
+			regPath := filepath.Join(pt.dir, "registry_git_pkgs")
 
-		data, err := ioutil.ReadFile(filepath.Join(pt.dir, "pkg_test.yaml"))
-		require.NoError(t, err)
-		pkgTestSpecPath := filepath.Join(regPath, "pkg_test.yaml")
-		err = ioutil.WriteFile(pkgTestSpecPath, data, 0644)
-		require.NoError(t, err)
+			suffix := "-autosync"
+			yamlFile := "pkg_test.yaml"
+			if i == 1 {
+				pt.GoldToit("test-reg-rm", [][]string{
+					{"pkg", "registry", "remove", "test-reg"},
+				})
+				// Delete the registry cache.
+				escapedRegistry := compiler.FilePathToURIPath(regPath).FilePath()
+				registryPath := filepath.Join(pt.registryCacheDir, escapedRegistry)
+				assert.DirExists(t, registryPath)
+				err := os.RemoveAll(registryPath)
+				assert.NoError(t, err)
 
-		repository, err := git.PlainOpen(regPath)
-		require.NoError(t, err)
-		wt, err := repository.Worktree()
-		require.NoError(t, err)
+				// No autosync for the second pass.
+				suffix = "-no-autosync"
+				yamlFile = "pkg_test2.yaml"
+				pt.tpkg.args = append([]string{"--no-autosync"}, pt.tpkg.args...)
+			}
 
-		rel, err := filepath.Rel(regPath, pkgTestSpecPath)
-		require.NoError(t, err)
-		_, err = wt.Add(rel)
-		require.NoError(t, err)
-		_, err = wt.Commit("Add pkg_test.yaml", &git.CommitOptions{
-			All: true,
-			Author: &object.Signature{
-				Name:  "Test Committer",
-				Email: "not_used@example.com",
-				When:  time.Now(),
-			},
-		})
-		require.NoError(t, err)
+			pt.GoldToit("test-1"+suffix, [][]string{
+				{"pkg", "registry", "add", "test-reg", regPath},
+				{"pkg", "list"},
+			})
 
-		pt.GoldToit("test-2", [][]string{
-			{"pkg", "list"},
-			{"pkg", "registry", "sync"},
-			{"pkg", "list"},
-			{"pkg", "registry", "sync"},
-		})
+			data, err := ioutil.ReadFile(filepath.Join(pt.dir, yamlFile))
+			require.NoError(t, err)
+			pkgTestSpecPath := filepath.Join(regPath, yamlFile)
+			err = ioutil.WriteFile(pkgTestSpecPath, data, 0644)
+			require.NoError(t, err)
+
+			repository, err := git.PlainOpen(regPath)
+			require.NoError(t, err)
+			wt, err := repository.Worktree()
+			require.NoError(t, err)
+
+			rel, err := filepath.Rel(regPath, pkgTestSpecPath)
+			require.NoError(t, err)
+			_, err = wt.Add(rel)
+			require.NoError(t, err)
+			_, err = wt.Commit("Add pkg_test.yaml", &git.CommitOptions{
+				All: true,
+				Author: &object.Signature{
+					Name:  "Test Committer",
+					Email: "not_used@example.com",
+					When:  time.Now(),
+				},
+			})
+			require.NoError(t, err)
+
+			pt.GoldToit("test-2"+suffix, [][]string{
+				{"pkg", "list"},
+				{"pkg", "registry", "sync"},
+				{"pkg", "list"},
+				{"pkg", "registry", "sync"},
+			})
+		}
 	})
 
 	t.Run("GitRegistrySyncBad", func(t *tedi.T, pt PkgTest) {
