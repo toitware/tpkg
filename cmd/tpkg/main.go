@@ -135,3 +135,9 @@ func (t *viperConf) SaveRegistryConfigs(configs tpkg.RegistryConfigs) error {
 func (t *viperConf) HasRegistryConfigs() bool {
 	return noDefaultRegistry || viper.IsSet(registriesConfigKey)
 }
+
+const packageInstallPathConfigEnv = "TOIT_PACKAGE_INSTALL_PATH"
+
+func (t *viperConf) GetPackageInstallPath() (string, bool) {
+	return os.LookupEnv(packageInstallPathConfigEnv)
+}

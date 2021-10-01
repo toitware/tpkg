@@ -14,21 +14,81 @@ import (
 // Cache handles all package-Cache related functionality.
 // It keeps track of where the caches are, and how to compute paths for packages.
 type Cache struct {
+	ui      UI
+	options *cacheOptions
+}
+
+type cacheOptions struct {
+	// If set, the location where new packages should be installed.
+	installPkgPath *string
 	// The locations where packages can be found.
-	// The first path is used to download new packages that don't exist yet.
 	pkgCachePaths []string
 	// The locations where git registries can be found.
 	// The first path is used to install new git registries.
 	registryCachePaths []string
-
-	ui UI
 }
 
-func NewCache(pkgCachePaths []string, registryCachePaths []string, ui UI) Cache {
+func (o *cacheOptions) apply(options ...CacheOption) {
+	for _, option := range options {
+		option.applyCacheOption(o)
+	}
+	if o.installPkgPath != nil {
+		o.pkgCachePaths = append([]string{*o.installPkgPath}, o.pkgCachePaths...)
+	}
+}
+
+// CacheOption defines the optional parameters for NewCache.
+type CacheOption interface {
+	applyCacheOption(*cacheOptions)
+}
+
+// WithPkgCachePath sets the locations where packages can be found.
+func WithPkgCachePath(paths ...string) CacheOption {
+	return pkgCachePaths(paths)
+}
+
+type pkgCachePaths []string
+
+func (p pkgCachePaths) applyCacheOption(o *cacheOptions) {
+	o.pkgCachePaths = append(o.pkgCachePaths, p...)
+}
+
+// WithRegistryCachePath sets the locations where git registries can be found.
+func WithRegistryCachePath(paths ...string) CacheOption {
+	return registryCachePaths(paths)
+}
+
+type registryCachePaths []string
+
+func (p registryCachePaths) applyCacheOption(o *cacheOptions) {
+	o.registryCachePaths = append(o.registryCachePaths, p...)
+}
+
+// WithPkgInstallPath sets the locations where git registries can be found.
+func WithPkgInstallPath(path string) CacheOption {
+	return pkgInstallPath(path)
+}
+
+type pkgInstallPath string
+
+func (p pkgInstallPath) applyCacheOption(o *cacheOptions) {
+	path := string(p)
+	o.installPkgPath = &path
+}
+
+// NewCache creates a new package cache and uses the registryPath as the locations where git registries
+// will be installed can be found.
+func NewCache(registryPath string, ui UI, options ...CacheOption) Cache {
+	option := &cacheOptions{
+		registryCachePaths: []string{
+			registryPath,
+		},
+	}
+	option.apply(options...)
+
 	return Cache{
-		pkgCachePaths:      pkgCachePaths,
-		registryCachePaths: registryCachePaths,
-		ui:                 ui,
+		options: option,
+		ui:      ui,
 	}
 }
 
@@ -55,14 +115,14 @@ func (c Cache) find(p string, paths []string) (string, error) {
 func (c Cache) FindPkg(rootPath string, url string, version string) (string, error) {
 	packageRel := URLVersionToRelPath(url, version)
 	fullProjectPackagesPath := filepath.Join(rootPath, ProjectPackagesPath)
-	return c.find(packageRel, append([]string{fullProjectPackagesPath}, c.pkgCachePaths...))
+	return c.find(packageRel, append([]string{fullProjectPackagesPath}, c.options.pkgCachePaths...))
 }
 
 // FindRegistry searches for the path of the registry with the given url in the cache.
 // If it's not found returns "".
 func (c Cache) FindRegistry(url string) (string, error) {
 	registryRel := urlToRelPath(url)
-	return c.find(registryRel, c.registryCachePaths)
+	return c.find(registryRel, c.options.registryCachePaths)
 }
 
 // Returns the path to the specification of the package url-version.
@@ -89,14 +149,21 @@ func (c Cache) SpecPathFor(projectRootPath string, url string, version string) (
 // PreferredPkgPath returns the preferred path for the package url-version.
 func (c Cache) PreferredPkgPath(projectRootPath string, url string, version string) string {
 	packageRel := URLVersionToRelPath(url, version)
-	return filepath.Join(projectRootPath, ProjectPackagesPath, packageRel)
+	return filepath.Join(c.PkgInstallPath(projectRootPath), packageRel)
+}
+
+func (c Cache) PkgInstallPath(projectRootPath string) string {
+	if c.options.installPkgPath != nil {
+		return *c.options.installPkgPath
+	}
+	return filepath.Join(projectRootPath, ProjectPackagesPath)
 }
 
 // PreferredRegistryPath returns the preferred path for the given registry url.
 func (c Cache) PreferredRegistryPath(url string) string {
 	// The first cache path is the preferred location.
 	escapedURL := string(compiler.ToURIPath(url))
-	return filepath.Join(c.registryCachePaths[0], filepath.FromSlash(escapedURL))
+	return filepath.Join(c.options.registryCachePaths[0], filepath.FromSlash(escapedURL))
 }
 
 const readmeContent string = `# Package Cache Directory
@@ -112,7 +179,7 @@ is thus safe to remove the content of this directory.
 // If the directory doesn't exist yet, creates it, and writes a README
 // explaining what the directory is for, and what is allowed to be done.
 func (c Cache) CreatePackagesCacheDir(projectRootPath string, ui UI) error {
-	packagesCacheDir := filepath.Join(projectRootPath, ProjectPackagesPath)
+	packagesCacheDir := c.PkgInstallPath(projectRootPath)
 	stat, err := os.Stat(packagesCacheDir)
 	if err == nil && !stat.IsDir() {
 		return ui.ReportError("Package cache path already exists but is not a directory: '%s'", packagesCacheDir)

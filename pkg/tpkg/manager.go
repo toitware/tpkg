@@ -510,7 +510,7 @@ func (m *ProjectPkgManager) CleanPackages() error {
 	}
 
 	rootPath := m.Paths.ProjectRootPath
-	fullProjectPkgsPath, err := filepath.Abs(filepath.Join(rootPath, ProjectPackagesPath))
+	fullProjectPkgsPath, err := filepath.Abs(m.cache.PkgInstallPath(rootPath))
 	if err != nil {
 		return err
 	}
