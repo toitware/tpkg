@@ -1102,10 +1102,13 @@ func test_toitPkg(t *tedi.T) {
 			{"pkg", "registry", "add", "test-reg", regPath1},
 			{"pkg", "list"},
 			{"pkg", "install", "pkg1"},
+			{"pkg", "install", "pkg2"},
 			{"pkg", "lockfile"},
+			{"pkg", "packagefile"},
 			{"pkg", "registry", "add", "test-reg3", regPath2},
 			{"pkg", "update"},
 			{"pkg", "lockfile"},
+			{"pkg", "packagefile"},
 		})
 	})
 
