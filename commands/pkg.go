@@ -20,15 +20,19 @@ import (
 	"github.com/toitware/tpkg/pkg/tracking"
 )
 
+const ConfigKeyRegistries = "pkg.registries"
+const ConfigKeyAutosync = "pkg.autosync"
+
 type Config interface {
 	GetPackageCachePaths() ([]string, error)
 	GetRegistryCachePaths() ([]string, error)
-	HasRegistryConfigs() bool
-	ShouldAutoSync() bool
-	GetRegistryConfigs() (tpkg.RegistryConfigs, error)
 	GetPackageInstallPath() (string, bool)
-	SaveRegistryConfigs(configs tpkg.RegistryConfigs) error
 	SDKVersion() (*version.Version, error)
+
+	GetBool(string) bool
+	IsSet(string) bool
+	Set(string, interface{}) error
+	Unmarshal(string, interface{}) error
 }
 
 var defaultRegistry = tpkg.RegistryConfig{
@@ -38,10 +42,30 @@ var defaultRegistry = tpkg.RegistryConfig{
 }
 
 func (h *pkgHandler) getRegistryConfigsOrDefault() (tpkg.RegistryConfigs, error) {
-	if h.cfg.HasRegistryConfigs() {
-		return h.cfg.GetRegistryConfigs()
+	if h.cfg.IsSet(ConfigKeyRegistries) {
+		var registries []tpkg.RegistryConfig
+		err := h.cfg.Unmarshal(ConfigKeyRegistries, &registries)
+		if err != nil {
+			return nil, err
+		}
+		return registries, nil
 	}
 	return []tpkg.RegistryConfig{defaultRegistry}, nil
+}
+
+func (h *pkgHandler) shouldAutoSync() bool {
+	if h.cfg.IsSet(ConfigKeyAutosync) {
+		return h.cfg.GetBool(ConfigKeyAutosync)
+	}
+	return true
+}
+
+func (h *pkgHandler) hasRegistryConfigs() bool {
+	return h.cfg.IsSet(ConfigKeyRegistries)
+}
+
+func (h *pkgHandler) saveRegistryConfigs(configs tpkg.RegistryConfigs) error {
+	return h.cfg.Set(ConfigKeyRegistries, configs)
 }
 
 type CobraCommand func(cmd *cobra.Command, args []string)
@@ -430,7 +454,7 @@ var tpkgUI = tpkg.FmtUI
 
 func (h pkgHandler) pkgInstall(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
-	m, err := h.buildProjectPkgManager(cmd, h.cfg.ShouldAutoSync())
+	m, err := h.buildProjectPkgManager(cmd, h.shouldAutoSync())
 
 	if err != nil {
 		return err
@@ -546,7 +570,7 @@ func (h pkgHandler) pkgUninstall(cmd *cobra.Command, args []string) error {
 
 func (h pkgHandler) pkgUpdate(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
-	m, err := h.buildProjectPkgManager(cmd, h.cfg.ShouldAutoSync())
+	m, err := h.buildProjectPkgManager(cmd, h.shouldAutoSync())
 	if err != nil {
 		return err
 	}
@@ -655,7 +679,7 @@ func (h *pkgHandler) pkgList(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	registries, err := h.loadUserRegistries(ctx, cache, h.cfg.ShouldAutoSync())
+	registries, err := h.loadUserRegistries(ctx, cache, h.shouldAutoSync())
 	if err != nil {
 		return err
 	}
@@ -744,13 +768,13 @@ func (h *pkgHandler) pkgRegistryAdd(cmd *cobra.Command, args []string) error {
 				return newExitError(1)
 			}
 			// Already exists with the same config.
-			if h.cfg.HasRegistryConfigs() {
+			if h.hasRegistryConfigs() {
 				return nil
 			}
 			// Already exists, but not saved in the configuration file.
 			// Not strictly necessary, but if the user explicitly adds a configuration
 			// we want to write it into the config file.
-			return h.cfg.SaveRegistryConfigs(configs)
+			return h.saveRegistryConfigs(configs)
 		}
 	}
 	registryConfig := tpkg.RegistryConfig{
@@ -780,7 +804,7 @@ func (h *pkgHandler) pkgRegistryAdd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	configs = append(configs, registryConfig)
-	return h.cfg.SaveRegistryConfigs(configs)
+	return h.saveRegistryConfigs(configs)
 }
 
 func (h *pkgHandler) pkgRegistryRemove(cmd *cobra.Command, args []string) error {
@@ -811,7 +835,7 @@ func (h *pkgHandler) pkgRegistryRemove(cmd *cobra.Command, args []string) error 
 	})
 
 	configs = append(configs[0:index], configs[index+1:]...)
-	return h.cfg.SaveRegistryConfigs(configs)
+	return h.saveRegistryConfigs(configs)
 }
 
 func (h *pkgHandler) pkgRegistrySync(cmd *cobra.Command, args []string) error {
@@ -880,7 +904,7 @@ func (h *pkgHandler) pkgSearch(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	registries, err := h.loadUserRegistries(ctx, cache, h.cfg.ShouldAutoSync())
+	registries, err := h.loadUserRegistries(ctx, cache, h.shouldAutoSync())
 	if err != nil {
 		return err
 	}

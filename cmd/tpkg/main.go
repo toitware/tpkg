@@ -15,7 +15,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/toitware/tpkg/commands"
-	"github.com/toitware/tpkg/pkg/tpkg"
 	"github.com/toitware/tpkg/pkg/tracking"
 )
 
@@ -121,35 +120,6 @@ func (t *viperConf) GetRegistryCachePaths() ([]string, error) {
 	}, nil
 }
 
-const registriesConfigKey = "pkg.registries"
-
-func (t *viperConf) GetRegistryConfigs() (tpkg.RegistryConfigs, error) {
-	var registries []tpkg.RegistryConfig
-	err := viper.UnmarshalKey(registriesConfigKey, &registries)
-	if err != nil {
-		return nil, err
-	}
-	return registries, nil
-}
-
-func (t *viperConf) SaveRegistryConfigs(configs tpkg.RegistryConfigs) error {
-	viper.Set(registriesConfigKey, configs)
-	return viper.WriteConfig()
-}
-
-func (t *viperConf) HasRegistryConfigs() bool {
-	return noDefaultRegistry || viper.IsSet(registriesConfigKey)
-}
-
-const shouldAutoSyncConfigKey = "pkg.autosync"
-
-func (t *viperConf) ShouldAutoSync() bool {
-	if noAutosync {
-		return false
-	}
-	return !viper.IsSet(shouldAutoSyncConfigKey) || viper.GetBool(shouldAutoSyncConfigKey)
-}
-
 const packageInstallPathConfigEnv = "TOIT_PACKAGE_INSTALL_PATH"
 
 func (t *viperConf) GetPackageInstallPath() (string, bool) {
@@ -161,4 +131,30 @@ func (t *viperConf) SDKVersion() (*version.Version, error) {
 		return nil, nil
 	}
 	return version.NewVersion(sdkVersion)
+}
+
+func (t *viperConf) IsSet(key string) bool {
+	if key == commands.ConfigKeyRegistries && noDefaultRegistry {
+		return true
+	}
+	if key == commands.ConfigKeyAutosync && noAutosync {
+		return true
+	}
+	return viper.IsSet(key)
+}
+
+func (t *viperConf) GetBool(key string) bool {
+	if key == commands.ConfigKeyAutosync && noAutosync {
+		return false
+	}
+	return viper.GetBool(key)
+}
+
+func (t *viperConf) Unmarshal(key string, o interface{}) error {
+	return viper.UnmarshalKey(key, o)
+}
+
+func (t *viperConf) Set(key string, value interface{}) error {
+	viper.Set(key, value)
+	return viper.WriteConfig()
 }
