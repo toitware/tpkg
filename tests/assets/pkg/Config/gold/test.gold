@@ -1,0 +1,25 @@
+pkg config autosync
+Exit Code: 0
+true
+===================
+pkg config autosync false
+Exit Code: 0
+===================
+pkg config autosync
+Exit Code: 0
+false
+===================
+pkg config autosync bad
+Exit Code: 1
+Error: Not a boolean value 'bad'
+===================
+pkg config autosync
+Exit Code: 0
+false
+===================
+pkg config autosync true
+Exit Code: 0
+===================
+pkg config autosync
+Exit Code: 0
+true

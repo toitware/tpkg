@@ -1516,4 +1516,16 @@ func test_toitPkg(t *tedi.T) {
 			{"exec", "main.toit"},
 		})
 	})
+
+	t.Run("Config", func(pt PkgTest) {
+		pt.GoldToit("test", [][]string{
+			{"pkg", "config", "autosync"},
+			{"pkg", "config", "autosync", "false"},
+			{"pkg", "config", "autosync"},
+			{"pkg", "config", "autosync", "bad"},
+			{"pkg", "config", "autosync"},
+			{"pkg", "config", "autosync", "true"},
+			{"pkg", "config", "autosync"},
+		})
+	})
 }
