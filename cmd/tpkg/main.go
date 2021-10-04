@@ -15,6 +15,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/toitware/tpkg/commands"
+	"github.com/toitware/tpkg/pkg/tpkg"
 	"github.com/toitware/tpkg/pkg/tracking"
 )
 
@@ -108,53 +109,59 @@ func initConfig() {
 
 type viperConf struct{}
 
-func (t *viperConf) GetPackageCachePaths() ([]string, error) {
-	return []string{
-		filepath.Join(cacheDir, "tpkg"),
-	}, nil
-}
-
-func (t *viperConf) GetRegistryCachePaths() ([]string, error) {
-	return []string{
-		filepath.Join(cacheDir, "tpkg-registries"),
-	}, nil
-}
-
 const packageInstallPathConfigEnv = "TOIT_PACKAGE_INSTALL_PATH"
+const configKeyRegistries = "pkg.registries"
+const configKeyAutosync = "pkg.autosync"
 
-func (t *viperConf) GetPackageInstallPath() (string, bool) {
-	return os.LookupEnv(packageInstallPathConfigEnv)
-}
-
-func (t *viperConf) SDKVersion() (*version.Version, error) {
-	if sdkVersion == "" {
-		return nil, nil
+func (vc *viperConf) Load(ctx context.Context) (*commands.Config, error) {
+	result := commands.Config{}
+	result.PackageCachePaths = []string{filepath.Join(cacheDir, "tpkg")}
+	result.RegistryCachePaths = []string{filepath.Join(cacheDir, "tpkg-registries")}
+	if p, ok := os.LookupEnv(packageInstallPathConfigEnv); ok {
+		result.PackageInstallPath = &p
 	}
-	return version.NewVersion(sdkVersion)
-}
-
-func (t *viperConf) IsSet(key string) bool {
-	if key == commands.ConfigKeyRegistries && noDefaultRegistry {
-		return true
+	if sdkVersion != "" {
+		v, err := version.NewVersion(sdkVersion)
+		if err != nil {
+			return nil, err
+		}
+		result.SDKVersion = v
 	}
-	if key == commands.ConfigKeyAutosync && noAutosync {
-		return true
+
+	var configs tpkg.RegistryConfigs
+	if viper.IsSet(configKeyRegistries) {
+		err := viper.UnmarshalKey(configKeyRegistries, &configs)
+		if err != nil {
+			return nil, err
+		}
+		if configs == nil {
+			// Viper seems to just ignore empty lists.
+			configs = tpkg.RegistryConfigs{}
+		}
+	} else if noDefaultRegistry {
+		configs = tpkg.RegistryConfigs{}
 	}
-	return viper.IsSet(key)
-}
+	result.RegistryConfigs = configs
 
-func (t *viperConf) GetBool(key string) bool {
-	if key == commands.ConfigKeyAutosync && noAutosync {
-		return false
+	var autosync *bool
+	if noAutosync {
+		sync := false
+		autosync = &sync
+	} else if viper.IsSet(configKeyAutosync) {
+		sync := viper.GetBool(configKeyAutosync)
+		autosync = &sync
 	}
-	return viper.GetBool(key)
+	result.Autosync = autosync
+
+	return &result, nil
 }
 
-func (t *viperConf) Unmarshal(key string, o interface{}) error {
-	return viper.UnmarshalKey(key, o)
-}
-
-func (t *viperConf) Set(key string, value interface{}) error {
-	viper.Set(key, value)
+func (vc *viperConf) Store(ctx context.Context, cfg *commands.Config) error {
+	if cfg.Autosync != nil {
+		viper.Set(configKeyAutosync, *cfg.Autosync)
+	}
+	if cfg.RegistryConfigs != nil {
+		viper.Set(configKeyRegistries, cfg.RegistryConfigs)
+	}
 	return viper.WriteConfig()
 }
