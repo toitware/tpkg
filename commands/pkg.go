@@ -435,28 +435,6 @@ directories to make the description path unique.`,
 	describeCmd.Flags().Bool("disallow-local-deps", false, "Always disallow local dependencies and report them as error")
 	cmd.AddCommand(describeCmd)
 
-	configCmd := &cobra.Command{
-		Use:   "config",
-		Short: "Get and set package management configuration options",
-	}
-	autosyncCmd := &cobra.Command{
-		Use:   "autosync",
-		Short: "Returns or sets the autosync option",
-		Long: `Returns or sets the autosync option.
-
-Without argument prints the current value of the option.
-
-If an argument ('true' or 'false') is provided, updates the
-option in the configuration.
-`,
-		Args:    cobra.MaximumNArgs(1),
-		Run:     run(handler.pkgConfigAutosync),
-		Aliases: []string{"auto-sync"},
-	}
-	autosyncCmd.Flags().Bool("unset", false, "Reverts to the default setting")
-	configCmd.AddCommand(autosyncCmd)
-	cmd.AddCommand(configCmd)
-
 	return cmd, nil
 }
 
@@ -1018,20 +996,4 @@ func (h *pkgHandler) pkgDescribe(cmd *cobra.Command, args []string) error {
 	}
 	h.ui.ReportInfo("Wrote '%s'", descPath)
 	return nil
-}
-
-func (h *pkgHandler) pkgConfigAutosync(cmd *cobra.Command, args []string) error {
-	if len(args) == 0 {
-		fmt.Println(h.shouldAutoSync())
-		return nil
-	}
-	newVal := strings.ToLower(args[0])
-	if newVal == "true" {
-		return h.cfg.Set(ConfigKeyAutosync, true)
-	}
-	if newVal == "false" {
-		return h.cfg.Set(ConfigKeyAutosync, false)
-	}
-	h.ui.ReportError("Not a boolean value '%s'", newVal)
-	return newExitError(1)
 }

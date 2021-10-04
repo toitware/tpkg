@@ -10,6 +10,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/hashicorp/go-version"
 	"github.com/spf13/cobra"
@@ -91,7 +92,9 @@ Label: {{.Label}}
 		return nil
 	}
 
-	pkgCmd, err := commands.Pkg(runWrapper, track, &viperConf{}, nil)
+	cfgStore := &viperConf{}
+
+	pkgCmd, err := commands.Pkg(runWrapper, track, cfgStore, nil)
 	if err != nil {
 		e, ok := err.(withSilent)
 		if !ok {
@@ -99,6 +102,30 @@ Label: {{.Label}}
 		}
 	}
 	rootCmd.AddCommand(pkgCmd)
+
+	configCmd := &cobra.Command{
+		Use:   "config",
+		Short: "Get and set package management configuration options",
+	}
+	autosyncCmd := &cobra.Command{
+		Use:   "autosync",
+		Short: "Returns or sets the autosync option",
+		Long: `Returns or sets the autosync option.
+
+Without argument prints the current value of the option.
+
+If an argument ('true' or 'false') is provided, updates the
+option in the configuration.
+`,
+		Args: cobra.MaximumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return pkgConfigAutosync(cmd, args, cfgStore)
+		},
+		Aliases: []string{"auto-sync"},
+	}
+	configCmd.AddCommand(autosyncCmd)
+	rootCmd.AddCommand(configCmd)
+
 	rootCmd.Execute()
 }
 
@@ -164,4 +191,28 @@ func (vc *viperConf) Store(ctx context.Context, cfg *commands.Config) error {
 		viper.Set(configKeyRegistries, cfg.RegistryConfigs)
 	}
 	return viper.WriteConfig()
+}
+
+func pkgConfigAutosync(cmd *cobra.Command, args []string, cfgStore commands.ConfigStore) error {
+	ctx := cmd.Context()
+	conf, err := cfgStore.Load(ctx)
+	if err != nil {
+		return err
+	}
+	if len(args) == 0 {
+		if conf.Autosync == nil {
+			fmt.Println(true)
+		} else {
+			fmt.Println(*conf.Autosync)
+		}
+		return nil
+	}
+	newValStr := strings.ToLower(args[0])
+	if newValStr != "true" && newValStr != "false" {
+		msg := fmt.Sprintf("Not a boolean value '%s'", newValStr)
+		cobra.CheckErr(msg)
+	}
+	newVal := newValStr == "true"
+	conf.Autosync = &newVal
+	return cfgStore.Store(ctx, conf)
 }
