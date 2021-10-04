@@ -24,6 +24,7 @@ type Config interface {
 	GetPackageCachePaths() ([]string, error)
 	GetRegistryCachePaths() ([]string, error)
 	HasRegistryConfigs() bool
+	ShouldAutoSync() bool
 	GetRegistryConfigs() (tpkg.RegistryConfigs, error)
 	GetPackageInstallPath() (string, bool)
 	SaveRegistryConfigs(configs tpkg.RegistryConfigs) error
@@ -71,12 +72,12 @@ func (h *pkgHandler) buildCache() (tpkg.Cache, error) {
 	return tpkg.NewCache(registryPath, h.ui, options...), nil
 }
 
-func (h *pkgHandler) buildManager(ctx context.Context) (*tpkg.Manager, error) {
+func (h *pkgHandler) buildManager(ctx context.Context, shouldSyncRegistries bool) (*tpkg.Manager, error) {
 	cache, err := h.buildCache()
 	if err != nil {
 		return nil, err
 	}
-	registries, err := h.loadUserRegistries(ctx, cache)
+	registries, err := h.loadUserRegistries(ctx, cache, shouldSyncRegistries)
 	if err != nil {
 		return nil, err
 	}
@@ -87,12 +88,12 @@ func (h *pkgHandler) buildManager(ctx context.Context) (*tpkg.Manager, error) {
 	return tpkg.NewManager(tpkg.Registries(registries), cache, sdkVersion, h.ui, h.track), nil
 }
 
-func (h *pkgHandler) buildProjectPkgManager(cmd *cobra.Command) (*tpkg.ProjectPkgManager, error) {
+func (h *pkgHandler) buildProjectPkgManager(cmd *cobra.Command, shouldSyncRegistries bool) (*tpkg.ProjectPkgManager, error) {
 	projectRoot, err := cmd.Flags().GetString("project-root")
 	if err != nil {
 		return nil, err
 	}
-	manager, err := h.buildManager(cmd.Context())
+	manager, err := h.buildManager(cmd.Context(), shouldSyncRegistries)
 	if err != nil {
 		return nil, err
 	}
@@ -429,7 +430,7 @@ var tpkgUI = tpkg.FmtUI
 
 func (h pkgHandler) pkgInstall(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
-	m, err := h.buildProjectPkgManager(cmd)
+	m, err := h.buildProjectPkgManager(cmd, h.cfg.ShouldAutoSync())
 
 	if err != nil {
 		return err
@@ -535,7 +536,7 @@ func (h pkgHandler) pkgInstall(cmd *cobra.Command, args []string) error {
 
 func (h pkgHandler) pkgUninstall(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
-	m, err := h.buildProjectPkgManager(cmd)
+	m, err := h.buildProjectPkgManager(cmd, false)
 	if err != nil {
 		return err
 	}
@@ -545,7 +546,7 @@ func (h pkgHandler) pkgUninstall(cmd *cobra.Command, args []string) error {
 
 func (h pkgHandler) pkgUpdate(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
-	m, err := h.buildProjectPkgManager(cmd)
+	m, err := h.buildProjectPkgManager(cmd, h.cfg.ShouldAutoSync())
 	if err != nil {
 		return err
 	}
@@ -553,7 +554,7 @@ func (h pkgHandler) pkgUpdate(cmd *cobra.Command, args []string) error {
 }
 
 func (h pkgHandler) pkgClean(cmd *cobra.Command, args []string) error {
-	m, err := h.buildProjectPkgManager(cmd)
+	m, err := h.buildProjectPkgManager(cmd, false)
 	if err != nil {
 		return err
 	}
@@ -561,7 +562,7 @@ func (h pkgHandler) pkgClean(cmd *cobra.Command, args []string) error {
 }
 
 func (h pkgHandler) printLockFile(cmd *cobra.Command, args []string) error {
-	m, err := h.buildProjectPkgManager(cmd)
+	m, err := h.buildProjectPkgManager(cmd, false)
 	if err != nil {
 		return err
 	}
@@ -569,7 +570,7 @@ func (h pkgHandler) printLockFile(cmd *cobra.Command, args []string) error {
 }
 
 func (h pkgHandler) printPackageFile(cmd *cobra.Command, args []string) error {
-	m, err := h.buildProjectPkgManager(cmd)
+	m, err := h.buildProjectPkgManager(cmd, false)
 	if err != nil {
 		return err
 	}
@@ -605,13 +606,12 @@ func (h pkgHandler) pkgInit(cmd *cobra.Command, args []string) error {
 }
 
 // Loads all registries as specified by the user's configuration.
-func (h *pkgHandler) loadUserRegistries(ctx context.Context, cache tpkg.Cache) ([]tpkg.Registry, error) {
+func (h *pkgHandler) loadUserRegistries(ctx context.Context, cache tpkg.Cache, shouldSync bool) ([]tpkg.Registry, error) {
 	configs, err := h.getRegistryConfigsOrDefault()
 	if err != nil {
 		return nil, err
 	}
-	sync := false
-	return configs.Load(ctx, sync, cache, h.ui)
+	return configs.Load(ctx, shouldSync, cache, h.ui)
 }
 
 func printDesc(d *tpkg.Desc, indent string, isVerbose bool, isJson bool) {
@@ -655,7 +655,7 @@ func (h *pkgHandler) pkgList(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	registries, err := h.loadUserRegistries(ctx, cache)
+	registries, err := h.loadUserRegistries(ctx, cache, h.cfg.ShouldAutoSync())
 	if err != nil {
 		return err
 	}
@@ -880,7 +880,7 @@ func (h *pkgHandler) pkgSearch(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	registries, err := h.loadUserRegistries(ctx, cache)
+	registries, err := h.loadUserRegistries(ctx, cache, h.cfg.ShouldAutoSync())
 	if err != nil {
 		return err
 	}

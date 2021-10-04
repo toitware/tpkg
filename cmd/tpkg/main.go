@@ -34,6 +34,7 @@ var (
 	noDefaultRegistry   bool
 	shouldPrintTracking bool
 	sdkVersion          string
+	noAutosync          bool
 
 	rootCmd = &cobra.Command{
 		Use:              "tpkg",
@@ -52,6 +53,7 @@ func main() {
 	rootCmd.PersistentFlags().StringVar(&cacheDir, "cache", "", "cache dir")
 	rootCmd.MarkPersistentFlagRequired("cache")
 	rootCmd.PersistentFlags().BoolVar(&noDefaultRegistry, "no-default-registry", false, "Don't use default registry if none exists")
+	rootCmd.PersistentFlags().BoolVar(&noAutosync, "no-autosync", false, "Don't automatically sync")
 	rootCmd.PersistentFlags().BoolVar(&shouldPrintTracking, "track", false, "Print tracking information")
 	rootCmd.PersistentFlags().StringVar(&sdkVersion, "sdk-version", "", "The SDK version")
 
@@ -137,6 +139,15 @@ func (t *viperConf) SaveRegistryConfigs(configs tpkg.RegistryConfigs) error {
 
 func (t *viperConf) HasRegistryConfigs() bool {
 	return noDefaultRegistry || viper.IsSet(registriesConfigKey)
+}
+
+const shouldAutoSyncConfigKey = "pkg.autosync"
+
+func (t *viperConf) ShouldAutoSync() bool {
+	if noAutosync {
+		return false
+	}
+	return !viper.IsSet(shouldAutoSyncConfigKey) || viper.GetBool(shouldAutoSyncConfigKey)
 }
 
 const packageInstallPathConfigEnv = "TOIT_PACKAGE_INSTALL_PATH"
