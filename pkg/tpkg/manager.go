@@ -5,7 +5,6 @@ package tpkg
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"sort"
@@ -563,42 +562,50 @@ func (m *ProjectPkgManager) Install(ctx context.Context, forceRecompute bool) er
 		return err
 	}
 
+	needsToSolve := false
 	if forceRecompute || lf == nil {
-		return m.update(ctx, spec, lf, true)
-	}
-	for _, pkg := range lf.Packages {
-		if pkg.Path != "" {
-			// Path dependencies might have changed constraints.
-			// Recompute the dependencies, preferring the existing entries.
-			return m.update(ctx, spec, lf, true)
+		needsToSolve = true
+	} else {
+		for _, pkg := range lf.Packages {
+			if pkg.Path != "" {
+				// Path dependencies might have changed constraints.
+				// Recompute the dependencies, preferring the existing entries.
+				needsToSolve = true
+				break
+			}
 		}
 	}
 
-	return m.downloadLockFilePackages(ctx, lf)
+	if !needsToSolve {
+		return m.downloadLockFilePackages(ctx, lf)
+	}
+
+	updatedLock, err := m.solveAndDownload(ctx, spec, lf)
+	if err != nil {
+		return err
+	}
+
+	return m.writeSpecAndLock(spec, updatedLock)
 }
 
 func (m *ProjectPkgManager) Update(ctx context.Context) error {
-	spec, lf, err := m.readSpecAndLock()
+	spec, _, err := m.readSpecAndLock()
 	if err != nil {
 		return err
 	}
 
-	return m.update(ctx, spec, lf, false)
-}
-
-func (m *ProjectPkgManager) update(ctx context.Context, spec *Spec, lf *LockFile, preferLock bool) error {
-	preferredLock := &LockFile{}
-	if preferLock {
-		preferredLock = lf
-	}
-	updatedLock, err := m.solveAndDownload(ctx, spec, preferredLock)
+	updatedLock, err := m.solveAndDownload(ctx, spec, nil)
 	if err != nil {
 		return err
 	}
 
-	if lf != nil && lf.path != updatedLock.path {
-		log.Fatal("Updated lock file '" + updatedLock.path + "' has different path than original '" + lf.path + "'")
+	// Update the deps in the spec file with the new requirements.
+	newSpec, err := NewSpecFromLockFile(updatedLock)
+	if err != nil {
+		return err
 	}
+
+	spec.Deps = newSpec.Deps
 
 	return m.writeSpecAndLock(spec, updatedLock)
 }

@@ -593,6 +593,15 @@ func (pt PkgTest) GoldToit(name string, commands [][]string) {
 	pt.checkGold(name, combined)
 }
 
+func deleteRegCache(t *tedi.T, pt PkgTest, regPath string) {
+	// Delete the registry cache.
+	escapedRegistry := compiler.FilePathToURIPath(regPath).FilePath()
+	registryPath := filepath.Join(pt.registryCacheDir, escapedRegistry)
+	assert.DirExists(t, registryPath)
+	err := os.RemoveAll(registryPath)
+	assert.NoError(t, err)
+}
+
 func test_toitPkg(t *tedi.T) {
 	t.Parallel()
 
@@ -1004,32 +1013,23 @@ func test_toitPkg(t *tedi.T) {
 			{"pkg", "registry", "add", "test-reg", regPath},
 		})
 
-		deleteRegCache := func() {
-			// Delete the registry cache.
-			escapedRegistry := compiler.FilePathToURIPath(regPath).FilePath()
-			registryPath := filepath.Join(pt.registryCacheDir, escapedRegistry)
-			assert.DirExists(t, registryPath)
-			err := os.RemoveAll(registryPath)
-			assert.NoError(t, err)
-		}
-
-		deleteRegCache()
+		deleteRegCache(t, pt, regPath)
 
 		pt.GoldToit("test-autosync-list", [][]string{
 			{"pkg", "list"},
 		})
 
-		deleteRegCache()
+		deleteRegCache(t, pt, regPath)
 		pt.GoldToit("test-autosync-install", [][]string{
 			{"pkg", "install"},
 		})
 
-		deleteRegCache()
+		deleteRegCache(t, pt, regPath)
 		pt.GoldToit("test-autosync-install2", [][]string{
 			{"pkg", "install", "pkg1"},
 		})
 
-		deleteRegCache()
+		deleteRegCache(t, pt, regPath)
 
 		pt.tpkg.args = append([]string{"--no-autosync"}, pt.tpkg.args...)
 
@@ -1054,12 +1054,8 @@ func test_toitPkg(t *tedi.T) {
 				pt.GoldToit("test-reg-rm", [][]string{
 					{"pkg", "registry", "remove", "test-reg"},
 				})
-				// Delete the registry cache.
-				escapedRegistry := compiler.FilePathToURIPath(regPath).FilePath()
-				registryPath := filepath.Join(pt.registryCacheDir, escapedRegistry)
-				assert.DirExists(t, registryPath)
-				err := os.RemoveAll(registryPath)
-				assert.NoError(t, err)
+
+				deleteRegCache(t, pt, regPath)
 
 				// No autosync for the second pass.
 				suffix = "-no-autosync"
@@ -1147,10 +1143,13 @@ func test_toitPkg(t *tedi.T) {
 			{"pkg", "registry", "add", "test-reg", regPath1},
 			{"pkg", "list"},
 			{"pkg", "install", "pkg1"},
+			{"pkg", "install", "pkg2"},
 			{"pkg", "lockfile"},
+			{"pkg", "packagefile"},
 			{"pkg", "registry", "add", "test-reg3", regPath2},
 			{"pkg", "update"},
 			{"pkg", "lockfile"},
+			{"pkg", "packagefile"},
 		})
 	})
 
