@@ -92,7 +92,7 @@ Label: {{.Label}}
 		return nil
 	}
 
-	cfgStore := &viperConf{}
+	cfgStore := &viperConfigStore{}
 
 	pkgCmd, err := commands.Pkg(runWrapper, track, cfgStore, nil)
 	if err != nil {
@@ -134,13 +134,13 @@ func initConfig() {
 	viper.ReadInConfig()
 }
 
-type viperConf struct{}
+type viperConfigStore struct{}
 
 const packageInstallPathConfigEnv = "TOIT_PACKAGE_INSTALL_PATH"
 const configKeyRegistries = "pkg.registries"
 const configKeyAutosync = "pkg.autosync"
 
-func (vc *viperConf) Load(ctx context.Context) (*commands.Config, error) {
+func (vc *viperConfigStore) Load(ctx context.Context) (*commands.Config, error) {
 	result := commands.Config{}
 	result.PackageCachePaths = []string{filepath.Join(cacheDir, "tpkg")}
 	result.RegistryCachePaths = []string{filepath.Join(cacheDir, "tpkg-registries")}
@@ -183,7 +183,7 @@ func (vc *viperConf) Load(ctx context.Context) (*commands.Config, error) {
 	return &result, nil
 }
 
-func (vc *viperConf) Store(ctx context.Context, cfg *commands.Config) error {
+func (vc *viperConfigStore) Store(ctx context.Context, cfg *commands.Config) error {
 	if cfg.Autosync != nil {
 		viper.Set(configKeyAutosync, *cfg.Autosync)
 	}
