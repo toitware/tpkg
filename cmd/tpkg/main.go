@@ -128,30 +128,26 @@ func (vc *viperConfigStore) Load(ctx context.Context) (*commands.Config, error) 
 		result.SDKVersion = v
 	}
 
-	var configs tpkg.RegistryConfigs
 	if viper.IsSet(configKeyRegistries) {
-		err := viper.UnmarshalKey(configKeyRegistries, &configs)
+		err := viper.UnmarshalKey(configKeyRegistries, &result.RegistryConfigs)
 		if err != nil {
 			return nil, err
 		}
-		if configs == nil {
+		if result.RegistryConfigs == nil {
 			// Viper seems to just ignore empty lists.
-			configs = tpkg.RegistryConfigs{}
+			result.RegistryConfigs = tpkg.RegistryConfigs{}
 		}
 	} else if noDefaultRegistry {
-		configs = tpkg.RegistryConfigs{}
+		result.RegistryConfigs = tpkg.RegistryConfigs{}
 	}
-	result.RegistryConfigs = configs
 
-	var autosync *bool
 	if noAutosync {
 		sync := false
-		autosync = &sync
+		result.Autosync = &sync
 	} else if viper.IsSet(configKeyAutosync) {
 		sync := viper.GetBool(configKeyAutosync)
-		autosync = &sync
+		result.Autosync = &sync
 	}
-	result.Autosync = autosync
 
 	return &result, nil
 }

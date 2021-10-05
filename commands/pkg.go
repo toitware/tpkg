@@ -97,12 +97,12 @@ func (h *pkgHandler) buildCache() (tpkg.Cache, error) {
 	return tpkg.NewCache(registryPath, h.ui, options...), nil
 }
 
-func (h *pkgHandler) buildManager(ctx context.Context, shouldSyncRegistries bool) (*tpkg.Manager, error) {
+func (h *pkgHandler) buildManager(ctx context.Context) (*tpkg.Manager, error) {
 	cache, err := h.buildCache()
 	if err != nil {
 		return nil, err
 	}
-	registries, err := h.loadUserRegistries(ctx, cache, shouldSyncRegistries)
+	registries, err := h.loadUserRegistries(ctx, cache)
 	if err != nil {
 		return nil, err
 	}
@@ -118,7 +118,7 @@ func (h *pkgHandler) buildProjectPkgManager(cmd *cobra.Command, shouldSyncRegist
 	if err != nil {
 		return nil, err
 	}
-	manager, err := h.buildManager(cmd.Context(), shouldSyncRegistries)
+	manager, err := h.buildManager(cmd.Context())
 	if err != nil {
 		return nil, err
 	}
@@ -640,9 +640,9 @@ func (h *pkgHandler) pkgInit(cmd *cobra.Command, args []string) error {
 }
 
 // Loads all registries as specified by the user's configuration.
-func (h *pkgHandler) loadUserRegistries(ctx context.Context, cache tpkg.Cache, shouldSync bool) ([]tpkg.Registry, error) {
+func (h *pkgHandler) loadUserRegistries(ctx context.Context, cache tpkg.Cache) ([]tpkg.Registry, error) {
 	configs := h.getRegistryConfigsOrDefault()
-	return configs.Load(ctx, shouldSync, cache, h.ui)
+	return configs.Load(ctx, h.shouldAutoSync(), cache, h.ui)
 }
 
 func printDesc(d *tpkg.Desc, indent string, isVerbose bool, isJson bool) {
@@ -686,7 +686,7 @@ func (h *pkgHandler) pkgList(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	registries, err := h.loadUserRegistries(ctx, cache, h.shouldAutoSync())
+	registries, err := h.loadUserRegistries(ctx, cache)
 	if err != nil {
 		return err
 	}
@@ -900,7 +900,7 @@ func (h *pkgHandler) pkgSearch(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	registries, err := h.loadUserRegistries(ctx, cache, h.shouldAutoSync())
+	registries, err := h.loadUserRegistries(ctx, cache)
 	if err != nil {
 		return err
 	}
