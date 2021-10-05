@@ -91,7 +91,7 @@ Label: {{.Label}}
 		return nil
 	}
 
-	pkgCmd, err := commands.Pkg(runWrapper, track, &viperConf{}, nil)
+	pkgCmd, err := commands.Pkg(runWrapper, track, &viperConfigStore{}, nil)
 	if err != nil {
 		e, ok := err.(withSilent)
 		if !ok {
@@ -107,58 +107,57 @@ func initConfig() {
 	viper.ReadInConfig()
 }
 
-type viperConf struct{}
-
-func (t *viperConf) GetPackageCachePaths() ([]string, error) {
-	return []string{
-		filepath.Join(cacheDir, "tpkg"),
-	}, nil
-}
-
-func (t *viperConf) GetRegistryCachePaths() ([]string, error) {
-	return []string{
-		filepath.Join(cacheDir, "tpkg-registries"),
-	}, nil
-}
-
-const registriesConfigKey = "pkg.registries"
-
-func (t *viperConf) GetRegistryConfigs() (tpkg.RegistryConfigs, error) {
-	var registries []tpkg.RegistryConfig
-	err := viper.UnmarshalKey(registriesConfigKey, &registries)
-	if err != nil {
-		return nil, err
-	}
-	return registries, nil
-}
-
-func (t *viperConf) SaveRegistryConfigs(configs tpkg.RegistryConfigs) error {
-	viper.Set(registriesConfigKey, configs)
-	return viper.WriteConfig()
-}
-
-func (t *viperConf) HasRegistryConfigs() bool {
-	return noDefaultRegistry || viper.IsSet(registriesConfigKey)
-}
-
-const shouldAutoSyncConfigKey = "pkg.autosync"
-
-func (t *viperConf) ShouldAutoSync() bool {
-	if noAutosync {
-		return false
-	}
-	return !viper.IsSet(shouldAutoSyncConfigKey) || viper.GetBool(shouldAutoSyncConfigKey)
-}
+type viperConfigStore struct{}
 
 const packageInstallPathConfigEnv = "TOIT_PACKAGE_INSTALL_PATH"
+const configKeyRegistries = "pkg.registries"
+const configKeyAutosync = "pkg.autosync"
 
-func (t *viperConf) GetPackageInstallPath() (string, bool) {
-	return os.LookupEnv(packageInstallPathConfigEnv)
+func (vc *viperConfigStore) Load(ctx context.Context) (*commands.Config, error) {
+	result := commands.Config{}
+	result.PackageCachePaths = []string{filepath.Join(cacheDir, "tpkg")}
+	result.RegistryCachePaths = []string{filepath.Join(cacheDir, "tpkg-registries")}
+	if p, ok := os.LookupEnv(packageInstallPathConfigEnv); ok {
+		result.PackageInstallPath = &p
+	}
+	if sdkVersion != "" {
+		v, err := version.NewVersion(sdkVersion)
+		if err != nil {
+			return nil, err
+		}
+		result.SDKVersion = v
+	}
+
+	if viper.IsSet(configKeyRegistries) {
+		err := viper.UnmarshalKey(configKeyRegistries, &result.RegistryConfigs)
+		if err != nil {
+			return nil, err
+		}
+		if result.RegistryConfigs == nil {
+			// Viper seems to just ignore empty lists.
+			result.RegistryConfigs = tpkg.RegistryConfigs{}
+		}
+	} else if noDefaultRegistry {
+		result.RegistryConfigs = tpkg.RegistryConfigs{}
+	}
+
+	if noAutosync {
+		sync := false
+		result.Autosync = &sync
+	} else if viper.IsSet(configKeyAutosync) {
+		sync := viper.GetBool(configKeyAutosync)
+		result.Autosync = &sync
+	}
+
+	return &result, nil
 }
 
-func (t *viperConf) SDKVersion() (*version.Version, error) {
-	if sdkVersion == "" {
-		return nil, nil
+func (vc *viperConfigStore) Store(ctx context.Context, cfg *commands.Config) error {
+	if cfg.Autosync != nil {
+		viper.Set(configKeyAutosync, *cfg.Autosync)
 	}
-	return version.NewVersion(sdkVersion)
+	if cfg.RegistryConfigs != nil {
+		viper.Set(configKeyRegistries, cfg.RegistryConfigs)
+	}
+	return viper.WriteConfig()
 }

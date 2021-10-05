@@ -20,15 +20,26 @@ import (
 	"github.com/toitware/tpkg/pkg/tracking"
 )
 
-type Config interface {
-	GetPackageCachePaths() ([]string, error)
-	GetRegistryCachePaths() ([]string, error)
-	HasRegistryConfigs() bool
-	ShouldAutoSync() bool
-	GetRegistryConfigs() (tpkg.RegistryConfigs, error)
-	GetPackageInstallPath() (string, bool)
-	SaveRegistryConfigs(configs tpkg.RegistryConfigs) error
-	SDKVersion() (*version.Version, error)
+const ConfigKeyRegistries = "pkg.registries"
+const ConfigKeyAutosync = "pkg.autosync"
+
+type ConfigStore interface {
+	Load(ctx context.Context) (*Config, error)
+	Store(ctx context.Context, cfg *Config) error
+}
+
+type Config struct {
+	PackageCachePaths  []string
+	RegistryCachePaths []string
+	PackageInstallPath *string
+	SDKVersion         *version.Version
+
+	// The following entries must be `nil` if they are not set in the
+	// configuration.
+	// Note that viper changes empty lists to `nil` so it's important to
+	// check for that case.
+	RegistryConfigs tpkg.RegistryConfigs
+	Autosync        *bool
 }
 
 var defaultRegistry = tpkg.RegistryConfig{
@@ -37,11 +48,31 @@ var defaultRegistry = tpkg.RegistryConfig{
 	Path: "github.com/toitware/registry",
 }
 
-func (h *pkgHandler) getRegistryConfigsOrDefault() (tpkg.RegistryConfigs, error) {
-	if h.cfg.HasRegistryConfigs() {
-		return h.cfg.GetRegistryConfigs()
+func (h *pkgHandler) getRegistryConfigsOrDefault() tpkg.RegistryConfigs {
+	if h.hasRegistryConfigs() {
+		return h.cfg.RegistryConfigs
 	}
-	return []tpkg.RegistryConfig{defaultRegistry}, nil
+	return []tpkg.RegistryConfig{defaultRegistry}
+}
+
+func (h *pkgHandler) shouldAutoSync() bool {
+	if h.cfg.Autosync != nil {
+		return *h.cfg.Autosync
+	}
+	return true
+}
+
+func (h *pkgHandler) hasRegistryConfigs() bool {
+	return h.cfg.RegistryConfigs != nil
+}
+
+func (h *pkgHandler) saveRegistryConfigs(ctx context.Context, configs tpkg.RegistryConfigs) error {
+	h.cfg.RegistryConfigs = configs
+	return h.saveConfigs(ctx)
+}
+
+func (h *pkgHandler) saveConfigs(ctx context.Context) error {
+	return h.cfgStore.Store(ctx, h.cfg)
 }
 
 type CobraCommand func(cmd *cobra.Command, args []string)
@@ -51,37 +82,31 @@ type Run func(CobraErrorCommand) CobraCommand
 type Registries tpkg.Registries
 
 func (h *pkgHandler) buildCache() (tpkg.Cache, error) {
-	pkgCachePaths, err := h.cfg.GetPackageCachePaths()
-	if err != nil {
-		return tpkg.Cache{}, err
-	}
-	registryCachePaths, err := h.cfg.GetRegistryCachePaths()
-	if err != nil {
-		return tpkg.Cache{}, err
-	}
+	pkgCachePaths := h.cfg.PackageCachePaths
+	registryCachePaths := h.cfg.RegistryCachePaths
 	registryPath, registryCachePaths := registryCachePaths[0], registryCachePaths[1:]
 	options := []tpkg.CacheOption{
 		tpkg.WithPkgCachePath(pkgCachePaths...),
 		tpkg.WithRegistryCachePath(registryCachePaths...),
 	}
 
-	if pkgInstallPath, ok := h.cfg.GetPackageInstallPath(); ok {
-		options = append(options, tpkg.WithPkgInstallPath(pkgInstallPath))
+	if h.cfg.PackageInstallPath != nil {
+		options = append(options, tpkg.WithPkgInstallPath(*h.cfg.PackageInstallPath))
 	}
 
 	return tpkg.NewCache(registryPath, h.ui, options...), nil
 }
 
-func (h *pkgHandler) buildManager(ctx context.Context, shouldSyncRegistries bool) (*tpkg.Manager, error) {
+func (h *pkgHandler) buildManager(ctx context.Context) (*tpkg.Manager, error) {
 	cache, err := h.buildCache()
 	if err != nil {
 		return nil, err
 	}
-	registries, err := h.loadUserRegistries(ctx, cache, shouldSyncRegistries)
+	registries, err := h.loadUserRegistries(ctx, cache)
 	if err != nil {
 		return nil, err
 	}
-	sdkVersion, err := h.cfg.SDKVersion()
+	sdkVersion := h.cfg.SDKVersion
 	if err != nil {
 		return nil, err
 	}
@@ -93,7 +118,7 @@ func (h *pkgHandler) buildProjectPkgManager(cmd *cobra.Command, shouldSyncRegist
 	if err != nil {
 		return nil, err
 	}
-	manager, err := h.buildManager(cmd.Context(), shouldSyncRegistries)
+	manager, err := h.buildManager(cmd.Context())
 	if err != nil {
 		return nil, err
 	}
@@ -105,19 +130,38 @@ func (h *pkgHandler) buildProjectPkgManager(cmd *cobra.Command, shouldSyncRegist
 }
 
 type pkgHandler struct {
-	cfg   Config
-	ui    tpkg.UI
-	track tracking.Track
+	cfg      *Config
+	cfgStore ConfigStore
+	ui       tpkg.UI
+	track    tracking.Track
 }
 
-func Pkg(run Run, track tracking.Track, config Config, ui tpkg.UI) (*cobra.Command, error) {
+func Pkg(run Run, track tracking.Track, configStore ConfigStore, ui tpkg.UI) (*cobra.Command, error) {
 
-	// Intercepts any error and checks if it is an already-reported error.
-	// If it is, replaces it with a silent error.
-	// Otherwise returns it to the caller.
-	// Also wraps the call into the given 'run' function.
-	errorRun := func(f CobraErrorCommand) CobraCommand {
+	if ui == nil {
+		ui = tpkgUI
+	}
+
+	handler := &pkgHandler{
+		cfgStore: configStore,
+		ui:       ui,
+		track:    track,
+	}
+
+	// 1. Loads the config before invoking the command.
+	// 2. Intercepts any error and checks if it is an already-reported error.
+	//    If it is, replaces it with a silent error.
+	//    Otherwise returns it to the caller.
+	// 3. Wraps the call into the given 'run' function.
+	errorCfgRun := func(f CobraErrorCommand) CobraCommand {
 		return run(func(cmd *cobra.Command, args []string) error {
+			if handler.cfg == nil {
+				cfg, err := handler.cfgStore.Load(cmd.Context())
+				if err != nil {
+					return err
+				}
+				handler.cfg = cfg
+			}
 			err := f(cmd, args)
 
 			if tpkg.IsErrAlreadyReported(err) {
@@ -125,16 +169,6 @@ func Pkg(run Run, track tracking.Track, config Config, ui tpkg.UI) (*cobra.Comma
 			}
 			return err
 		})
-	}
-
-	if ui == nil {
-		ui = tpkgUI
-	}
-
-	handler := &pkgHandler{
-		cfg:   config,
-		ui:    ui,
-		track: track,
 	}
 
 	cmd := &cobra.Command{
@@ -151,7 +185,7 @@ func Pkg(run Run, track tracking.Track, config Config, ui tpkg.UI) (*cobra.Comma
 This is done by creating a 'package.lock' and 'package.yaml' file.
 
 If the --project-root flag is used, initializes that directory instead.`,
-		Run:  errorRun(handler.pkgInit),
+		Run:  errorCfgRun(handler.pkgInit),
 		Args: cobra.NoArgs,
 	}
 	initCmd.Flags().Bool("pkg", false, "Create a package file")
@@ -219,7 +253,7 @@ contain local packages.
   toit pkg install --local ../my_other_package
   toit pkg install --local submodules/my_other_package --name=other
 `,
-		Run:     errorRun(handler.pkgInstall),
+		Run:     errorCfgRun(handler.pkgInstall),
 		Args:    cobra.MaximumNArgs(1),
 		Aliases: []string{"download", "fetch"},
 	}
@@ -236,7 +270,7 @@ contain local packages.
 Removes the package of the given name from the package files.
 The downloaded code is not automatically deleted.
 `,
-		Run:  errorRun(handler.pkgUninstall),
+		Run:  errorCfgRun(handler.pkgUninstall),
 		Args: cobra.ExactArgs(1),
 	})
 	cmd.AddCommand(&cobra.Command{
@@ -248,7 +282,7 @@ Uses semantic versioning to find the highest compatible version
 of each imported package (and their transitive dependencies).
 It then updates all packages to these versions.
 `,
-		Run:  errorRun(handler.pkgUpdate),
+		Run:  errorCfgRun(handler.pkgUpdate),
 		Args: cobra.NoArgs,
 	})
 
@@ -261,14 +295,14 @@ It then updates all packages to these versions.
 If a package isn't used anymore removes the downloaded files from the
 local package cache.
 `,
-		Run:  errorRun(handler.pkgClean),
+		Run:  errorCfgRun(handler.pkgClean),
 		Args: cobra.NoArgs,
 	})
 
 	cmd.AddCommand(&cobra.Command{
 		Use:    "lockfile",
 		Short:  "Prints the content of the lockfile",
-		Run:    errorRun(handler.printLockFile),
+		Run:    errorCfgRun(handler.printLockFile),
 		Args:   cobra.NoArgs,
 		Hidden: true,
 	})
@@ -276,7 +310,7 @@ local package cache.
 	cmd.AddCommand(&cobra.Command{
 		Use:    "packagefile",
 		Short:  "Prints the content of package.yaml",
-		Run:    errorRun(handler.printPackageFile),
+		Run:    errorCfgRun(handler.printPackageFile),
 		Args:   cobra.NoArgs,
 		Hidden: true,
 	})
@@ -289,7 +323,7 @@ local package cache.
 If no argument is given, lists all available packages.
 If an argument is given, it must point to a registry path. In that case
 only the packages from that registry are shown.`,
-		Run:  errorRun(handler.pkgList),
+		Run:  errorCfgRun(handler.pkgList),
 		Args: cobra.MaximumNArgs(1),
 	}
 	listCmd.Flags().BoolP("verbose", "v", false, "Show more information")
@@ -303,7 +337,7 @@ only the packages from that registry are shown.`,
 
 Searches in the name, and description entries, as well as in the URLs of
 the packages.`,
-		Run:  errorRun(handler.pkgSearch),
+		Run:  errorCfgRun(handler.pkgSearch),
 		Args: cobra.ExactArgs(1),
 	}
 	searchCmd.Flags().BoolP("verbose", "v", false, "Show more information")
@@ -328,7 +362,7 @@ path to a folder containing package descriptions.`,
 		Example: `  # Add the toit registry.
   toit pkg registry add toit github.com/toitware/registry
 `,
-		Run:  errorRun(handler.pkgRegistryAdd),
+		Run:  errorCfgRun(handler.pkgRegistryAdd),
 		Args: cobra.ExactArgs(2),
 	}
 	addRegistryCmd.Flags().Bool("local", false, "Registry is local")
@@ -343,7 +377,7 @@ The 'name' of the registry you want to remove.`,
 		Example: `  # Remove the toit registry.
   toit pkg registry remove toit
 `,
-		Run:  errorRun(handler.pkgRegistryRemove),
+		Run:  errorCfgRun(handler.pkgRegistryRemove),
 		Args: cobra.ExactArgs(1),
 	}
 	registryCmd.AddCommand(removeRegistryCmd)
@@ -356,7 +390,7 @@ The 'name' of the registry you want to remove.`,
 If no argument is given, synchronizes all registries.
 If an argument is given, it must point to a registry path. In that case
 only that registry is synchronized.`,
-		Run:  errorRun(handler.pkgRegistrySync),
+		Run:  errorCfgRun(handler.pkgRegistrySync),
 		Args: cobra.ArbitraryArgs,
 	}
 	registryCmd.AddCommand(syncRegistryCmd)
@@ -364,7 +398,7 @@ only that registry is synchronized.`,
 	listRegistriesCmd := &cobra.Command{
 		Use:   "list",
 		Short: "List registries",
-		Run:   errorRun(handler.pkgRegistriesList),
+		Run:   errorCfgRun(handler.pkgRegistriesList),
 		Args:  cobra.NoArgs,
 	}
 
@@ -376,7 +410,7 @@ only that registry is synchronized.`,
 		Long: `Synchronizes all registries.
 
 This is an alias for 'pkg registry sync'`,
-		Run:  errorRun(handler.pkgRegistrySync),
+		Run:  errorCfgRun(handler.pkgRegistrySync),
 		Args: cobra.NoArgs,
 	})
 
@@ -397,7 +431,7 @@ the given path.
 If the out directory is specified, generates a description file as used
 by registries. The actual description file is generated nested in
 directories to make the description path unique.`,
-		Run:  errorRun(handler.pkgDescribe),
+		Run:  errorCfgRun(handler.pkgDescribe),
 		Args: cobra.MaximumNArgs(2),
 	}
 	describeCmd.Flags().BoolP("verbose", "v", false, "Show more information")
@@ -433,9 +467,9 @@ func newExitError(code int) *exitError {
 
 var tpkgUI = tpkg.FmtUI
 
-func (h pkgHandler) pkgInstall(cmd *cobra.Command, args []string) error {
+func (h *pkgHandler) pkgInstall(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
-	m, err := h.buildProjectPkgManager(cmd, h.cfg.ShouldAutoSync())
+	m, err := h.buildProjectPkgManager(cmd, h.shouldAutoSync())
 
 	if err != nil {
 		return err
@@ -539,7 +573,7 @@ func (h pkgHandler) pkgInstall(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func (h pkgHandler) pkgUninstall(cmd *cobra.Command, args []string) error {
+func (h *pkgHandler) pkgUninstall(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 	m, err := h.buildProjectPkgManager(cmd, false)
 	if err != nil {
@@ -549,16 +583,16 @@ func (h pkgHandler) pkgUninstall(cmd *cobra.Command, args []string) error {
 
 }
 
-func (h pkgHandler) pkgUpdate(cmd *cobra.Command, args []string) error {
+func (h *pkgHandler) pkgUpdate(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
-	m, err := h.buildProjectPkgManager(cmd, h.cfg.ShouldAutoSync())
+	m, err := h.buildProjectPkgManager(cmd, h.shouldAutoSync())
 	if err != nil {
 		return err
 	}
 	return m.Update(ctx)
 }
 
-func (h pkgHandler) pkgClean(cmd *cobra.Command, args []string) error {
+func (h *pkgHandler) pkgClean(cmd *cobra.Command, args []string) error {
 	m, err := h.buildProjectPkgManager(cmd, false)
 	if err != nil {
 		return err
@@ -566,7 +600,7 @@ func (h pkgHandler) pkgClean(cmd *cobra.Command, args []string) error {
 	return m.CleanPackages()
 }
 
-func (h pkgHandler) printLockFile(cmd *cobra.Command, args []string) error {
+func (h *pkgHandler) printLockFile(cmd *cobra.Command, args []string) error {
 	m, err := h.buildProjectPkgManager(cmd, false)
 	if err != nil {
 		return err
@@ -574,7 +608,7 @@ func (h pkgHandler) printLockFile(cmd *cobra.Command, args []string) error {
 	return m.PrintLockFile()
 }
 
-func (h pkgHandler) printPackageFile(cmd *cobra.Command, args []string) error {
+func (h *pkgHandler) printPackageFile(cmd *cobra.Command, args []string) error {
 	m, err := h.buildProjectPkgManager(cmd, false)
 	if err != nil {
 		return err
@@ -582,7 +616,7 @@ func (h pkgHandler) printPackageFile(cmd *cobra.Command, args []string) error {
 	return m.PrintSpecFile()
 }
 
-func (h pkgHandler) pkgInit(cmd *cobra.Command, args []string) error {
+func (h *pkgHandler) pkgInit(cmd *cobra.Command, args []string) error {
 	isPkg, err := cmd.Flags().GetBool("pkg")
 	if err != nil {
 		return err
@@ -611,12 +645,9 @@ func (h pkgHandler) pkgInit(cmd *cobra.Command, args []string) error {
 }
 
 // Loads all registries as specified by the user's configuration.
-func (h *pkgHandler) loadUserRegistries(ctx context.Context, cache tpkg.Cache, shouldSync bool) ([]tpkg.Registry, error) {
-	configs, err := h.getRegistryConfigsOrDefault()
-	if err != nil {
-		return nil, err
-	}
-	return configs.Load(ctx, shouldSync, cache, h.ui)
+func (h *pkgHandler) loadUserRegistries(ctx context.Context, cache tpkg.Cache) ([]tpkg.Registry, error) {
+	configs := h.getRegistryConfigsOrDefault()
+	return configs.Load(ctx, h.shouldAutoSync(), cache, h.ui)
 }
 
 func printDesc(d *tpkg.Desc, indent string, isVerbose bool, isJson bool) {
@@ -660,7 +691,7 @@ func (h *pkgHandler) pkgList(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	registries, err := h.loadUserRegistries(ctx, cache, h.cfg.ShouldAutoSync())
+	registries, err := h.loadUserRegistries(ctx, cache)
 	if err != nil {
 		return err
 	}
@@ -697,10 +728,7 @@ func (h *pkgHandler) pkgList(cmd *cobra.Command, args []string) error {
 }
 
 func (h *pkgHandler) pkgRegistriesList(cmd *cobra.Command, args []string) error {
-	configs, err := h.getRegistryConfigsOrDefault()
-	if err != nil {
-		return err
-	}
+	configs := h.getRegistryConfigsOrDefault()
 	for _, config := range configs {
 		fmt.Printf("%s: %s (%s)\n", config.Name, config.Path, config.Kind)
 	}
@@ -737,10 +765,7 @@ func (h *pkgHandler) pkgRegistryAdd(cmd *cobra.Command, args []string) error {
 		}
 		pathOrURL = abs
 	}
-	configs, err := h.getRegistryConfigsOrDefault()
-	if err != nil {
-		return err
-	}
+	configs := h.getRegistryConfigsOrDefault()
 	// Check that we don't already have a registry with that name.
 	for _, config := range configs {
 		if config.Name == name {
@@ -749,13 +774,13 @@ func (h *pkgHandler) pkgRegistryAdd(cmd *cobra.Command, args []string) error {
 				return newExitError(1)
 			}
 			// Already exists with the same config.
-			if h.cfg.HasRegistryConfigs() {
+			if h.hasRegistryConfigs() {
 				return nil
 			}
 			// Already exists, but not saved in the configuration file.
 			// Not strictly necessary, but if the user explicitly adds a configuration
 			// we want to write it into the config file.
-			return h.cfg.SaveRegistryConfigs(configs)
+			return h.saveRegistryConfigs(ctx, configs)
 		}
 	}
 	registryConfig := tpkg.RegistryConfig{
@@ -785,15 +810,13 @@ func (h *pkgHandler) pkgRegistryAdd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	configs = append(configs, registryConfig)
-	return h.cfg.SaveRegistryConfigs(configs)
+	return h.saveRegistryConfigs(ctx, configs)
 }
 
 func (h *pkgHandler) pkgRegistryRemove(cmd *cobra.Command, args []string) error {
+	ctx := cmd.Context()
 	name := args[0]
-	configs, err := h.getRegistryConfigsOrDefault()
-	if err != nil {
-		return err
-	}
+	configs := h.getRegistryConfigsOrDefault()
 	index := -1
 	for i, config := range configs {
 		if config.Name == name {
@@ -816,7 +839,7 @@ func (h *pkgHandler) pkgRegistryRemove(cmd *cobra.Command, args []string) error 
 	})
 
 	configs = append(configs[0:index], configs[index+1:]...)
-	return h.cfg.SaveRegistryConfigs(configs)
+	return h.saveRegistryConfigs(ctx, configs)
 }
 
 func (h *pkgHandler) pkgRegistrySync(cmd *cobra.Command, args []string) error {
@@ -825,10 +848,7 @@ func (h *pkgHandler) pkgRegistrySync(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	configs, err := h.getRegistryConfigsOrDefault()
-	if err != nil {
-		return err
-	}
+	configs := h.getRegistryConfigsOrDefault()
 
 	var configsToSync []tpkg.RegistryConfig
 
@@ -885,7 +905,7 @@ func (h *pkgHandler) pkgSearch(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	registries, err := h.loadUserRegistries(ctx, cache, h.cfg.ShouldAutoSync())
+	registries, err := h.loadUserRegistries(ctx, cache)
 	if err != nil {
 		return err
 	}
