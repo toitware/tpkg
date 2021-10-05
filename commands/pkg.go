@@ -154,8 +154,8 @@ If the --project-root flag is used, initializes that directory instead.`,
 		Run:  errorRun(handler.pkgInit),
 		Args: cobra.NoArgs,
 	}
-	initCmd.Flags().Bool("pkg", false, "Create a package file. Deprecated")
-	initCmd.Flags().Bool("app", false, "Create a lock file for an application. Deprecated")
+	initCmd.Flags().Bool("pkg", false, "Create a package file")
+	initCmd.Flags().Bool("app", false, "Create a lock file for an application")
 	cmd.AddCommand(initCmd)
 
 	installCmd := &cobra.Command{
@@ -179,40 +179,45 @@ the package foo with the highest version satisfying '2.0.0 <= version < 3.0.0'.
 Note: the version constraint in the package.yaml is set to accept semver compatible
 versions. If necessary, modify the constraint in that file.
 
-The prefix of the newly installed package is the given prefix, or, if the
-'--prefix' argument wasn't provided, the name of the package (if it is a
-valid identifier) is used instead.
-
-Once installed, packages can be used by 'import prefix'.
+Installed packages are identified by their name. If the '--name' argument is
+provided, that one is used instead. Packages can then be used by
+  'import <name>.<lib>'.
 
 If the '--local' flag is used, then the 'package' argument is interpreted as
 a local path to a package directory. Note that published packages may not
 contain local packages.
 `,
-		Example: `  # Ensures all dependencies are downloaded.
+		Example: `  # Assumes that the package 'toitware/toit-morse' has the
+  # name 'morse' and has a library 'morse.toit' in its 'src' folder.
+
+  # Ensures all dependencies are downloaded.
   toit pkg install
 
-  # Install package named 'morse'. The prefix is 'morse' (the package name).
+  # Install package named 'morse'. The installed name is 'morse' (the package name).
+  # Programs would import this package with 'import morse.morse'
+  #   which can be shortened to 'import morse'.
   toit pkg install morse
 
-  # Install the package 'morse' with a prefix.
-  toit pkg install morse --prefix=prefix_morse
+  # Install the package 'morse' with an alternative name.
+	# Programs would use this package with 'import alt_morse.morse'.
+  toit pkg install morse --name=alt_morse
 
   # Install the version 1.0.0 of the package 'morse'.
   toit pkg install morse@1.0.0
 
   # Install the package 'morse' by URL (to disambiguate). The longer the URL
   # the less likely a conflict.
-  # The prefix is the package name.
+  # Programs would import this package with 'import morse'.
   toit pkg install toitware/toit-morse
   toit pkg install github.com/toitware/toit-morse
 
-  # Install the package 'morse' by URL with a prefix.
-  toit pkg install toitware/toit-morse --prefix=prefix_morse
+  # Install the package 'morse' by URL with a given name.
+  # Programs would use this package with 'import alt_morse.morse'.
+  toit pkg install toitware/toit-morse --name=alt_morse
 
   # Install a local package folder by path.
   toit pkg install --local ../my_other_package
-  toit pkg install --local submodules/my_other_package --prefix=other
+  toit pkg install --local submodules/my_other_package --name=other
 `,
 		Run:     errorRun(handler.pkgInstall),
 		Args:    cobra.MaximumNArgs(1),
@@ -220,16 +225,15 @@ contain local packages.
 	}
 	installCmd.Flags().Bool("local", false, "Treat package argument as local path")
 	installCmd.Flags().Bool("recompute", false, "Recompute dependencies")
-	installCmd.Flags().String("prefix", "", "The prefix of the package. Deprecated")
-	installCmd.Flags().String("name", "", "The prefix of the package")
+	installCmd.Flags().String("name", "", "The name used for the 'import' clause")
 	cmd.AddCommand(installCmd)
 
 	cmd.AddCommand(&cobra.Command{
-		Use:   "uninstall <prefix>",
-		Short: "Uninstalls the package with the given prefix",
-		Long: `Uninstalls the package with the given prefix.
+		Use:   "uninstall <name>",
+		Short: "Uninstalls the package with the given name",
+		Long: `Uninstalls the package with the given name.
 
-Removes the prefix entry from the package files.
+Removes the package of the given name from the package files.
 The downloaded code is not automatically deleted.
 `,
 		Run:  errorRun(handler.pkgUninstall),
@@ -464,21 +468,9 @@ func (h pkgHandler) pkgInstall(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	prefix, err := cmd.Flags().GetString("name")
+	name, err := cmd.Flags().GetString("name")
 	if err != nil {
 		return err
-	}
-	prefixDeprecated, err := cmd.Flags().GetString("prefix")
-	if err != nil {
-		return err
-	}
-	if prefixDeprecated != "" {
-		if prefix != "" {
-			h.ui.ReportError("The '--prefix' and '--name' flag may not be used at the same time")
-			return newExitError(1)
-		}
-		h.ui.ReportWarning("The '--prefix' flag is deprecated in favor of '--name'")
-		prefix = prefixDeprecated
 	}
 	forceRecompute, err := cmd.Flags().GetBool("recompute")
 	if err != nil {
@@ -490,8 +482,8 @@ func (h pkgHandler) pkgInstall(cmd *cobra.Command, args []string) error {
 			h.ui.ReportError("Local flag requires path argument")
 			return newExitError(1)
 		}
-		if prefix != "" {
-			h.ui.ReportError("Prefix flag can only be used with package name")
+		if name != "" {
+			h.ui.ReportError("Name flag can only be used with a package argument")
 			return newExitError(1)
 		}
 		err = m.Install(ctx, forceRecompute)
@@ -516,25 +508,25 @@ func (h pkgHandler) pkgInstall(cmd *cobra.Command, args []string) error {
 		h.ui.ReportError("The '--recompute' flag  can only be used without arguments")
 	}
 
-	installedPrefix := ""
+	installedName := ""
 	pkgString := ""
 
 	if isLocal {
 		p := args[0]
-		installedPrefix, err = m.InstallLocalPkg(ctx, prefix, p)
+		installedName, err = m.InstallLocalPkg(ctx, name, p)
 		pkgString = p
 		if err != nil {
 			return err
 		}
 	} else {
 		id := args[0]
-		installedPrefix, pkgString, err = m.InstallURLPkg(ctx, prefix, id)
+		installedName, pkgString, err = m.InstallURLPkg(ctx, name, id)
 		if err != nil {
 			return err
 		}
 	}
 
-	tpkgUI.ReportInfo("Package '%s' installed with prefix '%s'", pkgString, installedPrefix)
+	tpkgUI.ReportInfo("Package '%s' installed with name '%s'", pkgString, installedName)
 
 	h.track(ctx, &tracking.TrackingEvent{
 		Category: "pkg",

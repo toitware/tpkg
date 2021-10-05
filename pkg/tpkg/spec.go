@@ -363,7 +363,7 @@ func (s *Spec) addDep(prefix string, url string, version string, p string, ui UI
 		// creating or loading a spec.
 		s.Deps = DependencyMap{}
 	}
-	if !isValidPrefix(prefix) {
+	if !isValidName(prefix) {
 		return ui.ReportError("Invalid prefix: '%s'", prefix)
 	}
 	if _, ok := s.Deps[prefix]; ok {
@@ -380,14 +380,14 @@ func (s *Spec) addDep(prefix string, url string, version string, p string, ui UI
 }
 
 // TODO(florian): this function should be shared with the lock-file.
-func isValidPrefix(prefix string) bool {
+func isValidName(prefix string) bool {
 	validID := regexp.MustCompile(`^[a-zA-Z_][a-zA-Z0-9_]*$`)
 	return validID.MatchString(prefix)
 }
 
 // TODO(florian): create a Prefix type.
 func validatePrefix(prefix string, ui UI) error {
-	if !isValidPrefix(prefix) {
+	if !isValidName(prefix) {
 		return ui.ReportError("Invalid prefix: '%s'", prefix)
 	}
 	return nil

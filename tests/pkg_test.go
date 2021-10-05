@@ -678,15 +678,6 @@ func test_toitPkg(t *tedi.T) {
 		})
 	})
 
-	t.Run("PrefixName", func(t *tedi.T, pt PkgTest) {
-		regPath := filepath.Join(pt.dir, "registry")
-		pt.GoldToit("test", [][]string{
-			{"pkg", "registry", "add", "--local", "test-reg", regPath},
-			{"pkg", "install", "--prefix", "f", "foo"},
-			{"pkg", "install", "--prefix", "f", "--name", "f2", "foo"},
-		})
-	})
-
 	t.Run("List1", func(t *tedi.T, pt PkgTest) {
 		pt.GoldToit("list", [][]string{
 			{"pkg", "list", "list_registry"},

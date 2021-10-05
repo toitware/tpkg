@@ -14,7 +14,7 @@ test-reg: <TEST>/registry_many_versions:
 ===================
 pkg install many
 Exit Code: 0
-Info: Package '<GIT_URL>/pkgs_many_versions/many@3.0.2' installed with prefix 'many'
+Info: Package '<GIT_URL>/pkgs_many_versions/many@3.0.2' installed with name 'many'
 ===================
 pkg install many@99
 Exit Code: 1
@@ -22,11 +22,11 @@ Error: No package 'many' with version 99 found
 ===================
 pkg install many@1
 Exit Code: 1
-Error: Project has already a package with prefix 'many'
+Error: Project has already a package with name 'many'
 ===================
 pkg install --name=foo many@1.0
 Exit Code: 0
-Info: Package '<GIT_URL>/pkgs_many_versions/many@1.0.1' installed with prefix 'foo'
+Info: Package '<GIT_URL>/pkgs_many_versions/many@1.0.1' installed with name 'foo'
 ===================
 pkg lockfile
 Exit Code: 0
@@ -55,7 +55,7 @@ dependencies:
 ===================
 pkg install --name=gee many@1
 Exit Code: 0
-Info: Package '<GIT_URL>/pkgs_many_versions/many@1.1.0' installed with prefix 'gee'
+Info: Package '<GIT_URL>/pkgs_many_versions/many@1.1.0' installed with name 'gee'
 ===================
 pkg lockfile
 Exit Code: 0
