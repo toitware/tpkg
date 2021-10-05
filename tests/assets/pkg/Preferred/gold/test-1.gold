@@ -12,7 +12,7 @@ test-reg: <TEST>/registry_git_pkgs:
 ===================
 pkg install pkg1
 Exit Code: 0
-Info: Package '<GIT_URL>/git_pkgs/pkg1@1.0.0' installed with prefix 'pkg1'
+Info: Package '<GIT_URL>/git_pkgs/pkg1@1.0.0' installed with name 'pkg1'
 ===================
 pkg lockfile
 Exit Code: 0
@@ -54,7 +54,7 @@ Exit Code: 0
 ===================
 pkg install foo
 Exit Code: 0
-Info: Package '<GIT_URL>/foo_git@1.2.3' installed with prefix 'foo'
+Info: Package '<GIT_URL>/foo_git@1.2.3' installed with name 'foo'
 ===================
 // Installing foo did not change the versions of the existing packages
 ===================

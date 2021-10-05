@@ -6,8 +6,8 @@ Exit Code: 0
 ===================
 pkg install pkg1
 Exit Code: 0
-Info: Package '<GIT_URL>/git_pkgs/pkg1@1.0.0' installed with prefix 'pkg1'
+Info: Package '<GIT_URL>/git_pkgs/pkg1@1.0.0' installed with name 'pkg1'
 ===================
 pkg install pkg2
 Exit Code: 0
-Info: Package '<GIT_URL>/git_pkgs/pkg2@2.4.2' installed with prefix 'pkg2'
+Info: Package '<GIT_URL>/git_pkgs/pkg2@2.4.2' installed with name 'pkg2'
