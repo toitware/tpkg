@@ -1513,6 +1513,9 @@ func test_toitPkg(t *tedi.T) {
 			{"pkg", "uninstall", "foo"},
 			{"pkg", "--sdk-version=1.1.10", "install", "foo"},
 			{"exec", "main.toit"},
+			{"pkg", "uninstall", "foo"},
+			{"pkg", "install", "foo"},
+			{"exec", "main.toit"},
 		})
 	})
 }
