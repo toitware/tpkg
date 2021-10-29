@@ -19,7 +19,7 @@ Fields:
   hash: 
   url: <GIT_URL>/git_pkgs/pkg3
   version: 3.1.2
-Info: Package '<GIT_URL>/git_pkgs/pkg3@3.1.2' installed with prefix 'pkg3'
+Info: Package '<GIT_URL>/git_pkgs/pkg3@3.1.2' installed with name 'pkg3'
 Category: pkg
 Action: install
 Label: 

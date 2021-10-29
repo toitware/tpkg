@@ -5,7 +5,6 @@ package tpkg
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"sort"
@@ -337,11 +336,11 @@ func (m *ProjectPkgManager) writeSpecAndLock(spec *Spec, lf *LockFile) error {
 }
 
 // InstallLocalPkg installs the local package at the given path.
-// When provided, the package is installed with the given prefix. Otherwise, the
+// When provided, the package is installed with the given name. Otherwise, the
 // packages name is extracted from the path.
-// Returns the prefix that was used for the package.
+// Returns the name that was used for the package.
 // TODO(florian): the package name should be extracted from the package.yaml, or the README.
-func (m *ProjectPkgManager) InstallLocalPkg(ctx context.Context, prefix string, path string) (string, error) {
+func (m *ProjectPkgManager) InstallLocalPkg(ctx context.Context, name string, path string) (string, error) {
 	abs, err := filepath.Abs(path)
 	if err != nil {
 		return "", err
@@ -354,12 +353,12 @@ func (m *ProjectPkgManager) InstallLocalPkg(ctx context.Context, prefix string, 
 		}
 		return "", m.ui.ReportError("Target '%s' is not a directory: %v", path, err)
 	}
-	if prefix == "" {
-		prefix = filepath.Base(abs)
+	if name == "" {
+		name = filepath.Base(abs)
 	}
 
-	if !isValidPrefix(prefix) {
-		return "", m.ui.ReportError("Invalid prefix: '%s'", prefix)
+	if !isValidName(name) {
+		return "", m.ui.ReportError("Invalid name: '%s'", name)
 	}
 
 	spec, lf, err := m.readSpecAndLock()
@@ -367,13 +366,13 @@ func (m *ProjectPkgManager) InstallLocalPkg(ctx context.Context, prefix string, 
 		return "", err
 	}
 
-	if _, ok := spec.Deps[prefix]; ok {
-		return "", m.ui.ReportError("Project has already a package with prefix '%s'", prefix)
+	if _, ok := spec.Deps[name]; ok {
+		return "", m.ui.ReportError("Project has already a package with name '%s'", name)
 
 	}
 
 	// Add the local dependency to the deps before we build the solver deps.
-	spec.addDep(prefix, "", "", path, m.ui)
+	spec.addDep(name, "", "", path, m.ui)
 
 	solverDeps, err := spec.BuildSolverDeps(m.ui)
 	if err != nil {
@@ -404,30 +403,30 @@ func (m *ProjectPkgManager) InstallLocalPkg(ctx context.Context, prefix string, 
 		return "", err
 	}
 
-	return prefix, nil
+	return name, nil
 }
 
 // InstallURLPkg install the package identified by its identifier id.
 // The id can be a (suffix of a) package URL, or a package name. The identifier
 // can also be suffixed by a `@` followed by a version.
-// When provided, the package is installed with the given prefix. Otherwise, the
+// When provided, the package is installed with the given name. Otherwise, the
 // packages name (extracted from the description) is used.
-// Returns (prefix, package-string, err).
-func (m *ProjectPkgManager) InstallURLPkg(ctx context.Context, prefix string, id string) (string, string, error) {
+// Returns (name, package-string, err).
+func (m *ProjectPkgManager) InstallURLPkg(ctx context.Context, name string, id string) (string, string, error) {
 
-	prefixIsInferred := prefix == ""
+	nameIsInferred := name == ""
 
 	installPkg, err := m.identifyInstallURL(ctx, id)
 	if err != nil {
 		return "", "", err
 	}
 
-	if prefix == "" {
-		prefix = installPkg.name
+	if name == "" {
+		name = installPkg.name
 	}
 
-	if !isValidPrefix(prefix) {
-		return "", "", m.ui.ReportError("Invalid prefix: '%s'", prefix)
+	if !isValidName(name) {
+		return "", "", m.ui.ReportError("Invalid name: '%s'", name)
 	}
 
 	spec, lf, err := m.readSpecAndLock()
@@ -437,13 +436,13 @@ func (m *ProjectPkgManager) InstallURLPkg(ctx context.Context, prefix string, id
 
 	// Packages can theoretically change names with different versions.
 	// We will recheck before adding the new dependency.
-	if _, ok := spec.Deps[prefix]; ok {
-		return "", "", m.ui.ReportError("Project has already a package with prefix '%s'", prefix)
+	if _, ok := spec.Deps[name]; ok {
+		return "", "", m.ui.ReportError("Project has already a package with name '%s'", name)
 
 	}
 
 	// Create the solver deps first and then only add a new dependency.
-	// This is, because we don't yet know the exact version and prefix of the new
+	// This is, because we don't yet know the exact version and name of the new
 	// package.
 	solverDeps, err := spec.BuildSolverDeps(m.ui)
 	if err != nil {
@@ -482,15 +481,15 @@ func (m *ProjectPkgManager) InstallURLPkg(ctx context.Context, prefix string, id
 	}
 
 	// We still need to add the package to the dependencies.
-	// Also, if the prefix was inferred, we need to check that the prefix is still the
-	// right one, and check that we don't override an existing prefix.
+	// Also, if the name was inferred, we need to check that the name is still the
+	// right one, and check that we don't override an existing name.
 	solvedVersion, err := solution.versionFor(installPkg.url, installPkg.constraints, m.ui)
 	if err != nil {
 		return "", "", err
 	}
 
-	if prefixIsInferred {
-		// Packages might change their name. This could change their preferred prefix.
+	if nameIsInferred {
+		// Packages might change their name. This could change their preferred name.
 		descReg, err := m.registries.SearchURLVersion(installPkg.url, solvedVersion)
 		if err != nil {
 			return "", "", err
@@ -498,19 +497,19 @@ func (m *ProjectPkgManager) InstallURLPkg(ctx context.Context, prefix string, id
 		if len(descReg) == 0 {
 			return "", "", fmt.Errorf("couldn't find package '%s-%s' in registries", installPkg.url, solvedVersion)
 		}
-		if descReg[0].Desc.Name != prefix {
-			m.ui.ReportInfo("Package '%s' has different names with different versions ('%s', '%s')", installPkg.url, prefix, descReg[0].Desc.Name)
-			// The prefix of the package isn't the same as the one we expected.
-			// We don't need to check if the prefix already exists, as adding it (with `addDep`) will
+		if descReg[0].Desc.Name != name {
+			m.ui.ReportInfo("Package '%s' has different names with different versions ('%s', '%s')", installPkg.url, name, descReg[0].Desc.Name)
+			// The name of the package isn't the same as the one we expected.
+			// We don't need to check if the name already exists, as adding it (with `addDep`) will
 			// do that for us.
-			prefix = descReg[0].Desc.Name
+			name = descReg[0].Desc.Name
 		}
 
 	}
 	// The installation process automatically adjusts the version constraint of
 	// installed packages to accept semver compatible versions.
 	versionConstraint := "^" + solvedVersion
-	if err := spec.addDep(prefix, installPkg.url, versionConstraint, "", m.ui); err != nil {
+	if err := spec.addDep(name, installPkg.url, versionConstraint, "", m.ui); err != nil {
 		return "", "", err
 	}
 
@@ -531,19 +530,19 @@ func (m *ProjectPkgManager) InstallURLPkg(ctx context.Context, prefix string, id
 	}
 
 	installedPkgStr := installPkg.url + "@" + solvedVersion
-	return prefix, installedPkgStr, nil
+	return name, installedPkgStr, nil
 }
 
-func (m *ProjectPkgManager) Uninstall(ctx context.Context, prefix string) error {
+func (m *ProjectPkgManager) Uninstall(ctx context.Context, name string) error {
 	spec, lf, err := m.readSpecAndLock()
 	if err != nil {
 		return err
 	}
-	if _, ok := spec.Deps[prefix]; !ok {
-		m.ui.ReportInfo("Prefix '%s' does not exist", prefix)
+	if _, ok := spec.Deps[name]; !ok {
+		m.ui.ReportInfo("Package '%s' does not exist", name)
 		return nil
 	}
-	delete(spec.Deps, prefix)
+	delete(spec.Deps, name)
 
 	updatedLock, err := m.solveAndDownload(ctx, spec, lf)
 	if err != nil {
@@ -563,42 +562,50 @@ func (m *ProjectPkgManager) Install(ctx context.Context, forceRecompute bool) er
 		return err
 	}
 
+	needsToSolve := false
 	if forceRecompute || lf == nil {
-		return m.update(ctx, spec, lf, true)
-	}
-	for _, pkg := range lf.Packages {
-		if pkg.Path != "" {
-			// Path dependencies might have changed constraints.
-			// Recompute the dependencies, preferring the existing entries.
-			return m.update(ctx, spec, lf, true)
+		needsToSolve = true
+	} else {
+		for _, pkg := range lf.Packages {
+			if pkg.Path != "" {
+				// Path dependencies might have changed constraints.
+				// Recompute the dependencies, preferring the existing entries.
+				needsToSolve = true
+				break
+			}
 		}
 	}
 
-	return m.downloadLockFilePackages(ctx, lf)
+	if !needsToSolve {
+		return m.downloadLockFilePackages(ctx, lf)
+	}
+
+	updatedLock, err := m.solveAndDownload(ctx, spec, lf)
+	if err != nil {
+		return err
+	}
+
+	return m.writeSpecAndLock(spec, updatedLock)
 }
 
 func (m *ProjectPkgManager) Update(ctx context.Context) error {
-	spec, lf, err := m.readSpecAndLock()
+	spec, _, err := m.readSpecAndLock()
 	if err != nil {
 		return err
 	}
 
-	return m.update(ctx, spec, lf, false)
-}
-
-func (m *ProjectPkgManager) update(ctx context.Context, spec *Spec, lf *LockFile, preferLock bool) error {
-	preferredLock := &LockFile{}
-	if preferLock {
-		preferredLock = lf
-	}
-	updatedLock, err := m.solveAndDownload(ctx, spec, preferredLock)
+	updatedLock, err := m.solveAndDownload(ctx, spec, nil)
 	if err != nil {
 		return err
 	}
 
-	if lf != nil && lf.path != updatedLock.path {
-		log.Fatal("Updated lock file '" + updatedLock.path + "' has different path than original '" + lf.path + "'")
+	// Update the deps in the spec file with the new requirements.
+	newSpec, err := NewSpecFromLockFile(updatedLock)
+	if err != nil {
+		return err
 	}
+
+	spec.Deps = newSpec.Deps
 
 	return m.writeSpecAndLock(spec, updatedLock)
 }

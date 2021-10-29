@@ -593,6 +593,15 @@ func (pt PkgTest) GoldToit(name string, commands [][]string) {
 	pt.checkGold(name, combined)
 }
 
+func deleteRegCache(t *tedi.T, pt PkgTest, regPath string) {
+	// Delete the registry cache.
+	escapedRegistry := compiler.FilePathToURIPath(regPath).FilePath()
+	registryPath := filepath.Join(pt.registryCacheDir, escapedRegistry)
+	assert.DirExists(t, registryPath)
+	err := os.RemoveAll(registryPath)
+	assert.NoError(t, err)
+}
+
 func test_toitPkg(t *tedi.T) {
 	t.Parallel()
 
@@ -650,7 +659,7 @@ func test_toitPkg(t *tedi.T) {
 			{"pkg", "install", "--local", "pkg"},
 			{"exec", "main.toit"},
 			{"// Install with a prefix."},
-			{"pkg", "install", "--local", "--prefix=prepkg", "pkg2"},
+			{"pkg", "install", "--local", "--name=prepkg", "pkg2"},
 			{"exec", "main2.toit"},
 			{"// Installing again yields an error."},
 			{"pkg", "install", "--local", "pkg"},
@@ -662,7 +671,7 @@ func test_toitPkg(t *tedi.T) {
 			{"pkg", "install", "--local", "main.toit"},
 		})
 		pt.GoldToit("install_existing_prefix", [][]string{
-			{"pkg", "install", "--local", "--prefix=pkg", "pkg2"},
+			{"pkg", "install", "--local", "--name=pkg", "pkg2"},
 		})
 		pt.GoldToit("install_non_existing_git", [][]string{
 			{"pkg", "install", "some_pkg"},
@@ -761,8 +770,8 @@ func test_toitPkg(t *tedi.T) {
 			{"exec", "main.toit"},
 			{"// Execution should fail, as the prefixes are not yet known"},
 			{"exec", "main2.toit"},
-			{"pkg", "install", "--prefix=pre1", "foo"},
-			{"pkg", "install", "--prefix=pre2", "bar"},
+			{"pkg", "install", "--name=pre1", "foo"},
+			{"pkg", "install", "--name=pre2", "bar"},
 			{"// Execution should succeed now"},
 			{"exec", "main2.toit"},
 		})
@@ -770,7 +779,7 @@ func test_toitPkg(t *tedi.T) {
 		pt.GoldToit("bad-pkg search", [][]string{
 			{"// Add a registry, so that we have conflicts"},
 			{"pkg", "registry", "add", "--local", "test-reg2", "registry2"},
-			{"pkg", "install", "--prefix=pre3", "foo"},
+			{"pkg", "install", "--name=pre3", "foo"},
 		})
 
 		pt.GoldToit("package.lock", [][]string{
@@ -882,7 +891,7 @@ func test_toitPkg(t *tedi.T) {
 				{"// Add registry so we can find packages."},
 				{"pkg", "registry", "add", "--local", "test-reg", regPath},
 				{"// Install pkg4 for 'main.toit', creating/updating a lock file."},
-				{"pkg", "install", "pkg4", "--prefix=pkg4_pre"},
+				{"pkg", "install", "pkg4", "--name=pkg4_pre"},
 				{"// main.toit should work now."},
 				{"exec", "main.toit"},
 				{"pkg", "install", "pkg1"},
@@ -924,14 +933,14 @@ func test_toitPkg(t *tedi.T) {
 			{"pkg", "install", "many"},
 			{"pkg", "install", "many@99"},
 			{"pkg", "install", "many@1"},
-			{"pkg", "install", "--prefix=foo", "many@1.0"},
+			{"pkg", "install", "--name=foo", "many@1.0"},
 			{"pkg", "lockfile"},
 			{"pkg", "packagefile"},
-			{"pkg", "install", "--prefix=gee", "many@1"},
+			{"pkg", "install", "--name=gee", "many@1"},
 			{"pkg", "lockfile"},
 			{"pkg", "packagefile"},
-			{"pkg", "install", "--prefix=bad1", "many@"},
-			{"pkg", "install", "--prefix=bad2", "many@not_a-version"},
+			{"pkg", "install", "--name=bad1", "many@"},
+			{"pkg", "install", "--name=bad2", "many@not_a-version"},
 		})
 		for _, version := range []string{
 			"1",
@@ -957,11 +966,11 @@ func test_toitPkg(t *tedi.T) {
 			{"// Add registry so we can find packages."},
 			{"pkg", "registry", "add", "--local", "test-reg", regPath},
 			{"// Prefix must be used with package name."},
-			{"pkg", "install", "--prefix=foo"},
+			{"pkg", "install", "--name=foo"},
 			{"// Path must be used with path."},
 			{"pkg", "install", "--local"},
 			{"// Prefix must be valid."},
-			{"pkg", "install", "--prefix", "invalid prefix", "pkg2"},
+			{"pkg", "install", "--name", "invalid prefix", "pkg2"},
 		})
 	})
 
@@ -1004,14 +1013,28 @@ func test_toitPkg(t *tedi.T) {
 			{"// Add git registry"},
 			{"pkg", "registry", "add", "test-reg", regPath},
 		})
-		// Delete the registry cache.
-		escapedRegistry := compiler.FilePathToURIPath(regPath).FilePath()
-		registryPath := filepath.Join(pt.registryCacheDir, escapedRegistry)
-		assert.DirExists(t, registryPath)
-		err := os.RemoveAll(registryPath)
-		assert.NoError(t, err)
 
-		pt.GoldToit("test-2", [][]string{
+		deleteRegCache(t, pt, regPath)
+
+		pt.GoldToit("test-autosync-list", [][]string{
+			{"pkg", "list"},
+		})
+
+		deleteRegCache(t, pt, regPath)
+		pt.GoldToit("test-autosync-install", [][]string{
+			{"pkg", "install"},
+		})
+
+		deleteRegCache(t, pt, regPath)
+		pt.GoldToit("test-autosync-install2", [][]string{
+			{"pkg", "install", "pkg1"},
+		})
+
+		deleteRegCache(t, pt, regPath)
+
+		pt.tpkg.args = append([]string{"--no-autosync"}, pt.tpkg.args...)
+
+		pt.GoldToit("test-no-autosync", [][]string{
 			{"// Without sync there shouldn't be any packages"},
 			{"pkg", "list"},
 			{"// Install should, however, still work"},
@@ -1023,43 +1046,61 @@ func test_toitPkg(t *tedi.T) {
 	})
 
 	t.Run("GitRegistrySync", func(t *tedi.T, pt PkgTest) {
-		regPath := filepath.Join(pt.dir, "registry_git_pkgs")
-		pt.GoldToit("test-1", [][]string{
-			{"pkg", "registry", "add", "test-reg", regPath},
-			{"pkg", "list"},
-		})
+		for i := 0; i < 2; i++ {
+			regPath := filepath.Join(pt.dir, "registry_git_pkgs")
 
-		data, err := ioutil.ReadFile(filepath.Join(pt.dir, "pkg_test.yaml"))
-		require.NoError(t, err)
-		pkgTestSpecPath := filepath.Join(regPath, "pkg_test.yaml")
-		err = ioutil.WriteFile(pkgTestSpecPath, data, 0644)
-		require.NoError(t, err)
+			suffix := "-autosync"
+			yamlFile := "pkg_test.yaml"
+			if i == 1 {
+				pt.GoldToit("test-reg-rm", [][]string{
+					{"pkg", "registry", "remove", "test-reg"},
+				})
 
-		repository, err := git.PlainOpen(regPath)
-		require.NoError(t, err)
-		wt, err := repository.Worktree()
-		require.NoError(t, err)
+				deleteRegCache(t, pt, regPath)
 
-		rel, err := filepath.Rel(regPath, pkgTestSpecPath)
-		require.NoError(t, err)
-		_, err = wt.Add(rel)
-		require.NoError(t, err)
-		_, err = wt.Commit("Add pkg_test.yaml", &git.CommitOptions{
-			All: true,
-			Author: &object.Signature{
-				Name:  "Test Committer",
-				Email: "not_used@example.com",
-				When:  time.Now(),
-			},
-		})
-		require.NoError(t, err)
+				// No autosync for the second pass.
+				suffix = "-no-autosync"
+				yamlFile = "pkg_test2.yaml"
+				pt.tpkg.args = append([]string{"--no-autosync"}, pt.tpkg.args...)
+			}
 
-		pt.GoldToit("test-2", [][]string{
-			{"pkg", "list"},
-			{"pkg", "registry", "sync"},
-			{"pkg", "list"},
-			{"pkg", "registry", "sync"},
-		})
+			pt.GoldToit("test-1"+suffix, [][]string{
+				{"pkg", "registry", "add", "test-reg", regPath},
+				{"pkg", "list"},
+			})
+
+			data, err := ioutil.ReadFile(filepath.Join(pt.dir, yamlFile))
+			require.NoError(t, err)
+			pkgTestSpecPath := filepath.Join(regPath, yamlFile)
+			err = ioutil.WriteFile(pkgTestSpecPath, data, 0644)
+			require.NoError(t, err)
+
+			repository, err := git.PlainOpen(regPath)
+			require.NoError(t, err)
+			wt, err := repository.Worktree()
+			require.NoError(t, err)
+
+			rel, err := filepath.Rel(regPath, pkgTestSpecPath)
+			require.NoError(t, err)
+			_, err = wt.Add(rel)
+			require.NoError(t, err)
+			_, err = wt.Commit("Add pkg_test.yaml", &git.CommitOptions{
+				All: true,
+				Author: &object.Signature{
+					Name:  "Test Committer",
+					Email: "not_used@example.com",
+					When:  time.Now(),
+				},
+			})
+			require.NoError(t, err)
+
+			pt.GoldToit("test-2"+suffix, [][]string{
+				{"pkg", "list"},
+				{"pkg", "registry", "sync"},
+				{"pkg", "list"},
+				{"pkg", "registry", "sync"},
+			})
+		}
 	})
 
 	t.Run("GitRegistrySyncBad", func(t *tedi.T, pt PkgTest) {
@@ -1103,10 +1144,13 @@ func test_toitPkg(t *tedi.T) {
 			{"pkg", "registry", "add", "test-reg", regPath1},
 			{"pkg", "list"},
 			{"pkg", "install", "pkg1"},
+			{"pkg", "install", "pkg2"},
 			{"pkg", "lockfile"},
+			{"pkg", "packagefile"},
 			{"pkg", "registry", "add", "test-reg3", regPath2},
 			{"pkg", "update"},
 			{"pkg", "lockfile"},
+			{"pkg", "packagefile"},
 		})
 	})
 
@@ -1469,6 +1513,9 @@ func test_toitPkg(t *tedi.T) {
 			{"exec", "main.toit"},
 			{"pkg", "uninstall", "foo"},
 			{"pkg", "--sdk-version=1.1.10", "install", "foo"},
+			{"exec", "main.toit"},
+			{"pkg", "uninstall", "foo"},
+			{"pkg", "install", "foo"},
 			{"exec", "main.toit"},
 		})
 	})

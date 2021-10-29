@@ -51,7 +51,7 @@ Error: Couldn't find a valid solution for the package constraints
 ===================
 pkg install foo
 Exit Code: 0
-Info: Package '<GIT_URL>/foo_git@1.2.3' installed with prefix 'foo'
+Info: Package '<GIT_URL>/foo_git@1.2.3' installed with name 'foo'
 ===================
 ::exec:: exec main.toit
 ::exec:: Exit Code: 0
@@ -66,11 +66,26 @@ Exit Code: 0
 ===================
 pkg --sdk-version=1.1.10 install foo
 Exit Code: 0
-Info: Package '<GIT_URL>/foo_git@1.1.0' installed with prefix 'foo'
+Info: Package '<GIT_URL>/foo_git@1.1.0' installed with name 'foo'
 ===================
 ::exec:: exec main.toit
 ::exec:: Exit Code: 0
 ::exec:: hello from foo 1.1.0
+::exec:: 
+::analyze:: analyze main.toit
+::analyze:: Exit Code: 0
+::analyze:: 
+===================
+pkg uninstall foo
+Exit Code: 0
+===================
+pkg install foo
+Exit Code: 0
+Info: Package '<GIT_URL>/foo_git@1.2.3' installed with name 'foo'
+===================
+::exec:: exec main.toit
+::exec:: Exit Code: 0
+::exec:: hello from foo 1.2.3
 ::exec:: 
 ::analyze:: analyze main.toit
 ::analyze:: Exit Code: 0

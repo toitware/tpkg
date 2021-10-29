@@ -6,6 +6,7 @@ test-reg: <TEST>/registry_git_pkgs:
   pkg2 - 2.4.2
   pkg3 - 3.1.2
   pkg4 - 4.9.9
+  pkg_test - 0.9.3
 ===================
 pkg registry sync
 Exit Code: 0
@@ -20,6 +21,7 @@ test-reg: <TEST>/registry_git_pkgs:
   pkg3 - 3.1.2
   pkg4 - 4.9.9
   pkg_test - 0.9.3
+  pkg_test2 - 4.9.9
 ===================
 pkg registry sync
 Exit Code: 0
