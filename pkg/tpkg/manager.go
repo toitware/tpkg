@@ -190,7 +190,7 @@ func (m *ProjectPkgManager) identifyInstallURL(ctx context.Context, pkgName stri
 
 	if !strings.Contains(pkgName, "/") {
 		// Also search for the name.
-		foundNames, err := m.registries.SearchName(pkgName)
+		foundNames, err := m.registries.MatchName(pkgName)
 		if err != nil {
 			return nil, err
 		}

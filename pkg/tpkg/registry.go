@@ -31,6 +31,10 @@ type Registry interface {
 	// Searches for the given package name in the registry.
 	// Returns all matching packages.
 	SearchName(name string) ([]*Desc, error)
+	// Searches for the given package name in the registry.
+	// THe name must match completely.
+	// Returns all matching packages.
+	MatchName(name string) ([]*Desc, error)
 	// Searches for needle.
 	// The search uses all description information (including description, authors, ...)
 	// to find the package.
@@ -217,20 +221,35 @@ func newLocalRegistry(name string, path string) *pathRegistry {
 	}
 }
 
-func matchName(name string, desc *Desc) bool {
+func searchName(name string, desc *Desc) bool {
 	// TODO(florian): take qualifying path into account.
-	return name == desc.Name
+	return strings.Contains(strings.ToLower(desc.Name), strings.ToLower(name))
 }
 
-func matchDescription(needle string, desc *Desc) bool {
+func matchName(name string, desc *Desc) bool {
+	// TODO(florian): take qualifying path into account.
+	return strings.ToLower(desc.Name) == strings.ToLower(name)
+}
+
+func searchDescription(needle string, desc *Desc) bool {
 	return strings.Contains(strings.ToLower(desc.Description), strings.ToLower(needle))
 }
 
-func matchURL(needle string, desc *Desc) bool {
+func searchURL(needle string, desc *Desc) bool {
 	return strings.Contains(desc.URL, needle)
 }
 
 func (p *pathRegistry) SearchName(name string) ([]*Desc, error) {
+	result := []*Desc{}
+	for _, entry := range p.entries {
+		if searchName(name, entry) {
+			result = append(result, entry)
+		}
+	}
+	return result, nil
+}
+
+func (p *pathRegistry) MatchName(name string) ([]*Desc, error) {
 	result := []*Desc{}
 	for _, entry := range p.entries {
 		if matchName(name, entry) {
@@ -243,7 +262,7 @@ func (p *pathRegistry) SearchName(name string) ([]*Desc, error) {
 func (p *pathRegistry) SearchAll(needle string) ([]*Desc, error) {
 	result := []*Desc{}
 	for _, entry := range p.entries {
-		if matchName(needle, entry) || matchDescription(needle, entry) || matchURL(needle, entry) {
+		if searchName(needle, entry) || searchDescription(needle, entry) || searchURL(needle, entry) {
 			result = append(result, entry)
 		}
 	}
@@ -361,6 +380,14 @@ func (registries Registries) searchInRegistries(searchFun func(Registry) ([]*Des
 func (registries Registries) SearchName(name string) (DescRegistries, error) {
 	return registries.searchInRegistries(func(registry Registry) ([]*Desc, error) {
 		return registry.SearchName(name)
+	})
+}
+
+// MatchName searches for the given name in all registries, but
+// requires a full match.
+func (registries Registries) MatchName(name string) (DescRegistries, error) {
+	return registries.searchInRegistries(func(registry Registry) ([]*Desc, error) {
+		return registry.MatchName(name)
 	})
 }
 
