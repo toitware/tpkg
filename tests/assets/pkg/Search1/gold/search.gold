@@ -22,6 +22,10 @@ foo:
     sdk: ^1.1.30
   
 ===================
+pkg search Foo-Desc
+Exit Code: 0
+foo - 1.2.3
+===================
 pkg search bar
 Exit Code: 0
 bar - 2.0.1
@@ -42,6 +46,10 @@ Exit Code: 0
 foo - 1.2.3
 ===================
 pkg search bar-desc
+Exit Code: 0
+bar - 2.0.1
+===================
+pkg search bAr-dEsc
 Exit Code: 0
 bar - 2.0.1
 ===================
@@ -75,6 +83,18 @@ foo - 5.0.3
 pkg search gee
 Exit Code: 0
 gee - 1.1.1
+===================
+// Works with bad case and subset
+===================
+pkg search Ee
+Exit Code: 0
+gee - 1.1.1
+===================
+// Install doesn't work with subsets
+===================
+pkg install Ee
+Exit Code: 1
+Error: Package 'Ee' not found
 ===================
 // The bar and sub package didn't change
 ===================
