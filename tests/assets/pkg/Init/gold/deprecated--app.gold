@@ -1,3 +1,0 @@
-pkg init --app
-Exit Code: 0
-Warning: The --app and --pkg flags are deprecated

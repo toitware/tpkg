@@ -1172,30 +1172,6 @@ func test_toitPkg(t *tedi.T) {
 		err = os.Remove(lockPath)
 		assert.NoError(t, err)
 
-		pt.GoldToit("deprecated--pkg", [][]string{
-			{"pkg", "init", "--pkg"},
-		})
-
-		assert.FileExists(t, pkgPath)
-		assert.FileExists(t, lockPath)
-
-		err = os.Remove(pkgPath)
-		assert.NoError(t, err)
-		err = os.Remove(lockPath)
-		assert.NoError(t, err)
-
-		pt.GoldToit("deprecated--app", [][]string{
-			{"pkg", "init", "--app"},
-		})
-
-		assert.FileExists(t, pkgPath)
-		assert.FileExists(t, lockPath)
-
-		err = os.Remove(pkgPath)
-		assert.NoError(t, err)
-		err = os.Remove(lockPath)
-		assert.NoError(t, err)
-
 		pt.GoldToit("already_init", [][]string{
 			{"pkg", "init"},
 			{"pkg", "init"},
