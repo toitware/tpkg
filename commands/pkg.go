@@ -188,8 +188,6 @@ If the --project-root flag is used, initializes that directory instead.`,
 		Run:  errorCfgRun(handler.pkgInit),
 		Args: cobra.NoArgs,
 	}
-	initCmd.Flags().Bool("pkg", false, "Create a package file")
-	initCmd.Flags().Bool("app", false, "Create a lock file for an application")
 	cmd.AddCommand(initCmd)
 
 	installCmd := &cobra.Command{
@@ -617,18 +615,6 @@ func (h *pkgHandler) printPackageFile(cmd *cobra.Command, args []string) error {
 }
 
 func (h *pkgHandler) pkgInit(cmd *cobra.Command, args []string) error {
-	isPkg, err := cmd.Flags().GetBool("pkg")
-	if err != nil {
-		return err
-	}
-	isApp, err := cmd.Flags().GetBool("app")
-	if err != nil {
-		return err
-	}
-	if isPkg || isApp {
-		h.ui.ReportWarning("The --app and --pkg flags are deprecated")
-	}
-
 	projectRoot, err := cmd.Flags().GetString("project-root")
 	if err != nil {
 		return err
