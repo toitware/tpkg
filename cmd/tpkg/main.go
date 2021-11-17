@@ -74,12 +74,10 @@ func main() {
 		}
 	}
 
-	track := func(ctx context.Context, te *tracking.TrackingEvent) error {
+	track := func(ctx context.Context, te *tracking.Event) error {
 		if shouldPrintTracking {
-			tmpl := template.Must(template.New("tracking").Parse(`Category: {{.Category}}
-Action: {{.Action}}
-Label: {{.Label}}
-{{if .Fields }}Fields:{{ range $field, $value := .Fields }}
+			tmpl := template.Must(template.New("tracking").Parse(`Name: {{.Name}}
+{{if .Properties }}Properties:{{ range $field, $value := .Properties }}
   {{$field}}: {{$value}}{{end}}{{end}}
 `))
 			out := bytes.Buffer{}
