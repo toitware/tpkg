@@ -10,6 +10,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"text/template"
 
@@ -520,13 +521,11 @@ func (h *pkgHandler) pkgInstall(cmd *cobra.Command, args []string) error {
 		}
 		err = m.Install(ctx, forceRecompute)
 
-		action := "install-fetch"
-		if forceRecompute {
-			action = "install-recompute"
-		}
-		h.track(ctx, &tracking.TrackingEvent{
-			Category: "pkg",
-			Action:   action,
+		h.track(ctx, &tracking.Event{
+			Name: "toit pkg install",
+			Properties: map[string]string{
+				"recompute": strconv.FormatBool(forceRecompute),
+			},
 		})
 
 		if err != nil {
@@ -560,11 +559,11 @@ func (h *pkgHandler) pkgInstall(cmd *cobra.Command, args []string) error {
 
 	tpkgUI.ReportInfo("Package '%s' installed with name '%s'", pkgString, installedName)
 
-	h.track(ctx, &tracking.TrackingEvent{
-		Category: "pkg",
-		Action:   "install",
-		Fields: map[string]string{
-			"pkg-string": pkgString,
+	h.track(ctx, &tracking.Event{
+		Name: "toit pkg install",
+		Properties: map[string]string{
+			"package":      pkgString,
+			"install_name": installedName,
 		},
 	})
 
@@ -774,16 +773,16 @@ func (h *pkgHandler) pkgRegistryAdd(cmd *cobra.Command, args []string) error {
 		Kind: kind,
 		Path: pathOrURL,
 	}
-	trackingFields := map[string]string{
+	trackProperties := map[string]string{
+		"name": name,
 		"kind": string(kind),
 	}
 	if kind == tpkg.RegistryKindGit {
-		trackingFields["url"] = pathOrURL
+		trackProperties["url"] = pathOrURL
 	}
-	h.track(ctx, &tracking.TrackingEvent{
-		Category: "pkg",
-		Action:   "registry add",
-		Fields:   trackingFields,
+	h.track(ctx, &tracking.Event{
+		Name:       "toit pkg registry add",
+		Properties: trackProperties,
 	})
 
 	sync := true
@@ -816,10 +815,10 @@ func (h *pkgHandler) pkgRegistryRemove(cmd *cobra.Command, args []string) error 
 		return newExitError(1)
 	}
 
-	h.track(cmd.Context(), &tracking.TrackingEvent{
-		Category: "pkg",
-		Action:   "registry remove",
-		Fields: map[string]string{
+	h.track(cmd.Context(), &tracking.Event{
+		Name: "toit pkg registry remove",
+		Properties: map[string]string{
+			"name": configs[index].Name,
 			"path": configs[index].Path,
 		},
 	})
@@ -879,11 +878,10 @@ func (h *pkgHandler) pkgRegistrySync(cmd *cobra.Command, args []string) error {
 func (h *pkgHandler) pkgSearch(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 
-	h.track(ctx, &tracking.TrackingEvent{
-		Category: "pkg",
-		Action:   "search",
-		Fields: map[string]string{
-			"needle": args[0],
+	h.track(ctx, &tracking.Event{
+		Name: "toit pkg search",
+		Properties: map[string]string{
+			"query": args[0],
 		},
 	})
 
@@ -961,10 +959,9 @@ func (h *pkgHandler) pkgDescribe(cmd *cobra.Command, args []string) error {
 	} else if len(args) == 1 {
 		desc, err = tpkg.ScrapeDescriptionAt(args[0], allowsLocalDeps, isVerbose, h.ui)
 	} else {
-		h.track(cmd.Context(), &tracking.TrackingEvent{
-			Category: "pkg",
-			Action:   "describe",
-			Fields: map[string]string{
+		h.track(cmd.Context(), &tracking.Event{
+			Name: "toit pkg describe",
+			Properties: map[string]string{
 				"url":     args[0],
 				"version": args[1],
 			},

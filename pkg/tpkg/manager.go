@@ -103,17 +103,16 @@ func (m *ProjectPkgManager) download(ctx context.Context, url string, version st
 		NoReadOnly: false,
 	})
 
-	event := &tracking.TrackingEvent{
-		Category: "pkg",
-		Action:   "download-git",
-		Fields: map[string]string{
+	event := &tracking.Event{
+		Name: "toit pkg download-git",
+		Properties: map[string]string{
 			"url":     url,
 			"version": version,
 			"hash":    hash,
 		},
 	}
 	if err != nil {
-		event.Label = "failure"
+		event.Properties["error"] = err.Error()
 	}
 	m.track(ctx, event)
 

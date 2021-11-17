@@ -1,10 +1,9 @@
 pkg --track registry add test-reg <TEST>/registry_git_pkgs
 Exit Code: 0
-Category: pkg
-Action: registry add
-Label: 
-Fields:
+Name: toit pkg registry add
+Properties:
   kind: git
+  name: test-reg
   url: <TEST>/registry_git_pkgs
 ===================
 pkg --track init
@@ -12,41 +11,34 @@ Exit Code: 0
 ===================
 pkg --track install pkg3
 Exit Code: 0
-Category: pkg
-Action: download-git
-Label: 
-Fields:
+Name: toit pkg download-git
+Properties:
   hash: 
   url: <GIT_URL>/git_pkgs/pkg3
   version: 3.1.2
 Info: Package '<GIT_URL>/git_pkgs/pkg3@3.1.2' installed with name 'pkg3'
-Category: pkg
-Action: install
-Label: 
-Fields:
-  pkg-string: <GIT_URL>/git_pkgs/pkg3@3.1.2
+Name: toit pkg install
+Properties:
+  install_name: pkg3
+  package: <GIT_URL>/git_pkgs/pkg3@3.1.2
 ===================
 pkg --track install
 Exit Code: 0
-Category: pkg
-Action: install-fetch
-Label: 
-
+Name: toit pkg install
+Properties:
+  recompute: false
 ===================
 pkg --track install --recompute
 Exit Code: 0
-Category: pkg
-Action: install-recompute
-Label: 
-
+Name: toit pkg install
+Properties:
+  recompute: true
 ===================
 pkg --track search pkg
 Exit Code: 0
-Category: pkg
-Action: search
-Label: 
-Fields:
-  needle: pkg
+Name: toit pkg search
+Properties:
+  query: pkg
 pkg1 - 1.0.0
 pkg2 - 2.4.2
 pkg3 - 3.1.2
@@ -54,18 +46,15 @@ pkg4 - 4.9.9
 ===================
 pkg --track registry remove test-reg
 Exit Code: 0
-Category: pkg
-Action: registry remove
-Label: 
-Fields:
+Name: toit pkg registry remove
+Properties:
+  name: test-reg
   path: <TEST>/registry_git_pkgs
 ===================
 pkg --track describe github.com/toitware/toit-morse v1.0.0
 Exit Code: 0
-Category: pkg
-Action: describe
-Label: 
-Fields:
+Name: toit pkg describe
+Properties:
   url: github.com/toitware/toit-morse
   version: v1.0.0
 morse:

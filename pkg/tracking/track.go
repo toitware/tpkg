@@ -4,14 +4,12 @@ package tracking
 
 import "context"
 
-type TrackingEvent struct {
-	Category string
-	Action   string
-	Label    string
-	Fields   map[string]string
+type Event struct {
+	Name       string
+	Properties map[string]string
 }
-type Track func(ctx context.Context, event *TrackingEvent) error
+type Track func(ctx context.Context, event *Event) error
 
-func NopTrack(ctx context.Context, event *TrackingEvent) error {
+func NopTrack(ctx context.Context, event *Event) error {
 	return nil
 }
