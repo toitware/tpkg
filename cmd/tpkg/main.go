@@ -15,6 +15,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/toitware/tpkg/commands"
+	"github.com/toitware/tpkg/config"
 	"github.com/toitware/tpkg/pkg/tpkg"
 	"github.com/toitware/tpkg/pkg/tracking"
 )
@@ -49,12 +50,16 @@ func main() {
 	// If we didn't want to use the globals we could also switch to
 	// a PreRun function.
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file")
-	rootCmd.MarkPersistentFlagRequired("config")
+	rootCmd.Flags().MarkHidden("config")
 	rootCmd.PersistentFlags().StringVar(&cacheDir, "cache", "", "cache dir")
-	rootCmd.MarkPersistentFlagRequired("cache")
+	rootCmd.Flags().MarkHidden("cache")
 	rootCmd.PersistentFlags().BoolVar(&noDefaultRegistry, "no-default-registry", false, "Don't use default registry if none exists")
+	rootCmd.Flags().MarkHidden("no-default-registry")
 	rootCmd.PersistentFlags().BoolVar(&noAutosync, "no-autosync", false, "Don't automatically sync")
+	rootCmd.Flags().MarkHidden("no-autosync")
 	rootCmd.PersistentFlags().BoolVar(&shouldPrintTracking, "track", false, "Print tracking information")
+	rootCmd.Flags().MarkHidden("track")
+
 	rootCmd.PersistentFlags().StringVar(&sdkVersion, "sdk-version", "", "The SDK version")
 
 	runWrapper := func(f commands.CobraErrorCommand) commands.CobraCommand {
@@ -101,6 +106,9 @@ func main() {
 }
 
 func initConfig() {
+	if cfgFile == "" {
+		cfgFile, _ = config.UserConfigFile()
+	}
 	viper.SetConfigFile(cfgFile)
 	viper.ReadInConfig()
 }
@@ -113,8 +121,21 @@ const configKeyAutosync = "pkg.autosync"
 
 func (vc *viperConfigStore) Load(ctx context.Context) (*commands.Config, error) {
 	result := commands.Config{}
-	result.PackageCachePaths = []string{filepath.Join(cacheDir, "tpkg")}
-	result.RegistryCachePaths = []string{filepath.Join(cacheDir, "tpkg-registries")}
+
+	if cacheDir == "" {
+		var err error
+		result.PackageCachePaths, err = config.PackageCachePaths()
+		if err != nil {
+			return nil, err
+		}
+		result.RegistryCachePaths, err = config.RegistryCachePaths()
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		result.PackageCachePaths = []string{filepath.Join(cacheDir, "tpkg")}
+		result.RegistryCachePaths = []string{filepath.Join(cacheDir, "tpkg-registries")}
+	}
 	if p, ok := os.LookupEnv(packageInstallPathConfigEnv); ok {
 		result.PackageInstallPath = &p
 	}
