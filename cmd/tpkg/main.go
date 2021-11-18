@@ -106,12 +106,8 @@ func main() {
 }
 
 func initConfig() {
-	var err error
 	if cfgFile == "" {
-		cfgFile, err = config.UserConfigPath()
-		if err != nil {
-			panic(err)
-		}
+		cfgFile, _ = config.UserConfigFile()
 	}
 	viper.SetConfigFile(cfgFile)
 	viper.ReadInConfig()
