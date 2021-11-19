@@ -2,6 +2,9 @@ BUILD_DIR := build
 
 GO_PACKAGE := github.com/toitlang/tpkg
 
+all: tpkg
+.PHONY: all
+
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
 
