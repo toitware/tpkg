@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/toitware/tpkg/pkg/git"
+	"github.com/toitlang/tpkg/pkg/git"
 )
 
 const TestGitPathHost = "path.toit.local"

@@ -48,12 +48,6 @@ else
 $(eval GO_BUILD_FLAGS=$(GO_BUILD_FLAGS) CGO_ENABLED=1 GODEBUG=netdns=go)
 endif
 
-$(BUILD_DIR)/tpkg: $(GO_DEPS) $(GO_SOURCES)
-	$(GO_BUILD_FLAGS) go build -ldflags "$(GO_LINK_FLAGS)" -tags 'netgo osusergo' -o $(BUILD_DIR)/tpkg ./cmd/tpkg
-
-.PHONY: tpkg
-tpkg: $(BUILD_DIR)/tpkg
-
 $(BUILD_DIR)/registry: $(GO_DEPS) $(GO_SOURCES)
 	$(GO_BUILD_FLAGS) go build -ldflags "$(GO_LINK_FLAGS)" -tags 'netgo osusergo' -o $(BUILD_DIR)/registry .
 
@@ -77,7 +71,7 @@ mocks:
 
 TEST_FLAGS ?=
 .PHONY: test
-test: tpkg $(GO_MOCKS)
+test: $(GO_MOCKS)
 	tedi test -v -cover $(TEST_FLAGS) $(foreach dir,$(filter-out third_party/, $(sort $(dir $(wildcard */)))),./$(dir)...)
 
 WEB_TOITDOCS_VERSION ?= v0.0.13-pre.5+a74fc239

@@ -17,8 +17,8 @@ import (
 	"github.com/alessio/shellescape"
 	"github.com/hashicorp/go-version"
 	"github.com/spf13/cobra"
-	"github.com/toitware/tpkg/pkg/tpkg"
-	"github.com/toitware/tpkg/pkg/tracking"
+	"github.com/toitlang/tpkg/pkg/tpkg"
+	"github.com/toitlang/tpkg/pkg/tracking"
 )
 
 const ConfigKeyRegistries = "pkg.registries"

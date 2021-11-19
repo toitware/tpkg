@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/toitware/tpkg/pkg/compiler"
+	"github.com/toitlang/tpkg/pkg/compiler"
 	"gopkg.in/yaml.v2"
 )
 

@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/go-version"
-	"github.com/toitware/tpkg/pkg/compiler"
+	"github.com/toitlang/tpkg/pkg/compiler"
 )
 
 func isDirectory(p string) (bool, error) {
