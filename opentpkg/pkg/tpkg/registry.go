@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/gobwas/glob"
-	"github.com/toitware/tpkg/pkg/git"
+	"github.com/toitlang/tpkg/pkg/git"
 )
 
 type Registries []Registry

@@ -4,8 +4,8 @@ import (
 	"context"
 	"sync"
 
+	"github.com/toitlang/tpkg/pkg/tpkg"
 	doc "github.com/toitware/tpkg/pkg/toitdoc"
-	"github.com/toitware/tpkg/pkg/tpkg"
 	"go.uber.org/zap"
 )
 

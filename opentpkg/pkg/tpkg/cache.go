@@ -8,7 +8,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/toitware/tpkg/pkg/compiler"
+	"github.com/toitlang/tpkg/pkg/compiler"
 )
 
 // Cache handles all package-Cache related functionality.

@@ -12,7 +12,7 @@ import (
 	"github.com/hashicorp/go-version"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/toitware/tpkg/pkg/compiler"
+	"github.com/toitlang/tpkg/pkg/compiler"
 )
 
 type testUI struct {

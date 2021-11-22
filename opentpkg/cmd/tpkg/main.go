@@ -14,10 +14,10 @@ import (
 	"github.com/hashicorp/go-version"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/toitware/tpkg/commands"
-	"github.com/toitware/tpkg/config"
-	"github.com/toitware/tpkg/pkg/tpkg"
-	"github.com/toitware/tpkg/pkg/tracking"
+	"github.com/toitlang/tpkg/commands"
+	"github.com/toitlang/tpkg/config"
+	"github.com/toitlang/tpkg/pkg/tpkg"
+	"github.com/toitlang/tpkg/pkg/tracking"
 )
 
 type withExitCode interface {

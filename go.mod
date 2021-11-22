@@ -30,6 +30,7 @@ require (
 	github.com/spf13/cobra v1.1.3
 	github.com/spf13/viper v1.7.0
 	github.com/stretchr/testify v1.7.0
+	github.com/toitlang/tpkg v0.0.0-00010101000000-000000000000
 	github.com/twmb/murmur3 v1.1.5 // indirect
 	github.com/uber-go/tally v3.4.1+incompatible
 	github.com/valyala/fasthttp v1.28.0 // indirect
@@ -52,3 +53,5 @@ require (
 	google.golang.org/protobuf v1.26.0
 	gopkg.in/yaml.v2 v2.4.0
 )
+
+replace github.com/toitlang/tpkg => ./opentpkg

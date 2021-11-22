@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/toitware/tpkg/pkg/compiler"
+	"github.com/toitlang/tpkg/pkg/compiler"
 )
 
 func Test_OptimizePkgIDs(t *testing.T) {

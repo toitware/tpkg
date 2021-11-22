@@ -11,8 +11,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/toitware/tpkg/pkg/compiler"
-	"github.com/toitware/tpkg/pkg/set"
+	"github.com/toitlang/tpkg/pkg/compiler"
+	"github.com/toitlang/tpkg/pkg/set"
 	"gopkg.in/yaml.v2"
 )
 
