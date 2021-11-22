@@ -72,7 +72,7 @@ mocks:
 TEST_FLAGS ?=
 .PHONY: test
 test: $(GO_MOCKS)
-	tedi test -v -cover $(TEST_FLAGS) $(foreach dir,$(filter-out third_party/, $(sort $(dir $(wildcard */)))),./$(dir)...)
+	tedi test -v -cover $(TEST_FLAGS) $(foreach dir, $(filter-out opentpkg $(filter-out third_party/, $(sort $(dir $(wildcard */)))),./$(dir)...))
 
 WEB_TOITDOCS_VERSION ?= v0.0.13-pre.5+a74fc239
 $(BUILD_DIR)/web_toitdocs/$(WEB_TOITDOCS_VERSION):
