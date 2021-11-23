@@ -1,4 +1,0 @@
-build/
-tedi_test.go
-*.pb.go
-*_mock.go

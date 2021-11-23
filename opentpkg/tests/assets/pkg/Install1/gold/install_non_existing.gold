@@ -1,3 +1,0 @@
-pkg install --local non-existing
-Exit Code: 1
-Error: Target 'non-existing' does not exist

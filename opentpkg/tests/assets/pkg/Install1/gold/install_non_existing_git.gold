@@ -1,3 +1,0 @@
-pkg install some_pkg
-Exit Code: 1
-Error: Package 'some_pkg' not found

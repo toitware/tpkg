@@ -1,3 +1,0 @@
-pkg install --local --name=pkg pkg2
-Exit Code: 1
-Error: Project has already a package with name 'pkg'
