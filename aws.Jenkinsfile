@@ -58,6 +58,13 @@ pipeline {
 
             steps {
                 container('tpkg') {
+                    script {
+                        TOIT_VERSION=sh(returnStdout: true, script: 'gitversion').trim()
+                    }
+                    withCredentials([[$class: 'FileBinding', credentialsId: 'gcloud-service-auth', variable: 'GOOGLE_APPLICATION_CREDENTIALS']]) {
+                        sh 'gcloud auth activate-service-account --key-file=$GOOGLE_APPLICATION_CREDENTIALS'
+                        sh "gcloud config set project infrastructure-220307"
+                    }
                     sh "GCLOUD_IMAGE_TAG=${TOIT_VERSION} make gcloud"
                 }
             }
