@@ -15,7 +15,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.5.0
 	github.com/imkira/go-interpol v1.1.0 // indirect
-	github.com/jstroem/tedi v0.0.0-20200226142257-9a985c8b9ae7
+	github.com/jstroem/tedi v0.1.0
 	github.com/k0kubun/colorstring v0.0.0-20150214042306-9440f1994b88 // indirect
 	github.com/m3db/prometheus_client_golang v0.8.1 // indirect
 	github.com/m3db/prometheus_client_model v0.1.0 // indirect
@@ -23,6 +23,7 @@ require (
 	github.com/m3db/prometheus_procfs v0.8.1 // indirect
 	github.com/moul/http2curl v1.0.0 // indirect
 	github.com/onsi/gomega v1.14.0 // indirect
+	github.com/spf13/afero v1.1.2 // indirect
 	github.com/spf13/viper v1.7.0
 	github.com/toitlang/tpkg v0.0.0-20211122165249-e0dfea186707
 	github.com/twmb/murmur3 v1.1.5 // indirect
@@ -36,9 +37,13 @@ require (
 	go.uber.org/fx v1.13.1
 	go.uber.org/ratelimit v0.2.0
 	go.uber.org/zap v1.10.0
-	golang.org/x/net v0.0.0-20210805182204-aaa1db679c0d
+	golang.org/x/net v0.0.0-20211015210444-4f30a5c0130f
+	golang.org/x/sys v0.0.0-20220704084225-05e143d24a9e // indirect
+	golang.org/x/tools v0.1.11 // indirect
+	golang.org/x/xerrors v0.0.0-20220609144429-65e65417b02f // indirect
 	google.golang.org/api v0.30.0
 	google.golang.org/genproto v0.0.0-20210617175327-b9e0b3197ced
 	google.golang.org/grpc v1.38.0
-	google.golang.org/protobuf v1.26.0
+	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.2.0 // indirect
+	google.golang.org/protobuf v1.27.1
 )

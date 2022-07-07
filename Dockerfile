@@ -1,4 +1,15 @@
-FROM gcr.io/infrastructure-220307/console-base-ia32:latest
+# TODO(anders): Use i386/busybox:glibc, but currently we need multiarch++ due to pyinstaller.
+FROM ubuntu:20.04
+
+RUN \
+  dpkg --add-architecture i386 && \
+  apt-get update && \
+  apt-get -y upgrade && \
+  apt-get install -y libc6:i386 libncurses5:i386 libstdc++6:i386 zlib1g:i386 ca-certificates && \
+  rm -rf /var/lib/apt/lists/* && \
+  update-ca-certificates
+
+WORKDIR /
 
 ENV PORT 8733
 ENV DEBUG_PORT 8520
@@ -12,7 +23,6 @@ COPY build/registry_container /registry_container
 copy build/web_toitdocs/$WEB_TOITDOCS_VERSION /web_toitdocs
 copy build/sdk/$SDK_VERSION /sdk
 copy build/web_tpkg/$WEB_TPKG_VERSION /web_tpkg
-
 
 ENV SDK_PATH /sdk
 ENV TOITDOCS_VIEWER_PATH /web_toitdocs
