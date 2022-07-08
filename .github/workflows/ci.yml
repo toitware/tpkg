@@ -97,12 +97,22 @@ jobs:
         with:
           project_id: infrastructure-220307
 
+      - name: Create secrets
+        run: |
+          printf "%s" "${{ secrets.TOITWARE_REGISTRY_SSH_DEPLOY_KEY }}" > private_ssh_key
+          ssh-keyscan github.com > known_hosts
+
       - name: Build Docker Image
         run: |
           gcloud config set project infrastructure-220307
           gcloud auth configure-docker
 
           make image
+
+      - name: Delete secrets
+        if: always()
+        run: |
+          rm -f private_ssh_key
 
       - name: Upload image
         if: |
