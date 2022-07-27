@@ -19,10 +19,10 @@ $(BUILD_DIR):
 go_dependencies:
 	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc
 	go install google.golang.org/protobuf/cmd/protoc-gen-go
+	go install github.com/golang/mock/mockgen
 	go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway
 	go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2
-	go get -u github.com/golang/mock/mockgen@v1.5.0
-	go get -u github.com/jstroem/tedi/cmd/tedi
+	go install github.com/jstroem/tedi/cmd/tedi
 
 build/proto/%.pb.go: proto/%.proto
 	@mkdir -p $(BUILD_DIR)/proto/
@@ -72,7 +72,7 @@ mocks:
 TEST_FLAGS ?=
 .PHONY: test
 test: $(GO_MOCKS)
-	tedi test -v -cover $(TEST_FLAGS) $(foreach dir, $(filter-out opentpkg $(filter-out third_party/, $(sort $(dir $(wildcard */)))),./$(dir)...))
+	tedi test -v -cover $(TEST_FLAGS) $(foreach dir,$(filter-out third_party/, $(sort $(dir $(wildcard */)))),./$(dir)...)
 
 WEB_TOITDOCS_VERSION ?= v0.1.0
 $(BUILD_DIR)/web_toitdocs/$(WEB_TOITDOCS_VERSION):
