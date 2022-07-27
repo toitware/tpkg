@@ -74,29 +74,29 @@ TEST_FLAGS ?=
 test: $(GO_MOCKS)
 	tedi test -v -cover $(TEST_FLAGS) $(foreach dir, $(filter-out opentpkg $(filter-out third_party/, $(sort $(dir $(wildcard */)))),./$(dir)...))
 
-WEB_TOITDOCS_VERSION ?= v0.0.13-pre.5+a74fc239
+WEB_TOITDOCS_VERSION ?= v0.1.0
 $(BUILD_DIR)/web_toitdocs/$(WEB_TOITDOCS_VERSION):
 	mkdir -p $(BUILD_DIR)/web_toitdocs/$(WEB_TOITDOCS_VERSION)
 	gsutil cp gs://toit-web/toitdocs.toit.io/$(WEB_TOITDOCS_VERSION).tar.gz $(BUILD_DIR)/web_toitdocs/$(WEB_TOITDOCS_VERSION)
 	cd $(BUILD_DIR)/web_toitdocs/$(WEB_TOITDOCS_VERSION) && tar -xzf $(WEB_TOITDOCS_VERSION).tar.gz
 	rm -rf $(BUILD_DIR)/web_toitdocs/$(WEB_TOITDOCS_VERSION)/$(WEB_TOITDOCS_VERSION).tar.gz
 
-SDK_VERSION ?= v1.4.2
+SDK_VERSION ?= v2.0.0-alpha.12
 $(BUILD_DIR)/sdk/$(SDK_VERSION):
 	mkdir -p $(BUILD_DIR)/sdk/$(SDK_VERSION)
-	gsutil cp gs://toit-archive/toit-devkit/linux/$(SDK_VERSION).tgz $(BUILD_DIR)/sdk/$(SDK_VERSION)
-	cd $(BUILD_DIR)/sdk/$(SDK_VERSION) && tar -xzf $(SDK_VERSION).tgz
-	rm -rf $(BUILD_DIR)/sdk/$(SDK_VERSION)/$(SDK_VERSION).tgz
+	curl -L -o $(BUILD_DIR)/sdk/$(SDK_VERSION)/toit-linux.tar.gz https://github.com/toitlang/toit/releases/download/$(SDK_VERSION)/toit-linux.tar.gz
+	cd $(BUILD_DIR)/sdk/$(SDK_VERSION) && tar --strip-components=1 -xzf toit-linux.tar.gz
+	rm -rf $(BUILD_DIR)/sdk/$(SDK_VERSION)/toit-linux.tar.gz
 
-WEB_TPKG_VERSION ?= v0.0.1-pre.76+213cc8c
+WEB_TPKG_VERSION ?= v0.0.1-pre.1+9c71537
 $(BUILD_DIR)/web_tpkg/$(WEB_TPKG_VERSION):
 	mkdir -p $(BUILD_DIR)/web_tpkg/$(WEB_TPKG_VERSION)
 	gsutil cp gs://toit-web/pkg.toit.io/$(WEB_TPKG_VERSION).tgz $(BUILD_DIR)/web_tpkg/$(WEB_TPKG_VERSION)
 	cd $(BUILD_DIR)/web_tpkg/$(WEB_TPKG_VERSION) && tar -xzf $(WEB_TPKG_VERSION).tgz
 	rm -rf $(BUILD_DIR)/web_tpkg/$(WEB_TPKG_VERSION)/$(WEB_TPKG_VERSION).tgz
 
-TOITC_PATH ?= `pwd`/../toit/build/release64/bin/toitc
-TOITLSP_PATH ?= `pwd`/../toit/build/toitlsp
+TOITC_PATH ?= `pwd`/../toit/build/host/sdk/bin/toit.compile
+TOITLSP_PATH ?= `pwd`/../toit/build/host/sdk/bin/toit.lsp
 SDK_PATH ?=`pwd`/../toit/
 
 .PHONY: run/registry
