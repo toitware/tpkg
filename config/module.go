@@ -57,14 +57,14 @@ type SDK struct {
 
 func (s *SDK) ToitcPath() string {
 	if s.ToitcPath_ == "" {
-		return filepath.Join(s.Path, "toitc")
+		return filepath.Join(s.Path, "bin", "toit.compile")
 	}
 	return s.ToitcPath_
 }
 
 func (s *SDK) ToitlspPath() string {
 	if s.ToitlspPath_ == "" {
-		return filepath.Join(s.Path, "toitlsp")
+		return filepath.Join(s.Path, "bin", "toit.lsp")
 	}
 	return s.ToitlspPath_
 }
