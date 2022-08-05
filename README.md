@@ -39,6 +39,27 @@ $ curl -X POST 127.0.0.1:8733/api/v1/register/github.com/toitware/ubx-message/ve
 {}
 ```
 
+For testing the image
+=====================
+* Create a fresh repository or fork the existing registry repository.
+* Create a new ssh-key:
+  ``` shell
+  ssh-keygen -t ed25519
+  ```
+* Copy the public key into the deploy keys on Github: https://github.com/XXX/YYY/settings/keys.
+  Don't forget to add write-acces.
+* Create a known_hosts file:
+  ``` shell
+  ssh-keyscan github.com > known_hosts
+  ```
+* Start docker if not already running `sudo systemctl start docker`
+* Run `make image`
+* Start the image:
+  ``` shell
+  docker run -p 8733:8733 -e"REGISTRY_URL=github.com/XXX/YYY" toit-registry
+  ```
+
+
 Tips and Tricks
 ===============
 

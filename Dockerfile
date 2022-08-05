@@ -1,5 +1,5 @@
 # TODO(anders): Use i386/busybox:glibc, but currently we need multiarch++ due to pyinstaller.
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 RUN \
   dpkg --add-architecture i386 && \
