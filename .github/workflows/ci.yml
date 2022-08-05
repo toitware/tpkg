@@ -109,11 +109,6 @@ jobs:
 
           make image
 
-      - name: Delete secrets
-        if: always()
-        run: |
-          rm -f private_ssh_key
-
       - name: Upload image
         if: |
           github.event_name == 'release' ||
@@ -122,3 +117,8 @@ jobs:
           GCLOUD_IMAGE_TAG: ${{ steps.publish.outputs.tag }}
         run: |
           make gcloud
+
+      - name: Delete secrets
+        if: always()
+        run: |
+          rm -f private_ssh_key
