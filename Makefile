@@ -88,7 +88,7 @@ $(BUILD_DIR)/sdk/$(SDK_VERSION):
 	cd $(BUILD_DIR)/sdk/$(SDK_VERSION) && tar --strip-components=1 -xzf toit-linux.tar.gz
 	rm -rf $(BUILD_DIR)/sdk/$(SDK_VERSION)/toit-linux.tar.gz
 
-WEB_TPKG_VERSION ?= v0.0.1-pre.1+9c71537
+WEB_TPKG_VERSION ?= v0.0.1-pre.1+4b4b130
 $(BUILD_DIR)/web_tpkg/$(WEB_TPKG_VERSION):
 	mkdir -p $(BUILD_DIR)/web_tpkg/$(WEB_TPKG_VERSION)
 	gsutil cp gs://toit-web/pkg.toit.io/$(WEB_TPKG_VERSION).tgz $(BUILD_DIR)/web_tpkg/$(WEB_TPKG_VERSION)
