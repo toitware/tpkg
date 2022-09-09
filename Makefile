@@ -74,7 +74,7 @@ TEST_FLAGS ?=
 test: $(GO_MOCKS)
 	tedi test -v -cover $(TEST_FLAGS) $(foreach dir,$(filter-out third_party/, $(sort $(dir $(wildcard */)))),./$(dir)...)
 
-WEB_TOITDOCS_VERSION ?= v0.1.0
+WEB_TOITDOCS_VERSION ?= v0.2.3
 $(BUILD_DIR)/web_toitdocs/$(WEB_TOITDOCS_VERSION):
 	mkdir -p $(BUILD_DIR)/web_toitdocs/$(WEB_TOITDOCS_VERSION)
 	gsutil cp gs://toit-web/toitdocs.toit.io/$(WEB_TOITDOCS_VERSION).tar.gz $(BUILD_DIR)/web_toitdocs/$(WEB_TOITDOCS_VERSION)
@@ -88,7 +88,7 @@ $(BUILD_DIR)/sdk/$(SDK_VERSION):
 	cd $(BUILD_DIR)/sdk/$(SDK_VERSION) && tar --strip-components=1 -xzf toit-linux.tar.gz
 	rm -rf $(BUILD_DIR)/sdk/$(SDK_VERSION)/toit-linux.tar.gz
 
-WEB_TPKG_VERSION ?= v0.2.3
+WEB_TPKG_VERSION ?= v0.1.1
 $(BUILD_DIR)/web_tpkg/$(WEB_TPKG_VERSION):
 	mkdir -p $(BUILD_DIR)/web_tpkg/$(WEB_TPKG_VERSION)
 	gsutil cp gs://toit-web/pkg.toit.io/$(WEB_TPKG_VERSION).tgz $(BUILD_DIR)/web_tpkg/$(WEB_TPKG_VERSION)
