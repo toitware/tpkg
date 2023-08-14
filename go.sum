@@ -393,6 +393,8 @@ github.com/toitlang/tpkg v0.0.0-20220727131228-5d149728b2ba h1:NE5uwnOlv1Ib9pqJT
 github.com/toitlang/tpkg v0.0.0-20220727131228-5d149728b2ba/go.mod h1:8+mRIFIKJxHMEAu8H5MxkaY/fLALKSEguBBIm8D0lG8=
 github.com/toitlang/tpkg v0.0.0-20220817100231-9b6e93cbd21d h1:1jwW+qPQAjBAqcycXITrM6apcex//i/Zcz7s+wF1z0g=
 github.com/toitlang/tpkg v0.0.0-20220817100231-9b6e93cbd21d/go.mod h1:8+mRIFIKJxHMEAu8H5MxkaY/fLALKSEguBBIm8D0lG8=
+github.com/toitlang/tpkg v0.0.0-20230814090526-98c6923a4908 h1:YCVq61PJBMqiGmNNdhIOaHTom9xyO9EUMjiW/Z5XOOA=
+github.com/toitlang/tpkg v0.0.0-20230814090526-98c6923a4908/go.mod h1:6Yf3ioRYccdtpfmCDKjAK0zFqqz5v64tgz66zAB0Txc=
 github.com/twmb/murmur3 v1.1.5 h1:i9OLS9fkuLzBXjt6dptlAEyk58fJsSTXbRg3SgVyqgk=
 github.com/twmb/murmur3 v1.1.5/go.mod h1:Qq/R7NUyOfr65zD+6Q5IHKsJLwP7exErjN6lyyq3OSQ=
 github.com/uber-go/tally v3.4.1+incompatible h1:LXdA0lvxieCFm85XiRFb+SuhuiOFMSWyEGkvDqDOpbA=
