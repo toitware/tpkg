@@ -27,6 +27,7 @@ require (
 	github.com/onsi/gomega v1.14.0 // indirect
 	github.com/spf13/afero v1.1.2 // indirect
 	github.com/spf13/viper v1.7.0
+	github.com/stretchr/testify v1.7.0 // indirect
 	github.com/toitlang/tpkg v0.0.0-20230906110434-e2a5305ac29a
 	github.com/twmb/murmur3 v1.1.5 // indirect
 	github.com/uber-go/tally v3.4.1+incompatible
