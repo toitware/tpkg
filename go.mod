@@ -6,8 +6,10 @@ require (
 	github.com/ajg/form v1.5.1 // indirect
 	github.com/fasthttp-contrib/websocket v0.0.0-20160511215533-1f3b11f56072 // indirect
 	github.com/fatih/structs v1.1.0 // indirect
+	github.com/flynn/go-shlex v0.0.0-20150515145356-3f9db97f8568 // indirect
+	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/gavv/httpexpect v2.0.0+incompatible
-	github.com/go-git/go-git/v5 v5.4.2
+	github.com/go-git/go-git/v5 v5.8.1
 	github.com/golang/mock v1.5.0
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/gorilla/handlers v1.5.1
@@ -25,7 +27,8 @@ require (
 	github.com/onsi/gomega v1.14.0 // indirect
 	github.com/spf13/afero v1.1.2 // indirect
 	github.com/spf13/viper v1.7.0
-	github.com/toitlang/tpkg v0.0.0-20230825090848-be35b7cde30e
+	github.com/stretchr/testify v1.7.0 // indirect
+	github.com/toitlang/tpkg v0.0.0-20230906110434-e2a5305ac29a
 	github.com/twmb/murmur3 v1.1.5 // indirect
 	github.com/uber-go/tally v3.4.1+incompatible
 	github.com/valyala/fasthttp v1.28.0 // indirect
@@ -37,9 +40,7 @@ require (
 	go.uber.org/fx v1.13.1
 	go.uber.org/ratelimit v0.2.0
 	go.uber.org/zap v1.10.0
-	golang.org/x/net v0.0.0-20211015210444-4f30a5c0130f
-	golang.org/x/sys v0.0.0-20220704084225-05e143d24a9e // indirect
-	golang.org/x/tools v0.1.11 // indirect
+	golang.org/x/net v0.12.0
 	golang.org/x/xerrors v0.0.0-20220609144429-65e65417b02f // indirect
 	google.golang.org/api v0.30.0
 	google.golang.org/genproto v0.0.0-20210617175327-b9e0b3197ced
