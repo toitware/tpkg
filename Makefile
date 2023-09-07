@@ -12,6 +12,9 @@ GO_PROTO_PLUGINS := --plugin=protoc-gen-go=$(shell which protoc-gen-go) --plugin
 GO_PROTO_FLAGS := $(PROTO_FLAGS) -I$(GOOGLE_API_PROTO_DIR)
 GO_PACKAGE := github.com/toitware/tpkg
 
+.PHONY: all
+all: registry
+
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
 
