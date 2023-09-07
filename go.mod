@@ -25,9 +25,8 @@ require (
 	github.com/m3db/prometheus_procfs v0.8.1 // indirect
 	github.com/moul/http2curl v1.0.0 // indirect
 	github.com/onsi/gomega v1.14.0 // indirect
-	github.com/spf13/afero v1.1.2 // indirect
 	github.com/spf13/viper v1.7.0
-	github.com/stretchr/testify v1.7.0 // indirect
+	github.com/stretchr/testify v1.7.0
 	github.com/toitlang/tpkg v0.0.0-20230906110434-e2a5305ac29a
 	github.com/twmb/murmur3 v1.1.5 // indirect
 	github.com/uber-go/tally v3.4.1+incompatible
@@ -45,6 +44,5 @@ require (
 	google.golang.org/api v0.30.0
 	google.golang.org/genproto v0.0.0-20210617175327-b9e0b3197ced
 	google.golang.org/grpc v1.38.0
-	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.2.0 // indirect
 	google.golang.org/protobuf v1.27.1
 )
