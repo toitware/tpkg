@@ -8,9 +8,11 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/toitlang/tpkg/pkg/tpkg"
@@ -36,7 +38,13 @@ func createFileRegistry(t *testing.T) string {
 	_, err = w.Add("README.md")
 	require.NoError(t, err)
 
-	_, err = w.Commit("Initial commit", &git.CommitOptions{})
+	_, err = w.Commit("Initial commit", &git.CommitOptions{
+		Author: &object.Signature{
+			Name:  "John Doe",
+			Email: "john@example.com",
+			When:  time.Now(),
+		},
+	})
 	require.NoError(t, err)
 
 	// Create a non-master branch.
