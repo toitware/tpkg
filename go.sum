@@ -427,12 +427,6 @@ github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/
 github.com/subosito/gotenv v1.2.0 h1:Slr1R9HxAlEKefgq5jn9U+DnETlIUa6HfgEzj0g5d7s=
 github.com/subosito/gotenv v1.2.0/go.mod h1:N0PQaV/YGNqwC0u51sEeR/aUtSLEXKX9iv69rRypqCw=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20190109142713-0ad062ec5ee5/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=
-github.com/toitlang/tpkg v0.0.0-20230825090848-be35b7cde30e h1:2V7LnPhq1a+Nn4oAxMyZTaA4gFGbR8ZlSWQzHBl8PdM=
-github.com/toitlang/tpkg v0.0.0-20230825090848-be35b7cde30e/go.mod h1:6Yf3ioRYccdtpfmCDKjAK0zFqqz5v64tgz66zAB0Txc=
-github.com/toitlang/tpkg v0.0.0-20230906110434-e2a5305ac29a h1:LFCyo8DX1NDefMqwjyHleiy/udost0jiDM3HjEsEV0U=
-github.com/toitlang/tpkg v0.0.0-20230906110434-e2a5305ac29a/go.mod h1:L57D7q11LI+dCu8icjX3Lh2qRidFP5FrbFGdE7c1Bpw=
-github.com/toitlang/tpkg v0.0.0-20230913092551-85991d7ca97d h1:OZRCq+EgpiKNEtIOuwqUnpa+h4r5x08Pl7Sy0gp3jIM=
-github.com/toitlang/tpkg v0.0.0-20230913092551-85991d7ca97d/go.mod h1:L57D7q11LI+dCu8icjX3Lh2qRidFP5FrbFGdE7c1Bpw=
 github.com/toitlang/tpkg v0.0.0-20230928125532-1be02ac647ae h1:vmp2+atDvyFKE6TOSepzmrtNuSy8bXW5WagF3ZuJfq0=
 github.com/toitlang/tpkg v0.0.0-20230928125532-1be02ac647ae/go.mod h1:L57D7q11LI+dCu8icjX3Lh2qRidFP5FrbFGdE7c1Bpw=
 github.com/twmb/murmur3 v1.1.5 h1:i9OLS9fkuLzBXjt6dptlAEyk58fJsSTXbRg3SgVyqgk=
