@@ -6,8 +6,6 @@ require (
 	github.com/ajg/form v1.5.1 // indirect
 	github.com/fasthttp-contrib/websocket v0.0.0-20160511215533-1f3b11f56072 // indirect
 	github.com/fatih/structs v1.1.0 // indirect
-	github.com/flynn/go-shlex v0.0.0-20150515145356-3f9db97f8568 // indirect
-	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/gavv/httpexpect v2.0.0+incompatible
 	github.com/go-git/go-git/v5 v5.8.1
 	github.com/golang/mock v1.5.0
@@ -40,7 +38,6 @@ require (
 	go.uber.org/ratelimit v0.2.0
 	go.uber.org/zap v1.10.0
 	golang.org/x/net v0.12.0
-	golang.org/x/xerrors v0.0.0-20220609144429-65e65417b02f // indirect
 	google.golang.org/api v0.30.0
 	google.golang.org/genproto v0.0.0-20210617175327-b9e0b3197ced
 	google.golang.org/grpc v1.38.0
