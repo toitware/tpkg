@@ -77,14 +77,14 @@ TEST_FLAGS ?=
 test: $(GO_MOCKS)
 	tedi test -v -cover $(TEST_FLAGS) $(foreach dir,$(filter-out third_party/, $(sort $(dir $(wildcard */)))),./$(dir)...)
 
-WEB_TOITDOCS_VERSION ?= v0.2.6
+WEB_TOITDOCS_VERSION ?= v0.2.7
 $(BUILD_DIR)/web_toitdocs/$(WEB_TOITDOCS_VERSION):
 	mkdir -p $(BUILD_DIR)/web_toitdocs/$(WEB_TOITDOCS_VERSION)
 	gsutil cp gs://toit-web/toitdocs.toit.io/$(WEB_TOITDOCS_VERSION).tar.gz $(BUILD_DIR)/web_toitdocs/$(WEB_TOITDOCS_VERSION)
 	cd $(BUILD_DIR)/web_toitdocs/$(WEB_TOITDOCS_VERSION) && tar -xzf $(WEB_TOITDOCS_VERSION).tar.gz
 	rm -rf $(BUILD_DIR)/web_toitdocs/$(WEB_TOITDOCS_VERSION)/$(WEB_TOITDOCS_VERSION).tar.gz
 
-SDK_VERSION ?= v2.0.0-alpha.99
+SDK_VERSION ?= v2.0.0-alpha.112
 $(BUILD_DIR)/sdk/$(SDK_VERSION):
 	mkdir -p $(BUILD_DIR)/sdk/$(SDK_VERSION)
 	curl -L -o $(BUILD_DIR)/sdk/$(SDK_VERSION)/toit-linux.tar.gz https://github.com/toitlang/toit/releases/download/$(SDK_VERSION)/toit-linux.tar.gz
