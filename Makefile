@@ -77,7 +77,7 @@ TEST_FLAGS ?=
 test: $(GO_MOCKS)
 	tedi test -v -cover $(TEST_FLAGS) $(foreach dir,$(filter-out third_party/, $(sort $(dir $(wildcard */)))),./$(dir)...)
 
-WEB_TOITDOCS_VERSION ?= v0.2.7
+WEB_TOITDOCS_VERSION ?= v0.2.8
 $(BUILD_DIR)/web_toitdocs/$(WEB_TOITDOCS_VERSION):
 	mkdir -p $(BUILD_DIR)/web_toitdocs/$(WEB_TOITDOCS_VERSION)
 	gsutil cp gs://toit-web/toitdocs.toit.io/$(WEB_TOITDOCS_VERSION).tar.gz $(BUILD_DIR)/web_toitdocs/$(WEB_TOITDOCS_VERSION)
