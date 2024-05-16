@@ -31,8 +31,9 @@ func (g *generator) generateDocs(ctx context.Context, projectPath string, desc *
 		"--toitc", g.cfg.ToitcPath(),
 		"--sdk", g.cfg.Path,
 		"--exclude-sdk",
-		"--out", outFile,
+		"--pkg-name", desc.Name,
 		"--version", desc.Version,
+		"--out", outFile,
 		"./src",
 	)
 	cmd.Dir = projectPath
