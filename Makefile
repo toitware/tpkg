@@ -1,4 +1,10 @@
 
+# The toitdoc page used to server package toitdocs.
+WEB_TOITDOCS_VERSION ?= v0.2.10
+# The SDK used to extract toitdocs from packages.
+SDK_VERSION ?= v2.0.0-alpha.147
+# The version of the pkg.toit.io web page.
+WEB_TPKG_VERSION ?= v0.2.2
 
 BUILD_DIR := build
 PROTO_DIR := proto
@@ -77,26 +83,26 @@ TEST_FLAGS ?=
 test: $(GO_MOCKS)
 	tedi test -v -cover $(TEST_FLAGS) $(foreach dir,$(filter-out third_party/, $(sort $(dir $(wildcard */)))),./$(dir)...)
 
-WEB_TOITDOCS_VERSION ?= v0.2.9
 $(BUILD_DIR)/web_toitdocs/$(WEB_TOITDOCS_VERSION):
 	mkdir -p $(BUILD_DIR)/web_toitdocs/$(WEB_TOITDOCS_VERSION)
-	gsutil cp gs://toit-web/toitdocs.toit.io/$(WEB_TOITDOCS_VERSION).tar.gz $(BUILD_DIR)/web_toitdocs/$(WEB_TOITDOCS_VERSION)
-	cd $(BUILD_DIR)/web_toitdocs/$(WEB_TOITDOCS_VERSION) && tar -xzf $(WEB_TOITDOCS_VERSION).tar.gz
-	rm -rf $(BUILD_DIR)/web_toitdocs/$(WEB_TOITDOCS_VERSION)/$(WEB_TOITDOCS_VERSION).tar.gz
+	curl -L -o $(BUILD_DIR)/web_toitdocs/$(WEB_TOITDOCS_VERSION)/build.tar.gz \
+		https://github.com/toitware/web-toitdocs/releases/download/$(WEB_TOITDOCS_VERSION)/build.tar.gz
+	cd $(BUILD_DIR)/web_toitdocs/$(WEB_TOITDOCS_VERSION) && tar -xzf build.tar.gz
+	rm -rf $(BUILD_DIR)/web_toitdocs/$(WEB_TOITDOCS_VERSION)/build.tar.gz
 
-SDK_VERSION ?= v2.0.0-alpha.147
 $(BUILD_DIR)/sdk/$(SDK_VERSION):
 	mkdir -p $(BUILD_DIR)/sdk/$(SDK_VERSION)
-	curl -L -o $(BUILD_DIR)/sdk/$(SDK_VERSION)/toit-linux.tar.gz https://github.com/toitlang/toit/releases/download/$(SDK_VERSION)/toit-linux.tar.gz
+	curl -L -o $(BUILD_DIR)/sdk/$(SDK_VERSION)/toit-linux.tar.gz \
+	  https://github.com/toitlang/toit/releases/download/$(SDK_VERSION)/toit-linux.tar.gz
 	cd $(BUILD_DIR)/sdk/$(SDK_VERSION) && tar --strip-components=1 -xzf toit-linux.tar.gz
 	rm -rf $(BUILD_DIR)/sdk/$(SDK_VERSION)/toit-linux.tar.gz
 
-WEB_TPKG_VERSION ?= v0.2.1
 $(BUILD_DIR)/web_tpkg/$(WEB_TPKG_VERSION):
 	mkdir -p $(BUILD_DIR)/web_tpkg/$(WEB_TPKG_VERSION)
-	gsutil cp gs://toit-web/pkg.toit.io/$(WEB_TPKG_VERSION).tgz $(BUILD_DIR)/web_tpkg/$(WEB_TPKG_VERSION)
-	cd $(BUILD_DIR)/web_tpkg/$(WEB_TPKG_VERSION) && tar -xzf $(WEB_TPKG_VERSION).tgz
-	rm -rf $(BUILD_DIR)/web_tpkg/$(WEB_TPKG_VERSION)/$(WEB_TPKG_VERSION).tgz
+	curl -L -o $(BUILD_DIR)/web_tpkg/$(WEB_TPKG_VERSION)/build.tgz \
+	  https://github.com/toitware/web-tpkg/releases/download/$(WEB_TPKG_VERSION)/build.tgz
+	cd $(BUILD_DIR)/web_tpkg/$(WEB_TPKG_VERSION) && tar -xzf build.tgz
+	rm -rf $(BUILD_DIR)/web_tpkg/$(WEB_TPKG_VERSION)/build.tgz
 
 TOITC_PATH ?= `pwd`/../toit/build/host/sdk/bin/toit.compile
 TOITLSP_PATH ?= `pwd`/../toit/build/host/sdk/bin/toit.lsp
