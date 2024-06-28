@@ -114,8 +114,11 @@ run/registry: $(BUILD_DIR)/registry
 	rm -rf /tmp/registry
 	TOITC_PATH=$(TOITC_PATH) TOITLSP_PATH=$(TOITLSP_PATH) SDK_PATH=$(SDK_PATH) ./$(BUILD_DIR)/registry
 
+.PHONY: image-dependencies
+image-dependencies: $(BUILD_DIR)/registry_container $(BUILD_DIR)/web_toitdocs/$(WEB_TOITDOCS_VERSION) $(BUILD_DIR)/sdk/$(SDK_VERSION) $(BUILD_DIR)/web_tpkg/$(WEB_TPKG_VERSION)
+
 .PHONY: image
-image: $(BUILD_DIR)/registry_container $(BUILD_DIR)/web_toitdocs/$(WEB_TOITDOCS_VERSION) $(BUILD_DIR)/sdk/$(SDK_VERSION) $(BUILD_DIR)/web_tpkg/$(WEB_TPKG_VERSION)
+image: image-dependencies
 	docker build --build-arg WEB_TOITDOCS_VERSION=$(WEB_TOITDOCS_VERSION) --build-arg SDK_VERSION=${SDK_VERSION} --build-arg WEB_TPKG_VERSION=${WEB_TPKG_VERSION} -t toit_registry .
 
 GCLOUD_IMAGE_TAG ?= $(USER)
@@ -123,6 +126,12 @@ GCLOUD_IMAGE_TAG ?= $(USER)
 gcloud: image
 	docker tag toit_registry:latest gcr.io/infrastructure-220307/toit_registry:$(subst +,-,$(GCLOUD_IMAGE_TAG))
 	docker push gcr.io/infrastructure-220307/toit_registry:$(subst +,-,$(GCLOUD_IMAGE_TAG))
+
+.PHONY: docker-build-args
+docker-build-args:
+	@echo WEB_TOITDOCS_VERSION=$(WEB_TOITDOCS_VERSION)
+	@echo SDK_VERSION=$(SDK_VERSION)
+	@echo WEB_TPKG_VERSION=$(WEB_TPKG_VERSION)
 
 .PHONY: clean
 clean:
