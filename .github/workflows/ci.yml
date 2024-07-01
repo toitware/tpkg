@@ -100,7 +100,7 @@ jobs:
         if: |
           github.event_name == 'release' ||
           github.event_name == 'push' && github.ref_name == 'master'
-        uses: google-github-actions/setup-gcloud@v0
+        uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: infrastructure-220307
 
