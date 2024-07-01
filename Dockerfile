@@ -34,7 +34,6 @@ ENV SSH_KNOWN_HOSTS=/etc/ssh/ssh_known_hosts
 RUN mkdir -p /etc/ssh
 RUN ssh-keyscan github.com >> /etc/ssh/ssh_known_hosts
 RUN ssh-keyscan gitlab.com >> /etc/ssh/ssh_known_hosts
-RUN ssh-keyscan sourceforge.net >> /etc/ssh/ssh_known_hosts
-RUN ssh-keyscan bitbucket.org >> /etc/ssh/ssh_known_hosts
+RUN ssh-keyscan shell.sf.net >> /etc/ssh/ssh_known_hosts
 
 ENTRYPOINT ["/registry_container"]
