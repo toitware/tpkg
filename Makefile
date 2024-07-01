@@ -83,26 +83,29 @@ TEST_FLAGS ?=
 test: $(GO_MOCKS)
 	tedi test -v -cover $(TEST_FLAGS) $(foreach dir,$(filter-out third_party/, $(sort $(dir $(wildcard */)))),./$(dir)...)
 
-$(BUILD_DIR)/web_toitdocs/$(WEB_TOITDOCS_VERSION):
-	mkdir -p $(BUILD_DIR)/web_toitdocs/$(WEB_TOITDOCS_VERSION)
-	curl -L -o $(BUILD_DIR)/web_toitdocs/$(WEB_TOITDOCS_VERSION)/build.tar.gz \
+$(BUILD_DIR)/web_toitdocs:
+	mkdir -p $(BUILD_DIR)/downloads
+	mkdir -p $(BUILD_DIR)/web_toitdocs
+	curl -L -o $(BUILD_DIR)/downloads/web_toitdocs.tar.gz \
 		https://github.com/toitware/web-toitdocs/releases/download/$(WEB_TOITDOCS_VERSION)/build.tar.gz
-	cd $(BUILD_DIR)/web_toitdocs/$(WEB_TOITDOCS_VERSION) && tar -xzf build.tar.gz
-	rm -rf $(BUILD_DIR)/web_toitdocs/$(WEB_TOITDOCS_VERSION)/build.tar.gz
+	cd $(BUILD_DIR)/web_toitdocs && tar -xzf ../downloads/web_toitdocs.tar.gz
+	echo $(WEB_TOITDOCS_VERSION) > $(BUILD_DIR)/web_toitdocs/VERSION
 
-$(BUILD_DIR)/sdk/$(SDK_VERSION):
-	mkdir -p $(BUILD_DIR)/sdk/$(SDK_VERSION)
-	curl -L -o $(BUILD_DIR)/sdk/$(SDK_VERSION)/toit-linux.tar.gz \
+$(BUILD_DIR)/sdk:
+	mkdir -p $(BUILD_DIR)/downloads
+	mkdir -p $(BUILD_DIR)/sdk/
+	curl -L -o $(BUILD_DIR)/downloads/toit-linux.tar.gz \
 	  https://github.com/toitlang/toit/releases/download/$(SDK_VERSION)/toit-linux.tar.gz
-	cd $(BUILD_DIR)/sdk/$(SDK_VERSION) && tar --strip-components=1 -xzf toit-linux.tar.gz
-	rm -rf $(BUILD_DIR)/sdk/$(SDK_VERSION)/toit-linux.tar.gz
+	cd $(BUILD_DIR)/sdk && tar --strip-components=1 -xzf ../downloads/toit-linux.tar.gz
+	echo $(SDK_VERSION) > $(BUILD_DIR)/sdk/VERSION
 
-$(BUILD_DIR)/web_tpkg/$(WEB_TPKG_VERSION):
-	mkdir -p $(BUILD_DIR)/web_tpkg/$(WEB_TPKG_VERSION)
-	curl -L -o $(BUILD_DIR)/web_tpkg/$(WEB_TPKG_VERSION)/build.tgz \
+$(BUILD_DIR)/web_tpkg:
+	mkdir -p $(BUILD_DIR)/downloads
+	mkdir -p $(BUILD_DIR)/web_tpkg
+	curl -L -o $(BUILD_DIR)/downloads/web_tpkg.tgz \
 	  https://github.com/toitware/web-tpkg/releases/download/$(WEB_TPKG_VERSION)/build.tgz
-	cd $(BUILD_DIR)/web_tpkg/$(WEB_TPKG_VERSION) && tar -xzf build.tgz
-	rm -rf $(BUILD_DIR)/web_tpkg/$(WEB_TPKG_VERSION)/build.tgz
+	cd $(BUILD_DIR)/web_tpkg && tar -xzf ../downloads/web_tpkg.tgz
+	echo $(WEB_TPKG_VERSION) > $(BUILD_DIR)/web_tpkg/VERSION
 
 TOITC_PATH ?= `pwd`/../toit/build/host/sdk/bin/toit.compile
 TOITLSP_PATH ?= `pwd`/../toit/build/host/sdk/bin/toit.lsp
@@ -115,23 +118,28 @@ run/registry: $(BUILD_DIR)/registry
 	TOITC_PATH=$(TOITC_PATH) TOITLSP_PATH=$(TOITLSP_PATH) SDK_PATH=$(SDK_PATH) ./$(BUILD_DIR)/registry
 
 .PHONY: image-dependencies
-image-dependencies: $(BUILD_DIR)/registry_container $(BUILD_DIR)/web_toitdocs/$(WEB_TOITDOCS_VERSION) $(BUILD_DIR)/sdk/$(SDK_VERSION) $(BUILD_DIR)/web_tpkg/$(WEB_TPKG_VERSION)
+image-dependencies: $(BUILD_DIR)/registry_container $(BUILD_DIR)/web_toitdocs $(BUILD_DIR)/sdk $(BUILD_DIR)/web_tpkg
+
+.PHONY: check-versions
+# Check that the 'VERSION' files exist and are equal to the expected versions.
+check-versions:
+	@if [ ! -f $(BUILD_DIR)/web_toitdocs/VERSION ]; then echo "Missing $(BUILD_DIR)/web_toitdocs/VERSION"; exit 1; fi
+	@if [ ! -f $(BUILD_DIR)/sdk/VERSION ]; then echo "Missing $(BUILD_DIR)/sdk/VERSION"; exit 1; fi
+	@if [ ! -f $(BUILD_DIR)/web_tpkg/VERSION ]; then echo "Missing $(BUILD_DIR)/web_tpkg/VERSION"; exit 1; fi
+	@if [ "$(WEB_TOITDOCS_VERSION)" != "$$(cat $(BUILD_DIR)/web_toitdocs/VERSION)" ]; then echo "Version mismatch in $(BUILD_DIR)/web_toitdocs/VERSION"; exit 1; fi
+	@if [ "$(SDK_VERSION)" != "$$(cat $(BUILD_DIR)/sdk/VERSION)" ]; then echo "Version mismatch in $(BUILD_DIR)/sdk/VERSION"; exit 1; fi
+	@if [ "$(WEB_TPKG_VERSION)" != "$$(cat $(BUILD_DIR)/web_tpkg/VERSION)" ]; then echo "Version mismatch in $(BUILD_DIR)/web_tpkg/VERSION"; exit 1; fi
 
 .PHONY: image
 image: image-dependencies
-	docker build --build-arg WEB_TOITDOCS_VERSION=$(WEB_TOITDOCS_VERSION) --build-arg SDK_VERSION=${SDK_VERSION} --build-arg WEB_TPKG_VERSION=${WEB_TPKG_VERSION} -t toit_registry .
+	$(MAKE) check-versions
+	docker build -t toit_registry .
 
 GCLOUD_IMAGE_TAG ?= $(USER)
 .PHONY: gcloud
 gcloud: image
 	docker tag toit_registry:latest gcr.io/infrastructure-220307/toit_registry:$(subst +,-,$(GCLOUD_IMAGE_TAG))
 	docker push gcr.io/infrastructure-220307/toit_registry:$(subst +,-,$(GCLOUD_IMAGE_TAG))
-
-.PHONY: docker-build-args
-docker-build-args:
-	@echo WEB_TOITDOCS_VERSION=$(WEB_TOITDOCS_VERSION)
-	@echo SDK_VERSION=$(SDK_VERSION)
-	@echo WEB_TPKG_VERSION=$(WEB_TPKG_VERSION)
 
 .PHONY: clean
 clean:
