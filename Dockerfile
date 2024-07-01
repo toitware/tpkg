@@ -5,7 +5,7 @@ RUN \
   dpkg --add-architecture i386 && \
   apt-get update && \
   apt-get -y upgrade && \
-  apt-get install -y libc6:i386 libncurses5:i386 libstdc++6:i386 zlib1g:i386 ca-certificates && \
+  apt-get install -y libc6:i386 libncurses5:i386 libstdc++6:i386 zlib1g:i386 ca-certificates ssh && \
   rm -rf /var/lib/apt/lists/* && \
   update-ca-certificates
 
