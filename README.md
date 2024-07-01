@@ -26,6 +26,13 @@ Use `REGISTRY_SSH_KEY` if you want to provide the key as an environment variable
 
 The default port is `8733`. You can change it by setting the `PORT` environment variable.
 
+### SSH known hosts
+
+The docker container has keys for github.com, gitlab.com and shell.sf.net. If your
+registry is hosted on a different domain, you need to provide the known hosts file.
+You can either provide the file through a volume and point `SSH_KNOWN_HOSTS` to it,
+or you can inherit the container and add an updated known hosts file.
+
 ## Example
 
 Using a volume for the SSH key:
