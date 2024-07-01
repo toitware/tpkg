@@ -20,18 +20,12 @@ ARG WEB_TPKG_VERSION
 
 COPY config/config.yaml /config/config.yaml
 COPY build/registry_container /registry_container
-copy build/web_toitdocs/$WEB_TOITDOCS_VERSION /web_toitdocs
-copy build/sdk/$SDK_VERSION /sdk
-copy build/web_tpkg/$WEB_TPKG_VERSION /web_tpkg
+COPY build/web_toitdocs/$WEB_TOITDOCS_VERSION /web_toitdocs
+COPY build/sdk/$SDK_VERSION /sdk
+COPY build/web_tpkg/$WEB_TPKG_VERSION /web_tpkg
 
-ENV SDK_PATH /sdk
-ENV TOITDOCS_VIEWER_PATH /web_toitdocs
-ENV TPKG_PATH /web_tpkg
-
-ENV SDK_PATH /sdk
-ENV TOITDOCS_VIEWER_PATH /web_toitdocs
-
-ENV SDK_PATH /sdk
-ENV TOITDOCS_VIEWER_PATH /web_toitdocs
+ENV SDK_PATH=/sdk
+ENV TOITDOCS_VIEWER_PATH=/web_toitdocs
+ENV TPKG_PATH=/web_tpkg
 
 ENTRYPOINT ["/registry_container"]
