@@ -29,6 +29,10 @@ import (
 )
 
 func provideRegistry(config *config.Config, cache tpkg.Cache, logger *zap.Logger, ui tpkg.UI, r tpkg.Registry) (*registry, Registry, error) {
+	if err := populateSSHKeyFile(config); err != nil {
+		return nil, nil, err
+	}
+
 	if _, err := os.Stat(config.Registry.SSHKeyFile); os.IsNotExist(err) {
 		return nil, nil, fmt.Errorf("Failed to load SSH key from path: '%s'", config.Registry.SSHKeyFile)
 	}

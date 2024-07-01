@@ -11,6 +11,10 @@ import (
 )
 
 func provideTpkgRegistry(cfg *config.Config, cache tpkg.Cache) (tpkg.Registry, error) {
+	if err := populateSSHKeyFile(cfg); err != nil {
+		return nil, err
+	}
+
 	return tpkg.NewSSHGitRegistry("registry", cfg.Registry.Url, cache, cfg.Registry.SSHKeyFile, cfg.Registry.Branch)
 }
 

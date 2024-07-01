@@ -10,6 +10,9 @@ Environment variable explanation:
  - `REGISTRY_BRANCH` specifies the branch of the registry (e.g. `master`).
  - `REGISTRY_URL`specifies the url of the registry to serve packages from (e.g. `github.com/toitware/test-registry`).
  - `REGISTRY_SSH_KEY_FILE` specifies the SSH key file that grants read/write access to the registry (e.g. `/home/lau/toitware/toit/tools/tpkg/test-registry_deploy_key`).
+ - `REGISTRY_SSH_KEY` is an alternative way to provide the SSH key as a string. The `REGISTRY_SSH_KEY_FILE` path
+    must still be set, and will be populated with the content of the `REGISTYR_SSH_KEY` variable if the
+    `REGISTRY_SSH_KEY_FILE` doesn't exist.
 
 By default the server runs on port `8733` (set environment variable `PORT` to change this).
 
