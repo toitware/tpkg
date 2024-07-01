@@ -4,6 +4,7 @@ on:
   push:
   release:
     types: [published]
+  workflow_dispatch:
 
 jobs:
   build:
@@ -85,23 +86,23 @@ jobs:
           credentials_json: ${{ secrets.INFRASTRUCTURE_SERVICE_ACCOUNT_JSON_KEY }}
           service_account: github-action@infrastructure-220307.iam.gserviceaccount.com
 
+      - name: Build Docker Image
+        run: |
+          make image
+
+      - name: Print known-hosts
+        run: |
+          ssh-keyscan github.com >> known_hosts
+          echo "You can use the following known_hosts file to add to your secrets"
+          cat known_hosts
+
       - name: Set up Cloud SDK
+        if: |
+          github.event_name == 'release' ||
+          github.event_name == 'push' && github.ref_name == 'master'
         uses: google-github-actions/setup-gcloud@v0
         with:
           project_id: infrastructure-220307
-
-      - name: Create secrets
-        run: |
-          printf "%s" "${{ secrets.TOITWARE_REGISTRY_SSH_DEPLOY_KEY }}" > private_ssh_key
-          ssh-keyscan github.com > known_hosts
-          cat known_hosts
-
-      - name: Build Docker Image
-        run: |
-          gcloud config set project infrastructure-220307
-          gcloud auth configure-docker
-
-          make image
 
       - name: Upload image
         if: |
@@ -110,9 +111,7 @@ jobs:
         env:
           GCLOUD_IMAGE_TAG: ${{ steps.publish.outputs.tag }}
         run: |
-          make gcloud
+          gcloud config set project infrastructure-220307
+          gcloud auth configure-docker
 
-      - name: Delete secrets
-        if: always()
-        run: |
-          rm -f private_ssh_key
+          make gcloud
