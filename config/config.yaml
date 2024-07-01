@@ -12,7 +12,8 @@ registry:
   url: ${REGISTRY_URL:github.com/toitware/registry}
   branch: ${REGISTRY_BRANCH:main}
   cache_path: ${REGISTRY_CACHE_PATH:/tmp/registry}
-  ssh_key_file_file: ${REGISTRY_SSH_KEY_FILE:}
+  ssh_key_file_path: ${REGISTRY_SSH_KEY_FILE:}
+  ssh_key: ${REGISTRY_SSH_KEY:}
   allow_rewrite: false
   sync_interval: 5m
 

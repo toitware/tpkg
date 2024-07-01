@@ -48,7 +48,8 @@ type Registry struct {
 	Url          string        `mapstructure:"url"`
 	Branch       string        `mapstructure:"branch"`
 	CachePath    string        `mapstructure:"cache_path"`
-	SSHKeyFile   string        `mapstructure:"ssh_key_file_file"`
+	SSHKeyFile   string        `mapstructure:"ssh_key_file_path"`
+	SSHKey       string        `mapstructure:"ssh_key"`
 	AllowRewrite bool          `mapstructure:"allow_rewrite"`
 	SyncInterval time.Duration `mapstructure:"sync_interval"`
 }
