@@ -28,4 +28,12 @@ ENV SDK_PATH=/sdk
 ENV TOITDOCS_VIEWER_PATH=/web_toitdocs
 ENV TPKG_PATH=/web_tpkg
 
+# Bake in the keys of common git servers.
+# Use the ENV variable 'SSH_KNOWN_HOSTS' to replace this file with a custom one.
+ENV SSH_KNOWN_HOSTS=/etc/ssh/ssh_known_hosts
+RUN ssh-keyscan github.com >> /etc/ssh/ssh_known_hosts
+RUN ssh-keyscan gitlab.com >> /etc/ssh/ssh_known_hosts
+RUN ssh-keyscan sourceforge.net >> /etc/ssh/ssh_known_hosts
+RUN ssh-keyscan bitbucket.org >> /etc/ssh/ssh_known_hosts
+
 ENTRYPOINT ["/registry_container"]
