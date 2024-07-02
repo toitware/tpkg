@@ -43,7 +43,7 @@ docker run -p 8733:8733 \
   -e REGISTRY_URL=github.com/toitware/test-registry \
   -e REGISTRY_SSH_KEY_FILE=/secrets/ssh-key \
   -v /path/to/ssh-key:/secrets/ssh-key \
-  toit-registry
+  toit_registry
 ```
 
 Using an environment variable for the SSH key:
@@ -53,7 +53,7 @@ docker run -p 8733:8733 \
   -e REGISTRY_BRANCH=main \
   -e REGISTRY_URL=github.com/toitware/test-registry \
   -e REGISTRY_SSH_KEY="$(cat /path/to/ssh-key)" \
-  toit-registry
+  toit_registry
 ```
 
 ## API

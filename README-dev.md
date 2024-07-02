@@ -17,7 +17,7 @@
 * Run `make image`. Make sure `$HOME/go/bin` is in your path.
 * Start the image (see the main README):
   ``` shell
-  docker run -p 8733:8733 -e"REGISTRY_URL=github.com/XXX/YYY" -e"..." toit-registry
+  docker run -p 8733:8733 -e"REGISTRY_URL=github.com/XXX/YYY" -e"..." toit_registry
   ```
 
 
