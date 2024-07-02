@@ -88,6 +88,7 @@ type loader struct {
 	sync.Mutex
 
 	ctx    context.Context
+	logger *zap.Logger
 	cancel context.CancelFunc
 
 	signal chan struct{}
@@ -96,10 +97,11 @@ type loader struct {
 	doc *toitdoc
 }
 
-func newLoader() *loader {
+func newLoader(logger *zap.Logger) *loader {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &loader{
 		ctx:    ctx,
+		logger: logger,
 		cancel: cancel,
 		signal: make(chan struct{}),
 	}
@@ -141,6 +143,7 @@ func (l *loader) start(desc *tpkg.Desc, mgr *manager) (doc *toitdoc, err error) 
 		}
 	}()
 
+	l.logger.Debug("downloading package", zap.String("url", desc.URL), zap.String("version", desc.Version))
 	repoDir := filepath.Join(tmpDir, "repo")
 	if _, err := tpkg.DownloadGit(l.ctx, tpkg.DownloadGitOptions{
 		Directory:  repoDir,
@@ -150,19 +153,25 @@ func (l *loader) start(desc *tpkg.Desc, mgr *manager) (doc *toitdoc, err error) 
 		UI:         mgr.ui,
 		NoReadOnly: true,
 	}); err != nil {
+		l.logger.Error("failed to download package", zap.String("url", desc.URL), zap.String("version", desc.Version), zap.Error(err))
 		return nil, err
 	}
 
+	l.logger.Debug("downloaded package", zap.String("url", desc.URL), zap.String("version", desc.Version))
 	// Download dependent packages.
 	projectPaths, err := tpkg.NewProjectPaths(repoDir, "", "")
 	if err != nil {
+		l.logger.Error("failed to create project paths", zap.String("url", desc.URL), zap.String("version", desc.Version), zap.Error(err))
 		return nil, err
 	}
 
 	projectManager := tpkg.NewProjectPkgManager(mgr.manager, projectPaths)
 	if err := projectManager.Install(l.ctx, false); err != nil {
+		l.logger.Error("failed to install package", zap.String("url", desc.URL), zap.String("version", desc.Version), zap.Error(err))
 		return nil, err
 	}
+
+	l.logger.Debug("installation done", zap.String("url", desc.URL), zap.String("version", desc.Version))
 
 	// Generate toitdoc JSON file.
 	jsonPath := filepath.Join(tmpDir, toitdocPath)
@@ -243,7 +252,7 @@ func (m *manager) load(ctx context.Context, desc *tpkg.Desc, ident pkgIdentifier
 		return loader.Wait(ctx)
 	}
 
-	loader = newLoader()
+	loader = newLoader(m.logger)
 	m.loading[ident] = loader
 	m.Unlock()
 
