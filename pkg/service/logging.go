@@ -34,7 +34,7 @@ func provideLogger(cfg *config.Config) (*zap.Logger, error) {
 	var options []zap.Option
 	switch cfg.Logging.Backend {
 	case "":
-		zapCfg = zap.NewDevelopmentConfig()
+		zapCfg.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
 	case "humio":
 		// Nothing, use production out of the box.
 	default:

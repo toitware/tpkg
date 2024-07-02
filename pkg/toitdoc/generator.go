@@ -38,6 +38,7 @@ func (g *generator) generateDocs(ctx context.Context, projectPath string, desc *
 	)
 	cmd.Dir = projectPath
 
+	g.logger.Debug("generating toitdocs", zap.String("cwd", projectPath), zap.String("cmd", cmd.String()), zap.String("url", desc.URL), zap.String("version", desc.Version))
 	if err := cmd.Run(); err != nil {
 		var stdout string
 		if exitErr, ok := err.(*exec.ExitError); ok {
@@ -47,5 +48,6 @@ func (g *generator) generateDocs(ctx context.Context, projectPath string, desc *
 		return err
 	}
 
+	g.logger.Debug("generated toitdocs", zap.String("cwd", projectPath), zap.String("cmd", cmd.String()), zap.String("url", desc.URL), zap.String("version", desc.Version))
 	return nil
 }
