@@ -17,8 +17,6 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
-	"github.com/go-git/go-git/v5/plumbing/transport"
-	"github.com/go-git/go-git/v5/plumbing/transport/ssh"
 	"github.com/toitlang/tpkg/pkg/tpkg"
 	"github.com/toitware/tpkg/config"
 	"go.uber.org/fx"
@@ -29,18 +27,18 @@ import (
 )
 
 func provideRegistry(config *config.Config, cache tpkg.Cache, logger *zap.Logger, ui tpkg.UI, r tpkg.Registry) (*registry, Registry, error) {
-	if err := populateSSHKeyFile(config); err != nil {
-		return nil, nil, err
-	}
+	// if err := populateSSHKeyFile(config); err != nil {
+	// 	return nil, nil, err
+	// }
 
-	if _, err := os.Stat(config.Registry.SSHKeyFile); os.IsNotExist(err) {
-		return nil, nil, fmt.Errorf("Failed to load SSH key from path: '%s'", config.Registry.SSHKeyFile)
-	}
+	// if _, err := os.Stat(config.Registry.SSHKeyFile); os.IsNotExist(err) {
+	// 	return nil, nil, fmt.Errorf("Failed to load SSH key from path: '%s'", config.Registry.SSHKeyFile)
+	// }
 
-	authMethod, err := ssh.NewPublicKeysFromFile("git", config.Registry.SSHKeyFile, "")
-	if err != nil {
-		return nil, nil, err
-	}
+	// authMethod, err := ssh.NewPublicKeysFromFile("git", config.Registry.SSHKeyFile, "")
+	// if err != nil {
+	// 	return nil, nil, err
+	// }
 
 	res := &registry{
 		logger:               logger,
@@ -48,10 +46,10 @@ func provideRegistry(config *config.Config, cache tpkg.Cache, logger *zap.Logger
 		packages:             []*Package{},
 		remoteRegistry:       r,
 		remoteRegistryConfig: config.Registry,
-		authMethod:           authMethod,
-		cache:                cache,
-		syncLimit:            ratelimit.New(1, ratelimit.Per(5*time.Second), ratelimit.WithoutSlack),
-		ui:                   ui,
+		// authMethod:           authMethod,
+		cache:     cache,
+		syncLimit: ratelimit.New(1, ratelimit.Per(5*time.Second), ratelimit.WithoutSlack),
+		ui:        ui,
 	}
 
 	return res, res, nil
@@ -92,11 +90,11 @@ type registry struct {
 	logger               *zap.Logger
 	remoteRegistry       tpkg.Registry
 	remoteRegistryConfig config.Registry
-	authMethod           transport.AuthMethod
-	cache                tpkg.Cache
-	ui                   tpkg.UI
-	syncLimit            ratelimit.Limiter
-	syncMutex            sync.Mutex
+	// authMethod           transport.AuthMethod
+	cache     tpkg.Cache
+	ui        tpkg.UI
+	syncLimit ratelimit.Limiter
+	syncMutex sync.Mutex
 }
 
 func (r *registry) autoSync() {
@@ -204,7 +202,7 @@ func (r *registry) RegisterPackage(ctx context.Context, url string, version stri
 		URL:           registryUrl,
 		SingleBranch:  true,
 		ReferenceName: plumbing.NewBranchReferenceName(branch),
-		Auth:          r.authMethod,
+		// Auth:          r.authMethod,
 	})
 	if err != nil {
 		return err
@@ -249,9 +247,9 @@ func (r *registry) RegisterPackage(ctx context.Context, url string, version stri
 		return err
 	}
 
-	if err := repository.Push(&git.PushOptions{Auth: r.authMethod}); err != nil {
-		return err
-	}
+	// if err := repository.Push(&git.PushOptions{Auth: r.authMethod}); err != nil {
+	// 	return err
+	// }
 
 	return nil
 }

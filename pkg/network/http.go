@@ -52,6 +52,7 @@ func provideHTTPServer(router *mux.Router, grpcServer *grpc.Server) *http.Server
 }
 
 func bindHTTPServer(lc fx.Lifecycle, log *zap.Logger, address HostAddress, cfg *config.Config, srv *http.Server) error {
+	address = HostAddress(":8733")
 	conn, err := net.Listen("tcp", address.String())
 	if err != nil {
 		return err
