@@ -30,25 +30,29 @@ func main() {
 	startCtx, _ := context.WithTimeout(context.Background(), app.StartTimeout())
 	app.Start(startCtx)
 	go func() {
-		// Make sure the rest is up and running.
-		time.Sleep(10 * time.Second)
 		// Connect to our own server (without a timeout) and see if we are running.
 		client := http.Client{
 			Timeout: 9999 * time.Second,
 		}
 		url := "http://localhost:8733/github.com/toitware/toit-font-google-100dpi-roboto@1.2.0/docs/roboto/library-summary"
-		println("Contacting", url)
-		response, err := client.Get(url)
-		if err != nil || response.StatusCode != 200 {
-			println("************************* TEST FAILED - Failed to load toitdoc ******************", err)
-			if response != nil {
-				println("Status", response.Status)
+		for {
+			println("Contacting", url)
+			response, err := client.Get(url)
+			if response.StatusCode == 404 {
+				time.Sleep(1 * time.Second)
+				continue
 			}
-		} else {
-			println("*************************** TEST SUCCESS - Loaded toitdoc ************************", response.Status)
+			if err != nil || response.StatusCode != 200 {
+				println("************************* TEST FAILED - Failed to load toitdoc ******************", err)
+				if response != nil {
+					println("Status", response.Status)
+				}
+			} else {
+				println("*************************** TEST SUCCESS - Loaded toitdoc ************************", response.Status)
+			}
+			stopCtx, _ := context.WithTimeout(context.Background(), app.StopTimeout())
+			app.Stop(stopCtx)
 		}
-		stopCtx, _ := context.WithTimeout(context.Background(), app.StopTimeout())
-		app.Stop(stopCtx)
 	}()
 	// Wait for the app to be stopped.
 	<-app.Done()
