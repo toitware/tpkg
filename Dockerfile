@@ -14,19 +14,15 @@ WORKDIR /
 ENV PORT 8733
 ENV DEBUG_PORT 8520
 
-ARG WEB_TOITDOCS_VERSION
-ARG SDK_VERSION
-ARG WEB_TPKG_VERSION
-
-COPY config/config.yaml /config/config.yaml
-COPY build/registry_container /registry_container
-COPY build/web_toitdocs/$WEB_TOITDOCS_VERSION /web_toitdocs
-COPY build/sdk/$SDK_VERSION /sdk
-COPY build/web_tpkg/$WEB_TPKG_VERSION /web_tpkg
-
 ENV SDK_PATH=/sdk
 ENV TOITDOCS_VIEWER_PATH=/web_toitdocs
 ENV TPKG_PATH=/web_tpkg
+
+COPY config/config.yaml /config/config.yaml
+COPY build/registry_container /registry_container
+COPY build/web_toitdocs $TOITDOCS_VIEWER_PATH
+COPY build/sdk $SDK_PATH
+COPY build/web_tpkg $TPKG_PATH
 
 # Bake in the keys of common git servers.
 # Use the ENV variable 'SSH_KNOWN_HOSTS' to replace this file with a custom one.

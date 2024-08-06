@@ -64,10 +64,6 @@ jobs:
           echo "You can use the following known_hosts file to add to your secrets"
           cat known_hosts
 
-      - name: Build build-args
-        run: |
-          echo "BUILD_ARGS=$(make docker-build-args)" >> $GITHUB_ENV
-
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v5
@@ -115,6 +111,3 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           context: .
-          build-args: |
-            ${{ env.BUILD_ARGS }}
-
