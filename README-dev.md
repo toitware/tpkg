@@ -1,4 +1,4 @@
-# Toit Package Manager - Development
+# Toit package manager - development
 
 ## Testing the image
 
@@ -7,7 +7,7 @@
   ``` shell
   ssh-keygen -t ed25519
   ```
-* Copy the public key into the deploy keys on Github: https://github.com/XXX/YYY/settings/keys.
+* Copy the public key into the deploy keys on GitHub: https://github.com/XXX/YYY/settings/keys.
   Don't forget to add write-access.
 * Create a known_hosts file:
   ``` shell
@@ -21,7 +21,7 @@
   ```
 
 
-## Tips and Tricks
+## Tips and tricks
 
 ### Auto-update submodules
 
