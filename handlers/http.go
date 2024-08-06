@@ -68,6 +68,9 @@ func bindHTTPHandlers(router *mux.Router, cfg *config.Config, logger *zap.Logger
 	router.Handle("/{package:[^@]+}/docs/{path:.*}", network.HTTPHandle(h.toitdocs))
 	router.Handle("/{package:[^@]+}@{version:[^/]+}/docs/{path:.*}", network.HTTPHandle(h.toitdocs))
 	router.PathPrefix("/api/").Handler(http.StripPrefix("/api", apiHandler))
+	router.Path("/health").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
 
 	middlewares := []mux.MiddlewareFunc{
 		handlers.CORS(
