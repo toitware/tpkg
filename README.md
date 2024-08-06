@@ -18,7 +18,7 @@ Run the docker container with the following variables:
   that grants read/write access to the registry. For example `/secrets/ssh-key`.
 - `REGISTRY_SSH_KEY` is an alternative way to provide the SSH key as a string.
   The `REGISTRY_SSH_KEY_FILE` path must still be set, and will be populated with
-  the content of the `REGISTYR_SSH_KEY` variable if the `REGISTRY_SSH_KEY_FILE`
+  the content of the `REGISTRY_SSH_KEY` variable if the `REGISTRY_SSH_KEY_FILE`
   doesn't exist.
 
 Use `REGISTRY_SSH_KEY_FILE` if you want to provide the key through a mounted volume.
