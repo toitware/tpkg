@@ -11,9 +11,16 @@ on:
         required: false
         default: false
         type: boolean
+      redeploy:
+        description: 'Redeploy the container on railway'
+        required: false
+        default: false
+        type: boolean
 
 env:
   DOCKER_NAME: tpkg_registry
+  RAILWAY_PROJECT_ID: 6580ada5-829d-4c2a-8b84-0096bd87b421
+  RAILWAY_SERVICE_ID: d9ab2b13-9265-4757-97eb-282ac85f15fc
 
 jobs:
   build:
@@ -111,3 +118,15 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           context: .
+
+      - name: Install Railway
+        if: github.event.inputs.redeploy == 'true' || github.event_name == 'release'
+        run: npm i -g @railway/cli
+
+      - name: Deploy
+        if: github.event.inputs.redeploy == 'true' || github.event_name == 'release'
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          railway link --project-id $RAILWAY_PROJECT_ID --service $RAILWAY_SERVICE_ID
+          railway redeploy -y
