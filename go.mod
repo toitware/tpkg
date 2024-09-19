@@ -14,6 +14,7 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.5.0
+	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/imkira/go-interpol v1.1.0 // indirect
 	github.com/jstroem/tedi v0.1.0
 	github.com/k0kubun/colorstring v0.0.0-20150214042306-9440f1994b88 // indirect
@@ -25,7 +26,7 @@ require (
 	github.com/onsi/gomega v1.14.0 // indirect
 	github.com/spf13/viper v1.7.0
 	github.com/stretchr/testify v1.7.0
-	github.com/toitlang/tpkg v0.0.0-20240806094622-9637186e3a28
+	github.com/toitlang/tpkg v0.0.0-20240919112017-273e738f33d0
 	github.com/twmb/murmur3 v1.1.5 // indirect
 	github.com/uber-go/tally v3.4.1+incompatible
 	github.com/valyala/fasthttp v1.28.0 // indirect
