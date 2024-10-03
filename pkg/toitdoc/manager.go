@@ -330,10 +330,6 @@ func createHTMLVariables(pairs ...string) ([]*htmlVariable, error) {
 func rewriteIndexFile(desc *tpkg.Desc, body []byte) ([]byte, error) {
 	vars, err := createHTMLVariables(
 		`<base[^\>]+href="([^"]*)">`, "/"+desc.URL+"@"+desc.Version+"/docs/",
-		`<meta name="toitdoc-root-library"[^\>]+content="([^"]*)"[^\>]*/>`, "src",
-		`<meta name="toitdoc-path"[^\>]+content="([^"]*)"[^\>]*/>`, "/toitdocs/",
-		`<meta name="toitdoc-mode"[^\>]+content="([^"]*)"[^\>]*/>`, "package",
-		`<meta name="toitdoc-package-name"[^\>]+content="([^"]*)"[^\>]*/>`, desc.Name,
 	)
 	if err != nil {
 		return nil, err

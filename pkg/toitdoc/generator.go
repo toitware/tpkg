@@ -26,15 +26,14 @@ func provideGenerator(cfg *config.Config, logger *zap.Logger) *generator {
 }
 
 func (g *generator) generateDocs(ctx context.Context, projectPath string, desc *tpkg.Desc, outFile string) error {
-	cmd := exec.CommandContext(ctx, g.cfg.ToitlspPath(),
-		"toitdoc",
-		"--toitc", g.cfg.ToitcPath(),
-		"--sdk", g.cfg.Path,
-		"--exclude-sdk",
-		"--pkg-name", desc.Name,
+	cmd := exec.CommandContext(ctx, g.cfg.ToitPath(),
+		"toitdoc", "build",
+		"--package",
 		"--version", desc.Version,
-		"--out", outFile,
-		"./src",
+		"--exclude-sdk",
+		"--exclude-pkgs",
+		"--output", outFile,
+		projectPath,
 	)
 	cmd.Dir = projectPath
 

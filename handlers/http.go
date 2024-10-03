@@ -187,7 +187,7 @@ func (t *toitdocFileServer) serve(rw http.ResponseWriter, r *http.Request, name 
 		return nil
 	}
 
-	if name == "toitdocs/latest.json" {
+	if name == "toitdoc.json" {
 		http.ServeFile(rw, r, t.doc.JSONPath())
 		return nil
 	}
