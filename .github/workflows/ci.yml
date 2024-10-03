@@ -93,7 +93,6 @@ jobs:
       - name: Print configuration
         run: |
           echo "DOCKER_NAME=${{ env.DOCKER_NAME }}"
-          echo "BUILD_ARGS=${{ env.BUILD_ARGS }}"
           echo "TAGS=${{ steps.meta.outputs.tags }}"
           echo "LABELS=${{ steps.meta.outputs.labels }}"
 
