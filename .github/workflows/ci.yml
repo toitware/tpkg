@@ -132,7 +132,7 @@ jobs:
           (github.event_name == 'push' && github.ref == 'refs/heads/main')
         run: npm i -g @railway/cli
 
-      - name: Deploy dev
+      - name: Deploy pkg-dev.toit.io
         if: |
           github.event.inputs.redeploy-dev == 'true' ||
           (github.event_name == 'push' && github.ref == 'refs/heads/main')
@@ -142,7 +142,7 @@ jobs:
           railway link --project-id $RAILWAY_PROJECT_ID --service $RAILWAY_DEV_SERVICE_ID
           railway redeploy -y
 
-      - name: Deploy
+      - name: Deploy pkg.toit.io
         if: github.event.inputs.redeploy == 'true' || github.event_name == 'release'
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
