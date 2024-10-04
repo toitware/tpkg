@@ -1,7 +1,7 @@
 # The web-page sources (index.html...) used to serve package toitdocs.
 WEB_TOITDOCS_VERSION ?= v0.3.0
 # The SDK used to extract toitdocs from packages.
-SDK_VERSION ?= v2.0.0-alpha.162
+SDK_VERSION ?= v2.0.0-alpha.163
 # The version of the pkg.toit.io web page.
 WEB_TPKG_VERSION ?= v0.3.0
 
