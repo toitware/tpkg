@@ -12,7 +12,12 @@ on:
         default: false
         type: boolean
       redeploy:
-        description: 'Redeploy the container on railway'
+        description: 'Redeploy the container on pkg.toit.io'
+        required: false
+        default: false
+        type: boolean
+      redeploy-dev:
+        description: 'Redeploy the container on pkg-dev.toit.io'
         required: false
         default: false
         type: boolean
@@ -21,6 +26,7 @@ env:
   DOCKER_NAME: tpkg_registry
   RAILWAY_PROJECT_ID: 6580ada5-829d-4c2a-8b84-0096bd87b421
   RAILWAY_SERVICE_ID: d9ab2b13-9265-4757-97eb-282ac85f15fc
+  RAILWAY_DEV_SERVICE_ID: d22a4836-8f41-4d8b-b26c-bc16546e0738
 
 jobs:
   build:
@@ -119,10 +125,24 @@ jobs:
           context: .
 
       - name: Install Railway
-        if: github.event.inputs.redeploy == 'true' || github.event_name == 'release'
+        if: |
+          github.event.inputs.redeploy == 'true' ||
+          github.event.inputs.redeploy-dev == 'true' ||
+          github.event_name == 'release' ||
+          (github.event_name == 'push' && github.ref == 'refs/heads/main')
         run: npm i -g @railway/cli
 
-      - name: Deploy
+      - name: Deploy pkg-dev.toit.io
+        if: |
+          github.event.inputs.redeploy-dev == 'true' ||
+          (github.event_name == 'push' && github.ref == 'refs/heads/main')
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          railway link --project-id $RAILWAY_PROJECT_ID --service $RAILWAY_DEV_SERVICE_ID
+          railway redeploy -y
+
+      - name: Deploy pkg.toit.io
         if: github.event.inputs.redeploy == 'true' || github.event_name == 'release'
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
