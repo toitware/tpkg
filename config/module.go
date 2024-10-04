@@ -55,23 +55,15 @@ type Registry struct {
 }
 
 type SDK struct {
-	Path         string `mapstructure:"path"`
-	ToitcPath_   string `mapstructure:"toitc_path"`
-	ToitlspPath_ string `mapstructure:"toitlsp_path"`
+	Path      string `mapstructure:"path"`
+	ToitPath_ string `mapstructure:"toit_path"`
 }
 
-func (s *SDK) ToitcPath() string {
-	if s.ToitcPath_ == "" {
-		return filepath.Join(s.Path, "bin", "toit.compile")
+func (s *SDK) ToitPath() string {
+	if s.ToitPath_ == "" {
+		return filepath.Join(s.Path, "bin", "toit")
 	}
-	return s.ToitcPath_
-}
-
-func (s *SDK) ToitlspPath() string {
-	if s.ToitlspPath_ == "" {
-		return filepath.Join(s.Path, "bin", "toit.lsp")
-	}
-	return s.ToitlspPath_
+	return s.ToitPath_
 }
 
 type Toitdocs struct {

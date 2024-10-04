@@ -1,9 +1,9 @@
 # The web-page sources (index.html...) used to serve package toitdocs.
-WEB_TOITDOCS_VERSION ?= v0.2.10
+WEB_TOITDOCS_VERSION ?= v0.3.0
 # The SDK used to extract toitdocs from packages.
-SDK_VERSION ?= v2.0.0-alpha.147
+SDK_VERSION ?= v2.0.0-alpha.161
 # The version of the pkg.toit.io web page.
-WEB_TPKG_VERSION ?= v0.2.2
+WEB_TPKG_VERSION ?= v0.3.0
 
 BUILD_DIR := build
 PROTO_DIR := proto
@@ -125,20 +125,26 @@ check-versions:
 	@if [ ! -f $(BUILD_DIR)/web_toitdocs/VERSION ]; then echo "Missing $(BUILD_DIR)/web_toitdocs/VERSION"; exit 1; fi
 	@if [ ! -f $(BUILD_DIR)/sdk/VERSION ]; then echo "Missing $(BUILD_DIR)/sdk/VERSION"; exit 1; fi
 	@if [ ! -f $(BUILD_DIR)/web_tpkg/VERSION ]; then echo "Missing $(BUILD_DIR)/web_tpkg/VERSION"; exit 1; fi
-	@if [ "$(WEB_TOITDOCS_VERSION)" != "$$(cat $(BUILD_DIR)/web_toitdocs/VERSION)" ]; then echo "Version mismatch in $(BUILD_DIR)/web_toitdocs/VERSION"; exit 1; fi
-	@if [ "$(SDK_VERSION)" != "$$(cat $(BUILD_DIR)/sdk/VERSION)" ]; then echo "Version mismatch in $(BUILD_DIR)/sdk/VERSION"; exit 1; fi
-	@if [ "$(WEB_TPKG_VERSION)" != "$$(cat $(BUILD_DIR)/web_tpkg/VERSION)" ]; then echo "Version mismatch in $(BUILD_DIR)/web_tpkg/VERSION"; exit 1; fi
+	@if [ "$(WEB_TOITDOCS_VERSION)" != "$$(cat $(BUILD_DIR)/web_toitdocs/VERSION)" ]; then \
+		echo "Version mismatch in $(BUILD_DIR)/web_toitdocs/VERSION."; \
+		echo "Remove the directory to download the correct version."; \
+		exit 1; \
+	fi
+	@if [ "$(SDK_VERSION)" != "$$(cat $(BUILD_DIR)/sdk/VERSION)" ]; then \
+		echo "Version mismatch in $(BUILD_DIR)/sdk/VERSION."; \
+		echo "Remove the directory to download the correct version."; \
+		exit 1; \
+	fi
+	@if [ "$(WEB_TPKG_VERSION)" != "$$(cat $(BUILD_DIR)/web_tpkg/VERSION)" ]; then \
+		echo "Version mismatch in $(BUILD_DIR)/web_tpkg/VERSION."; \
+		echo "Remove the directory to download the correct version."; \
+		exit 1; \
+	fi
 
 .PHONY: image
 image: image-dependencies
 	$(MAKE) check-versions
 	docker build -t toit_registry .
-
-GCLOUD_IMAGE_TAG ?= $(USER)
-.PHONY: gcloud
-gcloud: image
-	docker tag toit_registry:latest gcr.io/infrastructure-220307/toit_registry:$(subst +,-,$(GCLOUD_IMAGE_TAG))
-	docker push gcr.io/infrastructure-220307/toit_registry:$(subst +,-,$(GCLOUD_IMAGE_TAG))
 
 .PHONY: clean
 clean:
