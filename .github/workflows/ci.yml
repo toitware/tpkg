@@ -138,6 +138,13 @@ jobs:
           (github.event_name == 'push' && github.ref == 'refs/heads/main')
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        # pkg-dev.toit.io is set up as follows:
+        # - Source image: ghcr.io/toitware/tpkg_registry:main
+        # - Variables:
+        #    REGISTRY_BRANCH="main"
+        #    REGISTRY_SSH_KEY="-----BEGIN OPENSSH PRIVATE KEY----- ... -----END OPENSSH PRIVATE KEY"
+        #    REGISTRY_SSH_KEY_FILE="/secrets/ssh-key"
+        #    REGISTRY_URL="github.com/toitware/registry"
         run: |
           railway link --project-id $RAILWAY_PROJECT_ID --service $RAILWAY_DEV_SERVICE_ID
           railway redeploy -y
@@ -146,6 +153,13 @@ jobs:
         if: github.event.inputs.redeploy == 'true' || github.event_name == 'release'
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        # pkg.toit.io is set up as follows:
+        # - Source image: ghcr.io/toitware/tpkg_registry:latest
+        # - Variables:
+        #    REGISTRY_BRANCH="main"
+        #    REGISTRY_SSH_KEY="-----BEGIN OPENSSH PRIVATE KEY----- ... -----END OPENSSH PRIVATE KEY"
+        #    REGISTRY_SSH_KEY_FILE="/secrets/ssh-key"
+        #    REGISTRY_URL="github.com/toitware/registry"
         run: |
           railway link --project-id $RAILWAY_PROJECT_ID --service $RAILWAY_SERVICE_ID
           railway redeploy -y
