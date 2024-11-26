@@ -146,8 +146,7 @@ jobs:
         #    REGISTRY_SSH_KEY_FILE="/secrets/ssh-key"
         #    REGISTRY_URL="github.com/toitware/registry"
         run: |
-          railway link --project $RAILWAY_PROJECT_ID --service $RAILWAY_DEV_SERVICE_ID
-          railway redeploy -y
+          railway redeploy -y --service $RAILWAY_DEV_SERVICE_ID
 
       - name: Deploy pkg.toit.io
         if: github.event.inputs.redeploy == 'true' || github.event_name == 'release'
@@ -161,5 +160,4 @@ jobs:
         #    REGISTRY_SSH_KEY_FILE="/secrets/ssh-key"
         #    REGISTRY_URL="github.com/toitware/registry"
         run: |
-          railway link --project $RAILWAY_PROJECT_ID --service $RAILWAY_SERVICE_ID
-          railway redeploy -y
+          railway redeploy -y --service $RAILWAY_SERVICE_ID
