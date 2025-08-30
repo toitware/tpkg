@@ -3,7 +3,7 @@ WEB_TOITDOCS_VERSION ?= v1.0.0
 # The SDK used to extract toitdocs from packages.
 SDK_VERSION ?= v2.0.0-alpha.188
 # The version of the pkg.toit.io web page.
-WEB_TPKG_VERSION ?= v0.3.1
+WEB_TPKG_VERSION ?= v0.3.2
 
 BUILD_DIR := build
 PROTO_DIR := proto
